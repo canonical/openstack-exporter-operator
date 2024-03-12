@@ -1,0 +1,81 @@
+# Testing tools configuration
+[tool.coverage.run]
+relative_files = true
+source = ["."]
+omit = ["tests/**", "docs/**", "lib/**", "snap/**", "build/**", "setup.py"]
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.coverage.html]
+directory = "tests/unit/report/html"
+
+[tool.coverage.xml]
+output = "tests/unit/report/coverage.xml"
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+log_cli_level = "INFO"
+
+# Linting tools configuration
+[tool.ruff]
+line-length = 99
+indent-width = 4
+exclude = [
+    ".eggs",
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "build",
+    "dist",
+    "venv",
+    "report",
+]
+
+[tool.ruff.format]
+indent-style = "space"
+line-ending = "auto"
+quote-style = "double"
+docstring-code-format = false
+skip-magic-trailing-comma = false
+docstring-code-line-length = "dynamic"
+
+
+[tool.ruff.lint]
+select = [
+    "ARG", # flake8-unused-arguments
+    "B",   # flake8-bugbear
+    "C",   # flake8-comprehensions
+    "C9",  # mccabe
+    "D",   # pydocstyle
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "PL",  # pylint
+    "W",   # pycodestyle warnings
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "D203",  # one-blank-line-before-class
+    "D213",  # multi-line-summary-second-line
+]
+fixable = ["ALL"]
+unfixable = []
+per-file-ignores = {"tests/*" = ["D100","D101","D102","D103","D104"]}
+
+[tool.codespell]
+skip = "build,lib,venv,icon.svg,.tox,.git,.mypy_cache,.ruff_cache,.coverage,./tests/unit/report"
+
+[tool.mypy]
+warn_unused_ignores = true
+warn_unused_configs = true
+warn_unreachable = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+exclude = ['.eggs', '.git', '.tox', '.venv', '.build', 'build', 'report', 'tests']

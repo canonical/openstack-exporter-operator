@@ -1,0 +1,44 @@
+type: charm
+name: openstack-exporter
+title: OpenStack Exporter
+summary: Openstack exporter for Charmed OpenStack
+description: |
+  This is an exporter that exposes information gathered from Openstack for use
+  by the Prometheus monitoring system. This operator works with the Canonical
+  Observability Stack (COS).
+subordinate: false
+
+bases:
+  - build-on:
+    - name: ubuntu
+      channel: "22.04"
+    run-on:
+    - name: ubuntu
+      channel: "22.04"
+
+# config:
+#   options:
+#     snap_channel:
+#       default: "latest/stable"
+#       type: string
+#       description: |
+#           If install_method is set to "snap" this option controls channel name.
+
+
+# links:
+#   contact: Please send your answer to Old Pink, care of the Funny Farm, Chalfont
+#   documentation: https://discourse.charmhub.io/t/openstack-exporter-operator/XXXXX
+#   issues:
+#   - https://github.com/canonical/openstack-exporter-operator/issues
+#   source:
+#   - https://github.com/canonical/openstack-exporter-operator
+#   website:
+#   - https://charmhub.io/openstack-exporter
+
+# resources:
+#   exporter-snap:
+#     type: file
+#     description: |
+#       (Optional) Snap that implements actual data collection and export. If not
+#       provided, charm will try to download openstack-exporter from snap store.
+#     filename: openstack-exporter.snap
