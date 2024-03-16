@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 USER_HOME = str(Path().home())
 
 # Snap global constants
-RESOURCE_NAME = "exporter-snap"
+RESOURCE_NAME = "openstack-exporter"
 SNAP_NAME = "golang-openstack-exporter"
 SNAP_SERVICE_NAME = "service"
 
