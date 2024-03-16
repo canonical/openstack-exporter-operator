@@ -16,14 +16,94 @@ bases:
     - name: ubuntu
       channel: "22.04"
 
-# config:
-#   options:
-#     snap_channel:
-#       default: "latest/stable"
-#       type: string
-#       description: |
-#           If install_method is set to "snap" this option controls channel name.
+config:
+  options:
+    snap-channel:
+      type: string
+      default: "stable"
+      description: |
+        Install golang-openstack-exporter snap from "snap-channel".
+        Supported values are "stable", "candidate", "beta" and "edge".
+        Note that it will be superseded by local the resource "exporter-snap".
+    port:
+      type: int
+      default: 9180
+      description: |
+        Start the exporter at "port".
+    log-level:
+      type: string
+      default: info
+      description: |
+        Set log-level (case-insensitive) to the specified level (default to info).
+        Available choices are [debug, info, warn, error]
+    log-format:
+      type: string
+      default: logfmt
+      description: |
+        Set log-format (case-insensitive) to the specified format (default to logfmt).
+        Available choices are [logfmt, json]
+    cloud:
+      type: string
+      default: default
+      description: |
+        Set the name of the openstack cloud (default to default).
+    prefix:
+      type: string
+      default: openstack
+      description: |
+        Set the prefix for metrics (default to openstack).
+    domain-id:
+      type: string
+      default: ""
+      description: |
+        Gather metrics only for the given domain ID (default to all domains).
+    endpoint-type:
+      type: string
+      default: public
+      description: |
+        Set the openstack endpoint type (case-insensitive) to use (default to public).
+        Available choices are [public, internal, admin]
+    disable-services:
+      type: string
+      default: ""
+      description: |
+        Do not gather metrics for these openstack services. The input value
+        should a space separated string such as `compute volume image` (default: don't disable any service).
 
+        For example, `juju config disable-services="compute volume image"`.
+
+        Available choices
+          - network
+          - compute
+          - image
+          - volume
+          - identity
+          - object-store
+          - load-balancer
+          - container-infr
+          - dns
+          - baremetal
+          - gnocchi
+          - database
+          - orchestration
+          - placement
+    disable-metrics:
+      type: string
+      default: ""
+      description: |
+        Do not gather these metrics. The input value should a space separated
+        string such as `cinder-snapshot nova-server_status` (default: don't disable any metric).
+
+        For example, `juju config disable-metrics="cinder-snapshot nova-server_status"`.
+
+#
+# TODO: expose more necessary options
+#
+
+
+#
+# TODO: fix these links after the charm is published
+#
 
 # links:
 #   contact: Please send your answer to Old Pink, care of the Funny Farm, Chalfont
@@ -35,10 +115,11 @@ bases:
 #   website:
 #   - https://charmhub.io/openstack-exporter
 
-# resources:
-#   exporter-snap:
-#     type: file
-#     description: |
-#       (Optional) Snap that implements actual data collection and export. If not
-#       provided, charm will try to download openstack-exporter from snap store.
-#     filename: openstack-exporter.snap
+resources:
+  openstack-exporter:
+    type: file
+    filename: openstack-exporter.snap
+    description: |
+      (Optional) Snap that implements actual data collection and export. If not
+      provided, charm will try to download golang-openstack-exporter from snap
+      store.
