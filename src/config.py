@@ -137,7 +137,7 @@ class ExporterSnapConfig(BaseModel):
         }
         keys = set(options.keys())
         if not keys.issubset(available_choices):
-            raise ValueError(f"{keys} must be in {available_choices}")
+            raise ValueError(f"'disable-service' must be in {available_choices}")
         return options
 
     @field_validator("endpoint_type")
@@ -147,7 +147,7 @@ class ExporterSnapConfig(BaseModel):
         available_choices = {"public", "admin", "internal"}
         canonical_option = option.lower()
         if canonical_option not in available_choices:
-            raise ValueError(f"'endpoint_type' must be in {available_choices}")
+            raise ValueError(f"'endpoint-type' must be in {available_choices}")
         return canonical_option
 
     @field_validator("log")
@@ -162,12 +162,12 @@ class ExporterSnapConfig(BaseModel):
         available_level_choices = {"debug", "info", "warn", "error"}
         log_level = options.get("level", "").lower()
         if log_level and log_level not in available_level_choices:
-            raise ValueError(f"'log.level' must be in {available_level_choices}")
+            raise ValueError(f"'log-level' must be in {available_level_choices}")
 
         available_format_choices = {"logfmt", "json"}
         log_format = options.get("format", "").lower()
         if log_format and log_format not in available_format_choices:
-            raise ValueError(f"'log.format' must be in {available_format_choices}")
+            raise ValueError(f"'log-format' must be in {available_format_choices}")
 
         canonical_options = {}
         if log_level:
@@ -191,7 +191,7 @@ class ExporterSnapConfig(BaseModel):
             _ = int(listen_address[1:])
         except ValueError as e:
             raise ValueError(
-                "'web.listen-address' must be in the format of colon + integer (e.g. ':8080')."
+                "'port' must be in the format of colon + integer (e.g. ':8080')."
             ) from e
 
         telemetry_path = options.get("telemetry-path", "")
