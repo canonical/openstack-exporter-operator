@@ -79,4 +79,4 @@ warn_unused_configs = true
 warn_unreachable = true
 disallow_untyped_defs = true
 ignore_missing_imports = true
-exclude = ['.eggs', '.git', '.tox', '.venv', '.build', 'build', 'report', 'tests']
+exclude = [".eggs", ".git", ".tox", ".venv", ".build", "build", "report", "tests", "lib"]
