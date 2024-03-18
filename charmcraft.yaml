@@ -36,69 +36,6 @@ config:
       description: |
         Set log-level (case-insensitive) to the specified level (default to info).
         Available choices are [debug, info, warn, error]
-    log-format:
-      type: string
-      default: logfmt
-      description: |
-        Set log-format (case-insensitive) to the specified format (default to logfmt).
-        Available choices are [logfmt, json]
-    cloud:
-      type: string
-      default: default
-      description: |
-        Set the name of the openstack cloud (default to default).
-    prefix:
-      type: string
-      default: openstack
-      description: |
-        Set the prefix for metrics (default to openstack).
-    domain-id:
-      type: string
-      default: ""
-      description: |
-        Gather metrics only for the given domain ID (default to all domains).
-    endpoint-type:
-      type: string
-      default: public
-      description: |
-        Set the openstack endpoint type (case-insensitive) to use (default to public).
-        Available choices are [public, internal, admin]
-    disable-services:
-      type: string
-      default: ""
-      description: |
-        Do not gather metrics for these openstack services. The input value
-        should a space separated string such as `compute volume image` (default: don't disable any service).
-
-        For example, `juju config disable-services="compute volume image"`.
-
-        Available choices
-          - network
-          - compute
-          - image
-          - volume
-          - identity
-          - object-store
-          - load-balancer
-          - container-infr
-          - dns
-          - baremetal
-          - gnocchi
-          - database
-          - orchestration
-          - placement
-    disable-metrics:
-      type: string
-      default: ""
-      description: |
-        Do not gather these metrics. The input value should a space separated
-        string such as `cinder-snapshot nova-server_status` (default: don't disable any metric).
-
-        For example, `juju config disable-metrics="cinder-snapshot nova-server_status"`.
-
-#
-# TODO: expose more necessary options
-#
 
 
 #
