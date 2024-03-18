@@ -98,12 +98,14 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
     def _on_install(self, _: ops.InstallEvent) -> None:
         """Handle install charm event."""
         resource = self.get_resource()
-        self.snap_service.install(self.model.config.get("channel"), resource=resource)
+        channel = self.model.config["snap-channel"]
+        self.snap_service.install(channel, resource=resource)
 
     def _on_upgrade(self, _: ops.UpgradeCharmEvent) -> None:
         """Handle upgrade charm event."""
         resource = self.get_resource()
-        self.snap_service.install(self.model.config.get("channel"), resource=resource)
+        channel = self.model.config["snap-channel"]
+        self.snap_service.install(channel, resource=resource)
 
     def _on_config_changed(self, event: ops.ConfigChangedEvent) -> None:
         """Handle config changed event."""
