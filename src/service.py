@@ -5,7 +5,7 @@ from logging import getLogger
 from typing import Any, Callable, Optional
 
 from charms.operator_libs_linux.v2 import snap
-from config import ExporterSnapConfig
+from config import SnapConfig
 
 logger = getLogger(__name__)
 
@@ -124,7 +124,7 @@ class SnapService:
     def configure(self, config: dict[str, Any]) -> None:
         """Configure the snap service."""
         previously_active = self.active
-        snap_config = ExporterSnapConfig.from_charm_config(config)
+        snap_config = SnapConfig.from_charm_config(config)
         self.client.set(snap_config.dict(by_alias=True), typed=True)
 
         # Changing snap configuration will also restart the snap service, so we
