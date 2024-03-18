@@ -14,22 +14,16 @@ from functools import cached_property
 from typing import Any, Optional
 
 import ops
-from config import RESOURCE_NAME, SNAP_NAME, SNAP_SERVICE_NAME
+from config import RESOURCE_NAME, SNAP_NAME, SNAP_SERVICE_NAME, SnapConfig
+from ops.model import (
+    ActiveStatus,
+    BlockedStatus,
+    ModelError,
+)
 from pydantic import ValidationError
 from service import SnapService
 
 logger = logging.getLogger(__name__)
-
-
-def serialize_status(status: ops.model.StatusBase) -> tuple[str, str]:
-    """Serialize `model.StatusBase` for storage."""
-    return status.name, status.message
-
-
-def deserialize_status(serialized_status: tuple[str, str]) -> ops.model.StatusBase:
-    """Deserialize a tuple of (name, message) to `ops.model.StatusBase`."""
-    name, message = serialized_status
-    return ops.model.StatusBase.from_name(name, message)
 
 
 class OpenstackExporterOperatorCharm(ops.CharmBase):
@@ -47,9 +41,6 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         self._stored.set_default(
             config={},
-            status={
-                "config": serialize_status(ops.model.ActiveStatus()),
-            },
         )
 
         self.framework.observe(self.on.remove, self._on_remove)
@@ -77,7 +68,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             snap_path = self.model.resources.fetch(RESOURCE_NAME).absolute()
             if not os.path.getsize(snap_path) > 0:
                 return None
-        except ops.model.ModelError:
+        except ModelError:
             return None
         else:
             return snap_path
@@ -88,22 +79,23 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         if not self.resource and "snap-channel" in changed_config:
             self.snap_service.install(self.model.config["snap-channel"], self.resource)
 
-        try:
-            self._stored.status["config"] = serialize_status(
-                ops.model.MaintenanceStatus("configuring charm")
-            )
-            self.snap_service.configure(self.model.config)
-        except ValidationError as e:
-            self._stored.status["config"] = serialize_status(
-                ops.model.BlockedStatus("invalid charm config, check `juju debug-log`")
-            )
-            logger.error(e)
+        snap_config = self.get_validated_snap_config()
+        if not snap_config:
+            logger.error("invalid charm config, check `juju debug-log`")
             return
-        self._stored.status["config"] = serialize_status(ops.model.ActiveStatus())
+        self.snap_service.configure(snap_config)
 
         # TODO: properly start and stop the service depends on the relations to
         # keystone and grafana-agent.
         self.snap_service.start()
+
+    def get_validated_snap_config(self) -> Optional[dict[str, Any]]:
+        """Get validated snap config from charm config, or None if it's not valid."""
+        try:
+            snap_config = SnapConfig.from_charm_config(self.model.config)
+        except ValidationError:
+            return None
+        return snap_config.dict(by_alias=True)
 
     def get_changed_config(self) -> dict[str, Any]:
         """Return a dictionary of changed config.
@@ -141,13 +133,15 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
     def _on_collect_unit_status(self, event: ops.CollectStatusEvent) -> None:
         """Handle collect unit status event (called after every event)."""
-        for status in self._stored.status.values():
-            event.add_status(deserialize_status(status))
+        if not self.get_validated_snap_config():
+            event.add_status(BlockedStatus("invalid charm config, please check `juju debug-log`"))
 
         if self.snap_service.installed and not self.snap_service.active:
             event.add_status(
-                ops.model.BlockedStatus("snap service is not running, please check snap service")
+                BlockedStatus("snap service is not running, please check snap service")
             )
+
+        event.add_status(ActiveStatus())
 
 
 if __name__ == "__main__":  # pragma: nocover

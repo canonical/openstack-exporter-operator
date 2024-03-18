@@ -5,7 +5,6 @@ from logging import getLogger
 from typing import Any, Callable, Optional
 
 from charms.operator_libs_linux.v2 import snap
-from config import SnapConfig
 
 logger = getLogger(__name__)
 
@@ -121,11 +120,10 @@ class SnapService:
         self.client.stop(disable=disable)
 
     @guard
-    def configure(self, config: dict[str, Any]) -> None:
+    def configure(self, snap_config: dict[str, Any]) -> None:
         """Configure the snap service."""
         previously_active = self.active
-        snap_config = SnapConfig.from_charm_config(config)
-        self.client.set(snap_config.dict(by_alias=True), typed=True)
+        self.client.set(snap_config, typed=True)
 
         # Changing snap configuration will also restart the snap service, so we
         # need to explicitly preserve the state of the snap service.
