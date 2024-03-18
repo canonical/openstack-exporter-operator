@@ -18,9 +18,7 @@ SNAP_SERVICE_NAME = "service"
 
 # Snap config options global constants
 WEB_TELEMETRY_PATH = "/metrics"
-# Perhaps /etc/openstack/clouds.yaml? But it will need snap auto connection
-# for system-files. We should revisit this later.
-OS_CLIENT_CONFIG = Path(USER_HOME) / ".openstack" / "clouds.yaml"
+OS_CLIENT_CONFIG = Path(USER_HOME) / "clouds.yaml"
 
 
 class ExporterSnapConfig(BaseModel):
@@ -67,9 +65,6 @@ class ExporterSnapConfig(BaseModel):
     }
 
     """
-
-    # TODO: uncomment those options if we decide to expose them to the charm
-    # config.
 
     cloud: str = Field(default="", alias="cloud")
     # collect_metric_time: bool = Field(
