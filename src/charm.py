@@ -84,17 +84,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             return snap_path
 
     def configure(self, _: ops.HookEvent) -> None:
-        """Configure the charm.
-
-        Args:
-        ----
-            event (ops.HookEvent): Any ops.HookEvent.
-
-        Returns:
-        -------
-            None
-
-        """
+        """Configure the charm."""
         changed_config = self.get_changed_config()
         if not self.resource and "snap-channel" in changed_config:
             self.snap_service.install(self.model.config["snap-channel"], self.resource)

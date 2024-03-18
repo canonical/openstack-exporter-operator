@@ -76,11 +76,7 @@ class SnapService(Service):
     def client(self) -> snap.Snap:
         """Get the snap client for the exporter.
 
-        Return:
-        ------
-            snap client (snap.Snap): The snap client.
-
-        Raises:
+        Raises
         ------
             snap.SnapNotFoundError: Raises `SnapNotFoundError` if the snap
                 cannot be found on snap store or locally.
@@ -90,13 +86,7 @@ class SnapService(Service):
 
     @property
     def active(self) -> bool:
-        """Return True if the snap service is active.
-
-        Returns
-        -------
-            True if the snap is active.
-
-        """
+        """Return True if the snap service is active."""
         try:
             service = self.client.services.get(self.service_name)
             if not service.get("active", False):
@@ -111,13 +101,7 @@ class SnapService(Service):
 
     @property
     def installed(self) -> bool:
-        """Return True if the snap is installed.
-
-        Returns
-        -------
-            True if the snap is installed.
-
-        """
+        """Return True if the snap is installed."""
         try:
             if not self.client.present:
                 logger.warning("snap is not installed.")
@@ -163,47 +147,17 @@ class SnapService(Service):
 
     @guard
     def start(self, enable: bool = True) -> None:
-        """Start and enable the snap service.
-
-        Args:
-        ----
-            enable (bool): Enable the service as well.
-
-        Returns:
-        -------
-            None
-
-        """
+        """Start and enable the snap service."""
         self.client.start(enable=enable)
 
     @guard
     def stop(self, disable: bool = True) -> None:
-        """Stop and disable the snap service.
-
-        Args:
-        ----
-            disable (bool): Disable the service as well.
-
-        Returns:
-        -------
-            None
-
-        """
+        """Stop and disable the snap service."""
         self.client.stop(disable=disable)
 
     @guard
     def configure(self, config: dict[str, Any]) -> None:
-        """Configure the snap service.
-
-        Args:
-        ----
-            config (dict): The config options.
-
-        Returns:
-        -------
-            None
-
-        """
+        """Configure the snap service."""
         previously_active = self.active
         snap_config = ExporterSnapConfig.from_charm_config(config)
         self.client.set(snap_config.dict(by_alias=True), typed=True)
