@@ -28,18 +28,12 @@ logger = logging.getLogger(__name__)
 class OpenstackExporterOperatorCharm(ops.CharmBase):
     """Charm the service."""
 
-    _stored = ops.framework.StoredState()
-
     def __init__(self, *args: tuple[Any]) -> None:
         """Initialize the charm."""
         super().__init__(*args)
         self.snap_service = SnapService(
             SNAP_NAME,
             SNAP_SERVICE_NAME,
-        )
-
-        self._stored.set_default(
-            config={},
         )
 
         self.framework.observe(self.on.remove, self._on_remove)
@@ -74,10 +68,10 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
     def configure(self, _: ops.HookEvent) -> None:
         """Configure the charm."""
-        changed_config = self.get_changed_config()
         resource = self.get_resource()
-        if not resource and "snap-channel" in changed_config:
-            self.snap_service.install(self.model.config["snap-channel"], resource)
+        channel = self.model.config["snap-channel"]
+        if not resource and self.snap_service.get_snap_channel() != channel:
+            self.snap_service.install(channel, resource=resource)
 
         snap_config = self.get_validated_snap_config()
         if not snap_config:
@@ -97,27 +91,9 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             return None
         return snap_config.dict(by_alias=True)
 
-    def get_changed_config(self) -> dict[str, Any]:
-        """Return a dictionary of changed config.
-
-        Update the juju store about the "config" data, and returns the config
-        options that were changed during the config changed event.
-
-        Returns
-        -------
-            changed_config (dict): A dictionary of changed config.
-
-        """
-        changed_config = {}
-        for k, v in self.model.config.items():
-            if k not in self._stored.config or self._stored.config[k] != v:
-                self._stored.config[k] = v
-                changed_config[k] = v
-        return changed_config
-
     def _on_remove(self, _: ops.RemoveEvent) -> None:
         """Handle remove charm event."""
-        self.snap_service.uninstall()
+        self.snap_service.remove()
 
     def _on_install(self, _: ops.InstallEvent) -> None:
         """Handle install charm event."""
@@ -138,7 +114,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         if not self.get_validated_snap_config():
             event.add_status(BlockedStatus("invalid charm config, please check `juju debug-log`"))
 
-        if self.snap_service.installed and not self.snap_service.active:
+        if self.snap_service.check_installed() and not self.snap_service.check_active():
             event.add_status(
                 BlockedStatus("snap service is not running, please check snap service")
             )
