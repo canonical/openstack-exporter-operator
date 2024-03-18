@@ -55,7 +55,6 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         self.framework.observe(self.on.remove, self._on_remove)
         self.framework.observe(self.on.install, self._on_install)
         self.framework.observe(self.on.upgrade_charm, self._on_upgrade)
-        self.framework.observe(self.on.update_status, self._on_update_status)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.collect_unit_status, self._on_collect_unit_status)
 
@@ -135,11 +134,6 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
     def _on_upgrade(self, _: ops.UpgradeCharmEvent) -> None:
         """Handle upgrade charm event."""
         self.snap_service.install(self.model.config.get("channel"), resource=self.resource)
-
-    def _on_update_status(self, event: ops.UpdateStatusEvent) -> None:
-        """Handle update status event."""
-        if self.unit.status != ops.model.ActiveStatus():
-            self.configure(event)
 
     def _on_config_changed(self, event: ops.ConfigChangedEvent) -> None:
         """Handle config changed event."""

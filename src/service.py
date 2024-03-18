@@ -1,6 +1,5 @@
 """Utility module to help manage the snap service."""
 
-from abc import ABC, abstractmethod
 from functools import wraps
 from logging import getLogger
 from typing import Any, Callable, Optional
@@ -30,41 +29,7 @@ def guard(func: Callable) -> Callable:
     return wrapper
 
 
-class Service(ABC):
-    """An abstract class defining the spec of a service."""
-
-    @property
-    @abstractmethod
-    def active(self) -> bool:
-        """Return True is the service is active."""
-
-    @property
-    @abstractmethod
-    def installed(self) -> bool:
-        """Return True is the service is installed."""
-
-    @abstractmethod
-    def start(self, enable: bool = False) -> None:
-        """Start the service and optionally enable the service."""
-
-    @abstractmethod
-    def stop(self, disable: bool = False) -> None:
-        """Stop the service and optionally disable the service."""
-
-    @abstractmethod
-    def install(self, *args: Any) -> None:
-        """Install the service."""
-
-    @abstractmethod
-    def uninstall(self, *args: Any) -> None:
-        """Uninstall the service."""
-
-    @abstractmethod
-    def configure(self, *args: Any) -> None:
-        """Configure the service."""
-
-
-class SnapService(Service):
+class SnapService:
     """A class representing the a snap service (only support one service)."""
 
     def __init__(self, name: str, service_name: str) -> None:
