@@ -10,7 +10,6 @@ OpenStack deployment.
 
 import logging
 import os
-from functools import cached_property
 from typing import Any, Optional
 
 import ops
@@ -49,15 +48,12 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.collect_unit_status, self._on_collect_unit_status)
 
-    @cached_property
-    def resource(self) -> Optional[str]:
+    def get_resource(self) -> Optional[str]:
         """Return the path-to-resource or None if the resource is empty.
 
         Fetch the charm's resource and check if the resource is an empty file
         or not. If it's empty, return None. Otherwise, return the path to the
         resource.
-
-        Note: the property is cached for each invocation of a hook.
 
         Returns
         -------
@@ -66,18 +62,22 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         """
         try:
             snap_path = self.model.resources.fetch(RESOURCE_NAME).absolute()
-            if not os.path.getsize(snap_path) > 0:
-                return None
         except ModelError:
+            logger.warning("cannot fetch charm resource")
             return None
-        else:
-            return snap_path
+
+        if not os.path.getsize(snap_path) > 0:
+            logger.warning("resource is an empty file")
+            return None
+
+        return snap_path
 
     def configure(self, _: ops.HookEvent) -> None:
         """Configure the charm."""
         changed_config = self.get_changed_config()
-        if not self.resource and "snap-channel" in changed_config:
-            self.snap_service.install(self.model.config["snap-channel"], self.resource)
+        resource = self.get_resource()
+        if not resource and "snap-channel" in changed_config:
+            self.snap_service.install(self.model.config["snap-channel"], resource)
 
         snap_config = self.get_validated_snap_config()
         if not snap_config:
@@ -117,15 +117,17 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
     def _on_remove(self, _: ops.RemoveEvent) -> None:
         """Handle remove charm event."""
-        self.snap_service.uninstall(self.model.config.get("channel"), resource=self.resource)
+        self.snap_service.uninstall()
 
     def _on_install(self, _: ops.InstallEvent) -> None:
         """Handle install charm event."""
-        self.snap_service.install(self.model.config.get("channel"), resource=self.resource)
+        resource = self.get_resource()
+        self.snap_service.install(self.model.config.get("channel"), resource=resource)
 
     def _on_upgrade(self, _: ops.UpgradeCharmEvent) -> None:
         """Handle upgrade charm event."""
-        self.snap_service.install(self.model.config.get("channel"), resource=self.resource)
+        resource = self.get_resource()
+        self.snap_service.install(self.model.config.get("channel"), resource=resource)
 
     def _on_config_changed(self, event: ops.ConfigChangedEvent) -> None:
         """Handle config changed event."""
