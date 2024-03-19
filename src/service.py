@@ -13,13 +13,13 @@ def guard_client(func: Callable) -> Callable:
     """Ensure the we can get the snap client before running a snap operation."""
 
     @wraps(func)
-    def wrapper(self: "SnapService", *args: Any, **kwargs: dict[Any, Any]) -> None:
+    def wrapper(self: "SnapService", *args: Any, **kwargs: dict[Any, Any]) -> Optional[Any]:
         fn = func.__name__  # This should be a verb
         if not self.snap_client:
             logger.error(
                 "cannot %s %s because it's unable to get snap client", fn, self.service_name
             )
-            return
+            return None
         logger.info("%s %s", fn, self.service_name)
         return func(self, *args, **kwargs)
 
@@ -30,11 +30,11 @@ def guard_installed(func: Callable) -> Callable:
     """Ensure the snap is installed before running a snap operation."""
 
     @wraps(func)
-    def wrapper(self: "SnapService", *args: Any, **kwargs: dict[Any, Any]) -> None:
+    def wrapper(self: "SnapService", *args: Any, **kwargs: dict[Any, Any]) -> Optional[Any]:
         fn = func.__name__  # This should be a verb
         if not self.check_installed():
             logger.error("cannot %s %s because it's not installed", fn, self.service_name)
-            return
+            return None
         logger.info("%s %s", fn, self.service_name)
         return func(self, *args, **kwargs)
 
@@ -96,15 +96,15 @@ class SnapService:
 
     @guard_client
     @guard_installed
-    def start(self, enable: bool = True) -> None:
+    def start(self) -> None:
         """Start and enable the snap service."""
-        self.snap_client.start(enable=enable)  # type: ignore
+        self.snap_client.start(enable=True)  # type: ignore
 
     @guard_client
     @guard_installed
-    def stop(self, disable: bool = True) -> None:
+    def stop(self) -> None:
         """Stop and disable the snap service."""
-        self.snap_client.stop(disable=disable)  # type: ignore
+        self.snap_client.stop(disable=True)  # type: ignore
 
     @guard_client
     @guard_installed

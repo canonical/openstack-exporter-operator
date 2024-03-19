@@ -10,16 +10,10 @@ OpenStack deployment.
 
 import logging
 import os
+from pathlib import Path
 from typing import Any, Optional
 
 import ops
-from config import (
-    CLOUD_NAME,
-    OS_CLIENT_CONFIG,
-    RESOURCE_NAME,
-    SNAP_NAME,
-    SNAP_SERVICE_NAME,
-)
 from ops.model import (
     ActiveStatus,
     BlockedStatus,
@@ -28,6 +22,19 @@ from ops.model import (
 from service import SnapService
 
 logger = logging.getLogger(__name__)
+
+# Miscellaneous constants
+USER_HOME = Path().home()
+
+# Snap global constants
+RESOURCE_NAME = "openstack-exporter"
+SNAP_NAME = "golang-openstack-exporter"
+SNAP_SERVICE_NAME = "service"
+
+# Snap config options global constants
+WEB_TELEMETRY_PATH = "/metrics"
+CLOUD_NAME = "openstack"
+OS_CLIENT_CONFIG = USER_HOME / "clouds.yaml"
 
 
 class OpenstackExporterOperatorCharm(ops.CharmBase):
@@ -53,11 +60,6 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         Fetch the charm's resource and check if the resource is an empty file
         or not. If it's empty, return None. Otherwise, return the path to the
         resource.
-
-        Returns
-        -------
-            snap_path (str or None)
-
         """
         try:
             snap_path = self.model.resources.fetch(RESOURCE_NAME).absolute()
@@ -100,7 +102,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             "cloud": CLOUD_NAME,
             "log": {"level": log_level},
             "web": {"listen-address": web_listen_address},
-            "os_client_config": OS_CLIENT_CONFIG,
+            "os-client-config": str(OS_CLIENT_CONFIG),
         }
 
     def _on_remove(self, _: ops.RemoveEvent) -> None:
