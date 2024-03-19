@@ -90,7 +90,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
     def get_validated_snap_config(self) -> Optional[dict[str, Any]]:
         """Get validated snap config from charm config, or None if it's not valid."""
-        log_level = self.model.config["log-level"]
+        log_level = self.model.config["log-level"].lower()
         web_listen_address = f":{self.model.config['port']}"
         log_level_choices = {"debug", "info", "warn", "error"}
         if log_level not in log_level_choices:
