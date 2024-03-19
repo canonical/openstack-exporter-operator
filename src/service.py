@@ -37,6 +37,11 @@ class SnapService:
 
     def configure(self, snap_config: dict[str, Any]) -> None:
         """Configure the snap service."""
+        # Bait out or it will crash on .set() method
+        if not snap_config:
+            logger.warning("empty snap config: %s, skipping...", snap_config)
+            return
+
         # Store is previous state, for later use.
         previously_active = self.is_active()
 

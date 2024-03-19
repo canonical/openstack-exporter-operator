@@ -96,8 +96,8 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         # keystone and grafana-agent.
         snap_service.start()
 
-    def get_validated_snap_config(self) -> Optional[dict[str, Any]]:
-        """Get validated snap config from charm config, or None if it's not valid."""
+    def get_validated_snap_config(self) -> dict[str, Any]:
+        """Get validated snap config from charm config, or empty dict if it's not valid."""
         log_level = self.model.config["log-level"].lower()
         web_listen_address = f":{self.model.config['port']}"
         log_level_choices = {"debug", "info", "warn", "error"}
