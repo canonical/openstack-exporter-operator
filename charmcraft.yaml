@@ -44,6 +44,4 @@ resources:
     type: file
     filename: openstack-exporter.snap
     description: |
-      Snap that implements actual data collection and export. If not
-      provided, charm will try to download golang-openstack-exporter from snap
-      store.
+      Snap that implements actual data collection and export.
