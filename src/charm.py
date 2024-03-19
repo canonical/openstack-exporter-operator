@@ -13,13 +13,18 @@ import os
 from typing import Any, Optional
 
 import ops
-from config import RESOURCE_NAME, SNAP_NAME, SNAP_SERVICE_NAME, SnapConfig
+from config import (
+    CLOUD_NAME,
+    OS_CLIENT_CONFIG,
+    RESOURCE_NAME,
+    SNAP_NAME,
+    SNAP_SERVICE_NAME,
+)
 from ops.model import (
     ActiveStatus,
     BlockedStatus,
     ModelError,
 )
-from pydantic import ValidationError
 from service import SnapService
 
 logger = logging.getLogger(__name__)
@@ -85,11 +90,18 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
     def get_validated_snap_config(self) -> Optional[dict[str, Any]]:
         """Get validated snap config from charm config, or None if it's not valid."""
-        try:
-            snap_config = SnapConfig.from_charm_config(self.model.config)
-        except ValidationError:
-            return None
-        return snap_config.dict(by_alias=True)
+        log_level = self.model.config["log-level"]
+        web_listen_address = f":{self.model.config["port"]}"
+        log_level_choices = {"debug", "info", "warn", "error"}
+        if log_level not in log_level_choices:
+            logger.error("invalid config `log-level`, must be in {log_level_choices}")
+            return {}
+        return {
+            cloud: CLOUD_NAME,
+            log: {"level": log_level},
+            web: {"listen-address": web_listen_address},
+            os_client_config: OS_CLIENT_CONFIG,
+        }
 
     def _on_remove(self, _: ops.RemoveEvent) -> None:
         """Handle remove charm event."""
