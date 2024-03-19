@@ -86,20 +86,17 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             event.defer()
             return
 
-        snap_service.configure(self.get_validated_snap_config())
+        snap_service.configure(
+            {
+                "cloud": CLOUD_NAME,
+                "os-client-config": str(OS_CLIENT_CONFIG),
+                "web": {"listen-address": f":{self.model.config['port']}"},
+            }
+        )
 
         # TODO: properly start and stop the service depends on the relations to
         # keystone and grafana-agent.
         snap_service.start()
-
-    def get_validated_snap_config(self) -> dict[str, Any]:
-        """Get validated snap config from charm config."""
-        web_listen_address = f":{self.model.config['port']}"
-        return {
-            "cloud": CLOUD_NAME,
-            "os-client-config": str(OS_CLIENT_CONFIG),
-            "web": {"listen-address": web_listen_address},
-        }
 
     def _on_install(self, _: ops.InstallEvent) -> None:
         """Handle install charm event."""
