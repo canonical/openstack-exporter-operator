@@ -1,121 +1,77 @@
 """Utility module to help manage the snap service with guarding functions."""
 
-from functools import wraps
 from logging import getLogger
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 from charms.operator_libs_linux.v2 import snap
 
 logger = getLogger(__name__)
 
-
-def guard_client(func: Callable) -> Callable:
-    """Ensure the we can get the snap client before running a snap operation."""
-
-    @wraps(func)
-    def wrapper(self: "SnapService", *args: Any, **kwargs: dict[Any, Any]) -> Optional[Any]:
-        fn = func.__name__  # This should be a verb
-        if not self.snap_client:
-            logger.error(
-                "cannot %s %s because it's unable to get snap client", fn, self.service_name
-            )
-            return None
-        logger.info("%s %s", fn, self.service_name)
-        return func(self, *args, **kwargs)
-
-    return wrapper
+SNAP_NAME = "golang-openstack-exporter"
+SNAP_SERVICE_NAME = "service"
 
 
-def guard_installed(func: Callable) -> Callable:
-    """Ensure the snap is installed before running a snap operation."""
-
-    @wraps(func)
-    def wrapper(self: "SnapService", *args: Any, **kwargs: dict[Any, Any]) -> Optional[Any]:
-        fn = func.__name__  # This should be a verb
-        if not self.check_installed():
-            logger.error("cannot %s %s because it's not installed", fn, self.service_name)
-            return None
-        logger.info("%s %s", fn, self.service_name)
-        return func(self, *args, **kwargs)
-
-    return wrapper
+class SnapNotInstalledError(Exception):
+    """Raise error if snap is not installed."""
 
 
 class SnapService:
     """A class representing the a snap service (only support one service)."""
 
-    def __init__(self, name: str, service_name: str) -> None:
+    def __init__(self, client: snap.Snap, snap_service: str) -> None:
         """Initialize the class."""
-        self.name = name
-        self.service_name = service_name
-        self.snap_client = self.get_client()
+        self.snap_client = client
+        self.snap_service = snap_service
 
-    def get_client(self) -> Optional[snap.Snap]:
-        """Return the snap client, or None if the snap cannot be found."""
-        try:
-            client = snap.SnapCache()[self.name]
-        except snap.SnapNotFoundError as e:
-            logger.warning("unable to get snap client: %s", str(e))
-            return None
-        return client
-
-    def install(self, resource: str) -> None:
-        """Install or refresh the snap."""
-        try:
-            logger.debug("installing snap.")
-            logger.debug("fetching from resource.")
-            snap_client = snap.install_local(resource, dangerous=True)
-        except snap.SnapError as e:
-            logger.error("failed to install snap: %s", str(e))
-            raise e  # need to crash on_install event if it's not okay
-        else:
-            self.snap_client = snap_client
-            logger.info("installed %s snap.", self.name)
-
-    @guard_client
-    @guard_installed
-    def remove(self) -> None:
-        """Remove the snap."""
-        try:
-            snap.remove([self.name])
-        except snap.SnapError as e:
-            logger.info("failed to remove snap.")
-            logger.error(str(e))
-        else:
-            logger.info("removed %s snap.", self.name)
-
-    @guard_client
-    def check_active(self) -> bool:
+    def is_active(self) -> bool:
         """Return True if the snap service is active."""
-        return self.snap_client.services.get(self.service_name, {}).get("active", False)  # type: ignore
+        return self.snap_client.services.get(self.snap_service, {}).get("active", False)
 
-    @guard_client
-    def check_installed(self) -> bool:
-        """Return True if the snap is installed."""
-        return self.snap_client.present  # type: ignore
-
-    @guard_client
-    @guard_installed
     def start(self) -> None:
         """Start and enable the snap service."""
-        self.snap_client.start(enable=True)  # type: ignore
+        self.snap_client.start([self.snap_service], enable=True)
 
-    @guard_client
-    @guard_installed
     def stop(self) -> None:
         """Stop and disable the snap service."""
-        self.snap_client.stop(disable=True)  # type: ignore
+        self.snap_client.stop([self.snap_service], disable=True)
 
-    @guard_client
-    @guard_installed
     def configure(self, snap_config: dict[str, Any]) -> None:
         """Configure the snap service."""
         # Store is previous state, for later use.
-        previously_active = self.check_active()
+        previously_active = self.is_active()
 
-        self.snap_client.set(snap_config, typed=True)  # type: ignore
+        self.snap_client.set(snap_config, typed=True)
 
         # Changing snap configuration will also restart the snap service, so we
         # need to explicitly preserve the state of the snap service.
         if not previously_active:
             self.stop()
+
+
+def snap_install(resource: str, snap_service: str) -> Optional[SnapService]:
+    """Install or refresh the snap, and return the snap service."""
+    try:
+        logger.debug("installing snap.")
+        logger.debug("fetching from resource.")
+        snap_client = snap.install_local(resource, dangerous=True)
+    except snap.SnapError as e:
+        logger.error("failed to install snap: %s", str(e))
+        raise e  # need to crash on_install event if it's not okay
+    else:
+        logger.info("installed %s snap.", snap_client.name)
+        return SnapService(snap_client, snap_service)
+
+
+def get_installed_snap_service(snap_name: str, snap_service: str) -> Optional[SnapService]:
+    """Return the snap service of the snap if it's installed."""
+    try:
+        snap_client = snap.SnapCache()[snap_name]
+        if not snap_client.present:
+            raise SnapNotInstalledError()
+    except snap.SnapNotFoundError as e:
+        logger.warning("unable to get snap client: %s", str(e))
+        return None
+    except SnapNotInstalledError:
+        logger.warning("snap %s not installed", snap_name)
+        return None
+    return SnapService(snap_client, snap_service)
