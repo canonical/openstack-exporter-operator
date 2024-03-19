@@ -7,13 +7,6 @@ from charms.operator_libs_linux.v2 import snap
 
 logger = getLogger(__name__)
 
-SNAP_NAME = "golang-openstack-exporter"
-SNAP_SERVICE_NAME = "service"
-
-
-class SnapNotInstalledError(Exception):
-    """Raise error if snap is not installed."""
-
 
 class SnapService:
     """A class representing the a snap service (only support one service)."""
@@ -37,7 +30,7 @@ class SnapService:
 
     def configure(self, snap_config: dict[str, Any]) -> None:
         """Configure the snap service."""
-        # Bait out or it will crash on .set() method
+        # Bait out or it will crash on self.snap_client.set() method
         if not snap_config:
             logger.warning("empty snap config: %s, skipping...", snap_config)
             return
@@ -71,12 +64,12 @@ def get_installed_snap_service(snap_name: str, snap_service: str) -> Optional[Sn
     """Return the snap service of the snap if it's installed."""
     try:
         snap_client = snap.SnapCache()[snap_name]
-        if not snap_client.present:
-            raise SnapNotInstalledError()
     except snap.SnapNotFoundError as e:
         logger.warning("unable to get snap client: %s", str(e))
         return None
-    except SnapNotInstalledError:
+
+    if not snap_client.present:
         logger.warning("snap %s not installed", snap_name)
         return None
+
     return SnapService(snap_client, snap_service)

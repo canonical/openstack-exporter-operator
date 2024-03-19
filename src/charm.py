@@ -86,11 +86,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             event.defer()
             return
 
-        snap_config = self.get_validated_snap_config()
-        if not snap_config:
-            logger.error("invalid charm config, check `juju debug-log`")
-            return
-        snap_service.configure(snap_config)
+        snap_service.configure(self.get_validated_snap_config())
 
         # TODO: properly start and stop the service depends on the relations to
         # keystone and grafana-agent.
