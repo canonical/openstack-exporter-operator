@@ -91,16 +91,16 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
     def get_validated_snap_config(self) -> Optional[dict[str, Any]]:
         """Get validated snap config from charm config, or None if it's not valid."""
         log_level = self.model.config["log-level"]
-        web_listen_address = f":{self.model.config["port"]}"
+        web_listen_address = f":{self.model.config['port']}"
         log_level_choices = {"debug", "info", "warn", "error"}
         if log_level not in log_level_choices:
             logger.error("invalid config `log-level`, must be in {log_level_choices}")
             return {}
         return {
-            cloud: CLOUD_NAME,
-            log: {"level": log_level},
-            web: {"listen-address": web_listen_address},
-            os_client_config: OS_CLIENT_CONFIG,
+            "cloud": CLOUD_NAME,
+            "log": {"level": log_level},
+            "web": {"listen-address": web_listen_address},
+            "os_client_config": OS_CLIENT_CONFIG,
         }
 
     def _on_remove(self, _: ops.RemoveEvent) -> None:
