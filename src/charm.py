@@ -79,7 +79,6 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             raise ValueError("resource is invalid or not found.")
         self.snap_service.install(resource)
 
-
     def configure(self, event: ops.HookEvent) -> None:
         """Configure the charm."""
         if not self.snap_service.check_installed():
