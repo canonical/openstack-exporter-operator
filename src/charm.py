@@ -48,7 +48,6 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             SNAP_SERVICE_NAME,
         )
 
-        self.framework.observe(self.on.remove, self._on_remove)
         self.framework.observe(self.on.install, self._on_install)
         self.framework.observe(self.on.upgrade_charm, self._on_upgrade)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
@@ -72,6 +71,14 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             return None
 
         return snap_path
+
+    def install(self) -> None:
+        """Install or upgrade charm."""
+        resource = self.get_resource()
+        if not resource:
+            raise ValueError("resource is invalid or not found.")
+        self.snap_service.install(resource)
+
 
     def configure(self, event: ops.HookEvent) -> None:
         """Configure the charm."""
@@ -105,23 +112,13 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             "os-client-config": str(OS_CLIENT_CONFIG),
         }
 
-    def _on_remove(self, _: ops.RemoveEvent) -> None:
-        """Handle remove charm event."""
-        self.snap_service.remove()
-
     def _on_install(self, _: ops.InstallEvent) -> None:
         """Handle install charm event."""
-        resource = self.get_resource()
-        if not resource:
-            raise ValueError("resource is invalid or not found.")
-        self.snap_service.install(resource)
+        self.install()
 
     def _on_upgrade(self, _: ops.UpgradeCharmEvent) -> None:
         """Handle upgrade charm event."""
-        resource = self.get_resource()
-        if not resource:
-            raise ValueError("resource is invalid or not found.")
-        self.snap_service.install(resource)
+        self.install()
 
     def _on_config_changed(self, event: ops.ConfigChangedEvent) -> None:
         """Handle config changed event."""
