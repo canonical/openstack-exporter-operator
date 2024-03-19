@@ -71,12 +71,12 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         return snap_path
 
-    def configure(self, _: ops.HookEvent) -> None:
+    def configure(self, event: ops.HookEvent) -> None:
         """Configure the charm."""
-        resource = self.get_resource()
-        channel = self.model.config["snap-channel"]
-        if not resource and self.snap_service.get_snap_channel() != channel:
-            self.snap_service.install(channel, resource=resource)
+        if not self.snap_service.check_installed():
+            logger.warning("snap is not installed, defer configuring the charm.")
+            event.defer()
+            return
 
         snap_config = self.get_validated_snap_config()
         if not snap_config:
@@ -110,14 +110,16 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
     def _on_install(self, _: ops.InstallEvent) -> None:
         """Handle install charm event."""
         resource = self.get_resource()
-        channel = self.model.config["snap-channel"]
-        self.snap_service.install(channel, resource=resource)
+        if not resource:
+            raise ValueError("resource is invalid or not found.")
+        self.snap_service.install(resource)
 
     def _on_upgrade(self, _: ops.UpgradeCharmEvent) -> None:
         """Handle upgrade charm event."""
         resource = self.get_resource()
-        channel = self.model.config["snap-channel"]
-        self.snap_service.install(channel, resource=resource)
+        if not resource:
+            raise ValueError("resource is invalid or not found.")
+        self.snap_service.install(resource)
 
     def _on_config_changed(self, event: ops.ConfigChangedEvent) -> None:
         """Handle config changed event."""

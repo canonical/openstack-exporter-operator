@@ -18,14 +18,6 @@ bases:
 
 config:
   options:
-    snap-channel:
-      type: string
-      default: "stable"
-      description: |
-        Install golang-openstack-exporter snap from "snap-channel".
-        Supported values are "stable", "candidate", "beta" and "edge".
-        Note that it will be superseded by local the resource "openstack-exporter".
-        (The snap is unavailable yet)
     port:
       type: int
       default: 9180
@@ -58,6 +50,6 @@ resources:
     type: file
     filename: openstack-exporter.snap
     description: |
-      (Optional) Snap that implements actual data collection and export. If not
+      Snap that implements actual data collection and export. If not
       provided, charm will try to download golang-openstack-exporter from snap
       store.

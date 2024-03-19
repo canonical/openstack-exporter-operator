@@ -59,30 +59,15 @@ class SnapService:
             return None
         return client
 
-    def install(self, channel: str, resource: Optional[str]) -> None:
-        """Install or refresh the snap.
-
-        Install the snap from snap store or install the snap from local snap.
-        If resource is provided, then it will install from local snap.
-
-        Args:
-        ----
-            channel (str): The channel of the snap.
-            resource (str or None): The path-to-resource for the local snap (optional).
-
-        """
+    def install(self, resource: str) -> None:
+        """Install or refresh the snap."""
         try:
-            logger.info("installing snap.")
-            if resource:
-                logger.info("fetching from resource.")
-                snap_client = snap.install_local(resource, dangerous=True)
-            else:
-                logger.info("fetching from snap store.")
-                snap_client = snap.add([self.name], channel=channel)
+            logger.debug("installing snap.")
+            logger.debug("fetching from resource.")
+            snap_client = snap.install_local(resource, dangerous=True)
         except snap.SnapError as e:
-            logger.info("failed to install snap.")
-            logger.error(str(e))
-            raise e  # need to crash on install if it's not okay
+            logger.error("failed to install snap: %s", str(e))
+            raise e  # need to crash on_install event if it's not okay
         else:
             self.snap_client = snap_client
             logger.info("installed %s snap.", self.name)
@@ -108,11 +93,6 @@ class SnapService:
     def check_installed(self) -> bool:
         """Return True if the snap is installed."""
         return self.snap_client.present  # type: ignore
-
-    @guard_client
-    def get_snap_channel(self) -> bool:
-        """Return the snap channel."""
-        return self.snap_client.channel  # type: ignore
 
     @guard_client
     @guard_installed
