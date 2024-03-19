@@ -30,7 +30,7 @@ class SnapService:
 
     def configure(self, snap_config: dict[str, Any]) -> None:
         """Configure the snap service."""
-        # Bait out or it will crash on self.snap_client.set() method
+        # Bail out or it will crash on self.snap_client.set() method
         if not snap_config:
             logger.warning("empty snap config: %s, skipping...", snap_config)
             return
