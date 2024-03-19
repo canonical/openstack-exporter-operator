@@ -23,12 +23,6 @@ config:
       default: 9180
       description: |
         Start the exporter at "port".
-    log-level:
-      type: string
-      default: info
-      description: |
-        Set log-level (case-insensitive) to the specified level (default to info).
-        Available choices are [debug, info, warn, error]
 
 
 #

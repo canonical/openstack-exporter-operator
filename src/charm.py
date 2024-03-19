@@ -93,18 +93,12 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         snap_service.start()
 
     def get_validated_snap_config(self) -> dict[str, Any]:
-        """Get validated snap config from charm config, or empty dict if it's not valid."""
-        log_level = self.model.config["log-level"].lower()
+        """Get validated snap config from charm config."""
         web_listen_address = f":{self.model.config['port']}"
-        log_level_choices = {"debug", "info", "warn", "error"}
-        if log_level not in log_level_choices:
-            logger.error("invalid config `log-level`, must be in {log_level_choices}")
-            return {}
         return {
             "cloud": CLOUD_NAME,
-            "log": {"level": log_level},
-            "web": {"listen-address": web_listen_address},
             "os-client-config": str(OS_CLIENT_CONFIG),
+            "web": {"listen-address": web_listen_address},
         }
 
     def _on_install(self, _: ops.InstallEvent) -> None:
@@ -129,9 +123,6 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             event.add_status(
                 BlockedStatus("snap service is not running, please check snap service")
             )
-
-        if not self.get_validated_snap_config():
-            event.add_status(BlockedStatus("invalid charm config, please check `juju debug-log`"))
 
         event.add_status(ActiveStatus())
 
