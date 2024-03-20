@@ -176,7 +176,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         logger.info("Keystone credentials are available, starting services.")
         self._write_cloud_config(data)
-        snap_service.start()
+        snap_service.restart_and_enable()
 
     def _on_install(self, _: ops.InstallEvent) -> None:
         """Handle install charm event."""

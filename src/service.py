@@ -20,8 +20,19 @@ class SnapService:
         """Return True if the snap service is active."""
         return self.snap_client.services.get(self.snap_service, {}).get("active", False)
 
-    def start(self) -> None:
-        """Start and enable the snap service."""
+    def restart_and_enable(self) -> None:
+        """Restart and enable the snap service.
+
+        Ensure:
+        - service is running
+        - service is enabled
+        - service is restarted if already running to apply updated config
+        """
+        # This is safe to always run,
+        # because restarting when service is disabled has no effect,
+        # and restarting when enabled but stopped has the same effect as start.
+        self.snap_client.restart([self.snap_service])
+        # This is idempotent, so ok to always run to ensure it's started and enabled
         self.snap_client.start([self.snap_service], enable=True)
 
     def stop(self) -> None:
