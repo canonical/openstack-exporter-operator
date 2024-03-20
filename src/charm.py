@@ -61,6 +61,12 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.collect_unit_status, self._on_collect_unit_status)
         self.framework.observe(self.on.credentials_relation_changed, self._on_credentials_changed)
+        self.framework.observe(
+            self.on.cos_agent_relation_changed, self._on_cos_agent_relation_changed
+        )
+        self.framework.observe(
+            self.on.cos_agent_relation_broken, self._on_cos_agent_relation_broken
+        )
 
     def _is_keystone_data_ready(self, data: dict[str, str]) -> bool:
         """Check if all the data is available from keystone.
@@ -205,6 +211,14 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
     def _on_credentials_changed(self, event: ops.RelationChangedEvent) -> None:
         """Handle updates to credentials from keystone."""
+        self.configure(event)
+
+    def _on_cos_agent_relation_changed(self, event: ops.RelationChangedEvent) -> None:
+        """Handle updates to grafana agent relation."""
+        self.configure(event)
+
+    def _on_cos_agent_relation_broken(self, event: ops.RelationBrokenEvent) -> None:
+        """Handle grafana agent leaving."""
         self.configure(event)
 
     def _on_collect_unit_status(self, event: ops.CollectStatusEvent) -> None:
