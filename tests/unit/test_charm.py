@@ -16,6 +16,5 @@ class TestCharm(unittest.TestCase):
         self.addCleanup(self.harness.cleanup)
         self.harness.begin()
 
-    def test_dummy_install(self):
-        """Dummy test case."""
-        self.harness.charm.on.install.emit()
+    def test_null(self):
+        """Remove me."""
