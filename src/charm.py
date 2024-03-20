@@ -36,6 +36,8 @@ SNAP_SERVICE_NAME = "service"
 # This is to match between openstack-exporter and the entry in clouds.yaml
 CLOUD_NAME = "openstack"
 # store the clouds.yaml where it's easily accessible by the openstack-exporter snap
+# This is the SNAP_COMMON directory for the exporter snap, which is accessible,
+# unversioned, and retained across updates of the snap.
 OS_CLIENT_CONFIG = "/var/snap/golang-openstack-exporter/common/clouds.yaml"
 
 
