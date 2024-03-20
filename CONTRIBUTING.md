@@ -23,6 +23,14 @@ tox run -e integration   # integration tests (Work in progress)
 tox                      # runs 'format', 'lint', 'static', and 'unit' environments
 ```
 
+## Fetching library
+
+If you need to include more library, you can run:
+
+```shell
+charmcraft fetch-lib <operator-libs>
+```
+
 ## Build the charm
 
 Build the charm in this git repository using:
@@ -31,4 +39,3 @@ Build the charm in this git repository using:
 charmcraft pack
 ```
 
-<!-- You may want to include any contribution/style guidelines in this document>
