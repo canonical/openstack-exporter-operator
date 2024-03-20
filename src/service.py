@@ -9,16 +9,15 @@ logger = getLogger(__name__)
 
 
 class SnapService:
-    """A class representing the a snap service (only support one service)."""
+    """A class representing the a snap service."""
 
-    def __init__(self, client: snap.Snap, snap_service: str) -> None:
+    def __init__(self, client: snap.Snap) -> None:
         """Initialize the class."""
         self.snap_client = client
-        self.snap_service = snap_service
 
-    def is_active(self) -> bool:
+    def is_active(self, service: str) -> bool:
         """Return True if the snap service is active."""
-        return self.snap_client.services.get(self.snap_service, {}).get("active", False)
+        return self.snap_client.services.get(service, {}).get("active", False)
 
     def restart_and_enable(self) -> None:
         """Restart and enable the snap service.
@@ -31,13 +30,13 @@ class SnapService:
         # This is safe to always run,
         # because restarting when service is disabled has no effect,
         # and restarting when enabled but stopped has the same effect as start.
-        self.snap_client.restart([self.snap_service])
+        self.snap_client.restart()
         # This is idempotent, so ok to always run to ensure it's started and enabled
-        self.snap_client.start([self.snap_service], enable=True)
+        self.snap_client.start(enable=True)
 
     def stop(self) -> None:
         """Stop and disable the snap service."""
-        self.snap_client.stop([self.snap_service], disable=True)
+        self.snap_client.stop(disable=True)
 
     def configure(self, snap_config: dict[str, Any]) -> None:
         """Configure the snap service."""
@@ -49,7 +48,7 @@ class SnapService:
         self.snap_client.set(snap_config, typed=True)
 
 
-def snap_install(resource: str, snap_service: str) -> Optional[SnapService]:
+def snap_install(resource: str) -> Optional[SnapService]:
     """Install or refresh the snap, and return the snap service."""
     try:
         logger.debug("installing snap.")
@@ -60,10 +59,10 @@ def snap_install(resource: str, snap_service: str) -> Optional[SnapService]:
         raise e  # need to crash on_install event if it's not okay
     else:
         logger.info("installed %s snap.", snap_client.name)
-        return SnapService(snap_client, snap_service)
+        return SnapService(snap_client)
 
 
-def get_installed_snap_service(snap_name: str, snap_service: str) -> Optional[SnapService]:
+def get_installed_snap_service(snap_name: str) -> Optional[SnapService]:
     """Return the snap service of the snap if it's installed."""
     try:
         snap_client = snap.SnapCache()[snap_name]
@@ -75,4 +74,4 @@ def get_installed_snap_service(snap_name: str, snap_service: str) -> Optional[Sn
         logger.warning("snap %s not installed", snap_name)
         return None
 
-    return SnapService(snap_client, snap_service)
+    return SnapService(snap_client)

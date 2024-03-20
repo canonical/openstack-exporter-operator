@@ -163,11 +163,11 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         resource = self.get_resource()
         if not resource:
             raise ValueError("resource is invalid or not found.")
-        snap_install(resource, SNAP_SERVICE_NAME)
+        snap_install(resource)
 
     def configure(self, event: ops.HookEvent) -> None:
         """Configure the charm."""
-        snap_service = get_installed_snap_service(SNAP_NAME, SNAP_SERVICE_NAME)
+        snap_service = get_installed_snap_service(SNAP_NAME)
 
         if not snap_service:
             logger.warning("snap is not installed, defer configuring the charm.")
@@ -232,13 +232,13 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         if not self.model.relations.get("cos-agent"):
             event.add_status(BlockedStatus("Grafana Agent is not related"))
 
-        snap_service = get_installed_snap_service(SNAP_NAME, SNAP_SERVICE_NAME)
+        snap_service = get_installed_snap_service(SNAP_NAME)
 
         if not snap_service:
             event.add_status(
                 BlockedStatus("snap service is not installed, please check snap service")
             )
-        elif not snap_service.is_active():
+        elif not snap_service.is_active(SNAP_SERVICE_NAME):
             event.add_status(
                 BlockedStatus("snap service is not running, please check snap service")
             )
