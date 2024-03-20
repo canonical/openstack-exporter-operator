@@ -168,6 +168,11 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             event.defer()
             return
 
+        # if cos is not related then we should block and not run anything
+        if not self.model.relations.get("cos-agent"):
+            snap_service.stop()
+            return
+
         snap_service.configure(
             {
                 "cloud": CLOUD_NAME,
@@ -209,6 +214,9 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         if not self._get_keystone_data():
             event.add_status(WaitingStatus("Waiting for credentials from keystone"))
+
+        if not self.model.relations.get("cos-agent"):
+            event.add_status(BlockedStatus("Grafana Agent is not related"))
 
         snap_service = get_installed_snap_service(SNAP_NAME, SNAP_SERVICE_NAME)
 
