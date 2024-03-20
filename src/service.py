@@ -35,15 +35,7 @@ class SnapService:
             logger.warning("empty snap config: %s, skipping...", snap_config)
             return
 
-        # Store is previous state, for later use.
-        previously_active = self.is_active()
-
         self.snap_client.set(snap_config, typed=True)
-
-        # Changing snap configuration will also restart the snap service, so we
-        # need to explicitly preserve the state of the snap service.
-        if not previously_active:
-            self.stop()
 
 
 def snap_install(resource: str, snap_service: str) -> Optional[SnapService]:
