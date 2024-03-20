@@ -115,7 +115,9 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         snap_service = get_installed_snap_service(SNAP_NAME, SNAP_SERVICE_NAME)
 
         if not snap_service:
-            event.add_status(BlockedStatus("snap service is not installed, please check snap service"))
+            event.add_status(
+                BlockedStatus("snap service is not installed, please check snap service")
+            )
         elif not snap_service.is_active():
             event.add_status(
                 BlockedStatus("snap service is not running, please check snap service")
