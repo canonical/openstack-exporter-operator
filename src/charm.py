@@ -14,6 +14,7 @@ from typing import Any, Optional
 
 import ops
 import yaml
+from charms.grafana_agent.v0.cos_agent import COSAgentProvider
 from ops.model import (
     ActiveStatus,
     BlockedStatus,
@@ -47,6 +48,13 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
     def __init__(self, *args: tuple[Any]) -> None:
         """Initialize the charm."""
         super().__init__(*args)
+
+        self._grafana_agent = COSAgentProvider(
+            self,
+            metrics_endpoints=[
+                {"path": "/metrics", "port": self.config["port"]},
+            ],
+        )
 
         self.framework.observe(self.on.install, self._on_install)
         self.framework.observe(self.on.upgrade_charm, self._on_upgrade)
