@@ -5,7 +5,7 @@ To make contributions to this charm, you'll need a working [development setup](h
 You can create an environment for development with `tox`:
 
 ```shell
-tox devenv -e integration
+tox devenv -e unit
 source venv/bin/activate
 ```
 
@@ -16,11 +16,9 @@ that can be used for linting and formatting code when you're preparing contribut
 
 ```shell
 tox run -e format        # update your code according to linting rules
-tox run -e lint          # code style
-tox run -e static        # static type checking
+tox run -e lint          # static analysis (code style, type checking, etc.)
 tox run -e unit          # unit tests
-tox run -e integration   # integration tests (Work in progress)
-tox                      # runs 'format', 'lint', 'static', and 'unit' environments
+tox                      # runs 'lint' and 'unit' environments
 ```
 
 ## Fetching library
