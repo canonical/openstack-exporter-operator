@@ -17,7 +17,7 @@ class SnapService:
 
     def is_active(self) -> bool:
         """Return True if all snap service(s) is / are active."""
-        return all(service.get("active", False) for service in self.snap_client.services)
+        return all(service.get("active", False) for service in self.snap_client.services.values())
 
     def restart_and_enable(self) -> None:
         """Restart and enable the snap service.
