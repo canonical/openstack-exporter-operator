@@ -14,6 +14,7 @@ from typing import Any, Optional
 
 import ops
 import yaml
+from charms.grafana_agent.v0.cos_agent import COSAgentProvider
 from ops.model import (
     ActiveStatus,
     BlockedStatus,
@@ -48,11 +49,24 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         """Initialize the charm."""
         super().__init__(*args)
 
+        self._grafana_agent = COSAgentProvider(
+            self,
+            metrics_endpoints=[
+                {"path": "/metrics", "port": self.config["port"]},
+            ],
+        )
+
         self.framework.observe(self.on.install, self._on_install)
         self.framework.observe(self.on.upgrade_charm, self._on_upgrade)
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.collect_unit_status, self._on_collect_unit_status)
         self.framework.observe(self.on.credentials_relation_changed, self._on_credentials_changed)
+        self.framework.observe(
+            self.on.cos_agent_relation_changed, self._on_cos_agent_relation_changed
+        )
+        self.framework.observe(
+            self.on.cos_agent_relation_broken, self._on_cos_agent_relation_broken
+        )
 
     def _is_keystone_data_ready(self, data: dict[str, str]) -> bool:
         """Check if all the data is available from keystone.
@@ -160,6 +174,11 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             event.defer()
             return
 
+        # if cos is not related then we should block and not run anything
+        if not self.model.relations.get("cos-agent"):
+            snap_service.stop()
+            return
+
         snap_service.configure(
             {
                 "cloud": CLOUD_NAME,
@@ -194,6 +213,14 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         """Handle updates to credentials from keystone."""
         self.configure(event)
 
+    def _on_cos_agent_relation_changed(self, event: ops.RelationChangedEvent) -> None:
+        """Handle updates to grafana agent relation."""
+        self.configure(event)
+
+    def _on_cos_agent_relation_broken(self, event: ops.RelationBrokenEvent) -> None:
+        """Handle grafana agent leaving."""
+        self.configure(event)
+
     def _on_collect_unit_status(self, event: ops.CollectStatusEvent) -> None:
         """Handle collect unit status event (called after every event)."""
         if not self.model.relations.get("credentials"):
@@ -201,6 +228,9 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         if not self._get_keystone_data():
             event.add_status(WaitingStatus("Waiting for credentials from keystone"))
+
+        if not self.model.relations.get("cos-agent"):
+            event.add_status(BlockedStatus("Grafana Agent is not related"))
 
         snap_service = get_installed_snap_service(SNAP_NAME, SNAP_SERVICE_NAME)
 

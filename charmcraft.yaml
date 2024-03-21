@@ -20,6 +20,10 @@ requires:
   credentials:
     interface: keystone-admin
 
+provides:
+  cos-agent:
+    interface: cos_agent
+
 config:
   options:
     port:
