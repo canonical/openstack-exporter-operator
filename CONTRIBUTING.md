@@ -21,13 +21,18 @@ tox run -e unit          # unit tests
 tox                      # runs 'lint' and 'unit' environments
 ```
 
-## Fetching library
+## Fetching libraries
 
-If you need to include more library, you can run:
+Charm libraries are managed with charmcraft and recorded in `./scripts/update-charm-libs.sh`.
+Run that script to update the libraries included.
+
+If you need to include more charm libraries, you can run:
 
 ```shell
 charmcraft fetch-lib <operator-libs>
 ```
+
+And add the corresponding command to `./scripts/update-charm-libs.sh`.
 
 ## Build the charm
 
