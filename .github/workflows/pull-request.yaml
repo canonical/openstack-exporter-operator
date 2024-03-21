@@ -36,3 +36,24 @@ jobs:
         run: python3 -m pip install tox
       - name: Run unit test
         run: tox -e unit
+
+  check-file-updates:
+    name: Check update for grafana dashboard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout local repository
+        uses: actions/checkout@v4
+      - name: Checkout remote repository
+        working-directory: ../
+        run: |
+          git clone https://opendev.org/openstack/sunbeam-charms
+      - name: Check differences
+        run: |
+          LOCAL_SOURCE=./src/grafana_dashboards/openstack-exporter.json
+          REMOTE_SOURCE=../sunbeam-charms/charms/openstack-exporter-k8s/src/grafana_dashboards/openstack-exporter.json
+          diff $LOCAL_SOURCE $REMOTE_SOURCE > /dev/null 2>&1
+          DIFF_STATUS=$?
+          if [ $DIFF_STATUS -ne 0 ]; then
+            echo "Differences detected in the file ./src/grafana_dashboards/openstack-exporter.json"
+            exit 1
+          fi
