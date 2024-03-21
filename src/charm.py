@@ -30,8 +30,6 @@ RESOURCE_NAME = "openstack-exporter"
 
 # snap global constants
 SNAP_NAME = "golang-openstack-exporter"
-SNAP_SERVICE_NAME = "service"
-
 
 # Snap config options global constants
 # This is to match between openstack-exporter and the entry in clouds.yaml
@@ -238,7 +236,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             event.add_status(
                 BlockedStatus("snap service is not installed, please check snap service")
             )
-        elif not snap_service.is_active(SNAP_SERVICE_NAME):
+        elif not snap_service.is_active():
             event.add_status(
                 BlockedStatus("snap service is not running, please check snap service")
             )

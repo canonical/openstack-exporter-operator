@@ -9,15 +9,15 @@ logger = getLogger(__name__)
 
 
 class SnapService:
-    """A class representing the a snap service."""
+    """A class representing the snap service(s)."""
 
     def __init__(self, client: snap.Snap) -> None:
         """Initialize the class."""
         self.snap_client = client
 
-    def is_active(self, service: str) -> bool:
-        """Return True if the snap service is active."""
-        return self.snap_client.services.get(service, {}).get("active", False)
+    def is_active(self) -> bool:
+        """Return True if all snap service(s) is / are active."""
+        return all(service.get("active", False) for service in self.snap_client.services)
 
     def restart_and_enable(self) -> None:
         """Restart and enable the snap service.
