@@ -1,0 +1,3 @@
+# For cos_agent library
+cosl
+pydantic < 2
