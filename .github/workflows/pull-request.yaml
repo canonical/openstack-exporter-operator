@@ -36,3 +36,12 @@ jobs:
         run: python3 -m pip install tox
       - name: Run unit test
         run: tox -e unit
+
+  check-file-updates:
+    name: Check updates for grafana dashboard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout local repository
+        uses: actions/checkout@v4
+      - name: Check differences
+        run: make check-dashboard-updates
