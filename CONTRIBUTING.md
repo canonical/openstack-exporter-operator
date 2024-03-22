@@ -22,7 +22,7 @@ tox                      # runs 'lint' and 'unit' environments
 ```
 
 This project also uses `make` for managing charm related operations. You can use the following make
-targets to
+targets to perform charming tasks:
 
 ```shell
 make                            # show help texts
@@ -52,7 +52,7 @@ And add the corresponding command to `./scripts/update-charm-libs.sh`.
 
 The openstack exporter dashboard is a shared file managed by the upstream repository which is
 hosted in the [Sunbeam](https://opendev.org/openstack/sunbeam-charms). To check if a new version of
-the dashboard is avaliable you can run the make target:
+the dashboard is available you can run the make target:
 
 ```shell
 make check-dashboard-updates
