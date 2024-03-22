@@ -21,10 +21,24 @@ tox run -e unit          # unit tests
 tox                      # runs 'lint' and 'unit' environments
 ```
 
+This project also uses `make` for managing charm related operations. You can use the following make
+targets to
+
+```shell
+make                            # show help texts
+make update-charm-libs          # update charm's libraries
+make check-dashboard-updates    # check if there's a new dashboard from the upstream
+```
+
 ## Fetching libraries
 
 Charm libraries are managed with charmcraft and recorded in `./scripts/update-charm-libs.sh`.
-Run that script to update the libraries included.
+
+To update the libraries included, run
+
+```shell
+make update-charm-libs
+```
 
 If you need to include more charm libraries, you can run:
 
@@ -34,6 +48,16 @@ charmcraft fetch-lib <operator-libs>
 
 And add the corresponding command to `./scripts/update-charm-libs.sh`.
 
+## Checking for dashboard updates
+
+The openstack exporter dashboard is a shared file managed by the upstream repository which is
+hosted in the [Sunbeam](https://opendev.org/openstack/sunbeam-charms). To check if a new version of
+the dashboard is avaliable you can run the make target:
+
+```shell
+make check-dashboard-updates
+```
+
 ## Build the charm
 
 Build the charm in this git repository using:
@@ -41,4 +65,3 @@ Build the charm in this git repository using:
 ```shell
 charmcraft pack
 ```
-
