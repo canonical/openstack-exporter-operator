@@ -3,6 +3,7 @@ gate_bundles:
   - jammy
 tests:
   - charm_tests.openstack_exporter.OpenstackExporterBasicTest
-vault:
-  workload-status: active
-  workload-status-message: ""
+target_deploy_status:
+  ubuntu:
+    workload-status: active
+    workload-status-message-prefix: "^$"

@@ -6,8 +6,6 @@
 import logging
 import unittest
 
-import zaza.model as model
-
 logger = logging.getLogger(__name__)
 
 
