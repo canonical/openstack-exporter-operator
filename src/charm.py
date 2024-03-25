@@ -56,15 +56,12 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         self.framework.observe(self.on.install, self._on_install)
         self.framework.observe(self.on.upgrade_charm, self._on_upgrade)
-        self.framework.observe(self.on.config_changed, self._on_config_changed)
+        self.framework.observe(self.on.config_changed, self._configure)
         self.framework.observe(self.on.collect_unit_status, self._on_collect_unit_status)
-        self.framework.observe(self.on.credentials_relation_changed, self._on_credentials_changed)
-        self.framework.observe(
-            self.on.cos_agent_relation_changed, self._on_cos_agent_relation_changed
-        )
-        self.framework.observe(
-            self.on.cos_agent_relation_broken, self._on_cos_agent_relation_broken
-        )
+        self.framework.observe(self.on.credentials_relation_changed, self._configure)
+        self.framework.observe(self.on.credentials_relation_broken, self._configure)
+        self.framework.observe(self.on.cos_agent_relation_changed, self._configure)
+        self.framework.observe(self.on.cos_agent_relation_broken, self._configure)
 
     def _is_keystone_data_ready(self, data: dict[str, str]) -> bool:
         """Check if all the data is available from keystone.
@@ -163,8 +160,12 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             raise ValueError("resource is invalid or not found.")
         snap_install(resource)
 
-    def configure(self, event: ops.HookEvent) -> None:
-        """Configure the charm."""
+    def _configure(self, event: ops.HookEvent) -> None:
+        """Configure the charm.
+
+        An idempotent method called as the result
+        of several config or relation changed hooks.
+        """
         snap_service = get_installed_snap_service(SNAP_NAME)
 
         if not snap_service:
@@ -202,22 +203,6 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
     def _on_upgrade(self, _: ops.UpgradeCharmEvent) -> None:
         """Handle upgrade charm event."""
         self.install()
-
-    def _on_config_changed(self, event: ops.ConfigChangedEvent) -> None:
-        """Handle config changed event."""
-        self.configure(event)
-
-    def _on_credentials_changed(self, event: ops.RelationChangedEvent) -> None:
-        """Handle updates to credentials from keystone."""
-        self.configure(event)
-
-    def _on_cos_agent_relation_changed(self, event: ops.RelationChangedEvent) -> None:
-        """Handle updates to grafana agent relation."""
-        self.configure(event)
-
-    def _on_cos_agent_relation_broken(self, event: ops.RelationBrokenEvent) -> None:
-        """Handle grafana agent leaving."""
-        self.configure(event)
 
     def _on_collect_unit_status(self, event: ops.CollectStatusEvent) -> None:
         """Handle collect unit status event (called after every event)."""
