@@ -1,0 +1,23 @@
+name: Upload and Release Charm
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-to-edge
+  cancel-in-progress: true
+
+jobs:
+  quality-checks:
+    uses: ./.github/workflows/_quality_check.yaml
+    with:
+      python-version: "3.10"
+
+  release-to-edge:
+    needs: [quality-checks]
+    name: Release charm to latest/edge channel
+    uses: ./.github/workflows/_release.yaml
+    secrets: inherit
+    with:
+      channel: "latest/edge"
