@@ -54,6 +54,7 @@ jobs:
     with:
       command: "tox -e integration"
       juju-channel: "3.1/stable"
+      tox-version: ""
       nested-containers: false
       timeout-minutes: 120
       action-operator: false
