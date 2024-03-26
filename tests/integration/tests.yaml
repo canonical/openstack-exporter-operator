@@ -6,4 +6,4 @@ tests:
 target_deploy_status:
   ubuntu:
     workload-status: active
-    workload-status-message-prefix: "^$"
+    workload-status-message-regex: "^$"
