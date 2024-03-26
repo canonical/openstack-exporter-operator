@@ -1,0 +1,42 @@
+name: Quality Checks
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        required: false
+        description: "Python version"
+        type: string
+        default: "3.10"
+
+jobs:
+
+  code-quality:
+    name: Run code quality checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+      - name: Set up Python ${{ inputs.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+      - name: Install dependencies
+        run: python3 -m pip install tox
+      - name: Run linters
+        run: tox -e lint
+
+  unit-test:
+    name: Run unit test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+      - name: Set up Python ${{ inputs.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+      - name: Install dependencies
+        run: python3 -m pip install tox
+      - name: Run unit test
+        run: tox -e unit

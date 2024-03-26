@@ -1,0 +1,30 @@
+name: Upload and Release Charm
+
+on:
+  workflow_call:
+    inputs:
+      channel:
+        type: string
+        default: "latest/edge"
+        description: "charmhub channel to release"
+        required: false
+    secrets:
+      CHARMHUB_TOKEN:
+        required: true
+      GITHUB_TOKEN:
+        required: true
+jobs:
+
+  release:
+    name: Release charm to charmhub
+    needs: [quality-checks]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+      - name: Upload and release charm to latest/edge channel
+        uses: canonical/charming-actions/upload-charm@2.5.0-rc # pre-release: supports all-in-one charmcraft.yaml
+        with:
+          channel: "${{ inputs.channel }}"
+          credentials: "${{ secrets.CHARMHUB_TOKEN }}"
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
