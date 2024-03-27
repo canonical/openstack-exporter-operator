@@ -16,9 +16,10 @@ that can be used for linting and formatting code when you're preparing contribut
 
 ```shell
 tox run -e format        # update your code according to linting rules
-tox run -e lint          # static analysis (code style, type checking, etc.)
-tox run -e unit          # unit tests
-tox                      # runs 'lint' and 'unit' environments
+tox run -e lint          # run static analysis (code style, type checking, etc.)
+tox run -e unit          # run unit tests
+tox run -e integration   # run integration tests
+tox                      # run 'lint' and 'unit' environments
 ```
 
 This project also uses `make` for managing charm related operations. You can use the following make

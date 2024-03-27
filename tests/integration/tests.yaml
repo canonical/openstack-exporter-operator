@@ -1,0 +1,9 @@
+charm_name: openstack-exporter
+gate_bundles:
+  - jammy
+tests:
+  - charm_tests.openstack_exporter.OpenstackExporterBasicTest
+target_deploy_status:
+  ubuntu:
+    workload-status: active
+    workload-status-message-regex: "^$"
