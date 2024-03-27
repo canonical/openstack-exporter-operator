@@ -18,6 +18,13 @@ on:
         description: "Juju snap channel (default to 3.1/stable)"
         type: string
         default: "3.1/stable"
+    secrets:
+      JUJU_CONTROLLERS_YAML:
+        required: True
+      JUJU_ACCOUNTS_YAML:
+        required: True
+      OPENSTACK_AUTH_ENV:
+        required: True
 
 jobs:
 
