@@ -1,0 +1,80 @@
+name: Quality Checks
+
+on:
+  workflow_call:
+    inputs:
+      tox-version:
+        required: false
+        description: "Tox version (default to latest)"
+        type: string
+        default: ""
+      python-version:
+        required: false
+        description: "Python version (default to 3.10)"
+        type: string
+        default: "3.10"
+      juju-channel:
+        required: false
+        description: "Juju snap channel (default to 3.1/stable)"
+        type: string
+        default: "3.1/stable"
+    secrets:
+      JUJU_CONTROLLERS_YAML:
+        required: True
+      JUJU_ACCOUNTS_YAML:
+        required: True
+      OPENSTACK_AUTH_ENV:
+        required: True
+
+jobs:
+
+  lint-test:
+    name: Run lint test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+      - name: Set up Python ${{ inputs.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+      - name: Install dependencies
+        run: python3 -m pip install tox
+      - name: Run linters
+        run: tox -e lint
+
+  unit-test:
+    name: Run unit test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+      - name: Set up Python ${{ inputs.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+      - name: Install dependencies
+        run: python3 -m pip install tox
+      - name: Run unit test
+        run: tox -e unit
+
+  integration-test:
+    needs: [lint-test, unit-test]
+    uses: canonical/bootstack-actions/.github/workflows/func.yaml@v3
+    strategy:
+      fail-fast: false
+    with:
+      command: "tox -e integration"
+      juju-channel: ${{ inputs.juju-channel }}
+      tox-version: ${{ inputs.tox-version }}
+      nested-containers: false
+      timeout-minutes: 120
+      action-operator: false
+      external-controller: true
+      runs-on: "['self-hosted', 'runner-openstack-exporter']"
+      juju-controller: soleng-ci-ctrl
+      zaza-yaml: "LS0tCm1vZGVsX3NldHRpbmdzOgogIGltYWdlLXN0cmVhbTogcmVsZWFzZWQKcmVnaW9uOiBwcm9kc3RhY2s2CmNsb3VkOiBidWlsZGVyLWNsb3VkCmNyZWRlbnRpYWw6IGJ1aWxkZXItY2xvdWQtY3JlZAo="
+    secrets:
+      juju-controllers-yaml: ${{ secrets.JUJU_CONTROLLERS_YAML }}
+      juju-accounts-yaml: ${{ secrets.JUJU_ACCOUNTS_YAML }}
+      openstack-auth-env: ${{ secrets.OPENSTACK_AUTH_ENV }}
