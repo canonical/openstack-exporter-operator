@@ -1,5 +1,6 @@
 """Utility module to help manage the snap service with guarding functions."""
 
+import os
 from logging import getLogger
 from typing import Any, Optional
 
@@ -48,8 +49,11 @@ class SnapService:
         self.snap_client.set(snap_config, typed=True)
 
 
-def snap_install(resource: str) -> Optional[SnapService]:
-    """Install or refresh the snap, and return the snap service."""
+def snap_install(resource: str) -> SnapService:
+    """Install or refresh the snap, and return the snap service.
+
+    Raises an exception on error.
+    """
     try:
         logger.debug("installing snap.")
         logger.debug("fetching from resource.")
@@ -59,6 +63,7 @@ def snap_install(resource: str) -> Optional[SnapService]:
         raise e  # need to crash on_install event if it's not okay
     else:
         logger.info("installed %s snap.", snap_client.name)
+        workaround_bug_268()
         return SnapService(snap_client)
 
 
@@ -75,3 +80,15 @@ def get_installed_snap_service(snap_name: str) -> Optional[SnapService]:
         return None
 
     return SnapService(snap_client)
+
+
+def workaround_bug_268() -> None:
+    """Workaround for a bug that blocks some nova metrics.
+
+    https://github.com/openstack-exporter/openstack-exporter/issues/268
+    """
+    logger.info("Adding service override to workaround bug 268")
+    dir = "/etc/systemd/system/snap.golang-openstack-exporter.service.service.d"
+    os.makedirs(dir, exist_ok=True)
+    with open(f"{dir}/bug_268.conf", "w") as f:
+        f.write("[Service]\nEnvironment=OS_COMPUTE_API_VERSION=2.87\n")
