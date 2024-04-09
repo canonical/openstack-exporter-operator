@@ -1,4 +1,3 @@
 python-openstackclient
 
 git+https://github.com/openstack-charmers/zaza.git@libjuju-3.1#egg=zaza
-juju<4

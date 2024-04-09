@@ -12,10 +12,10 @@ help:
 	@echo " make                            - show help text"
 	@echo " make update-charm-libs          - update charm's libraries"
 	@echo " make check-dashboard-updates    - check if there's a new dashboard from the upstream"
-	@echo " make clean - remove unneeded files"
-	@echo " make download-snap - download snap release from github release assets"
-	@echo " make build - build the charm"
-	@echo " make integration - run the tests defined in the integration subdirectory"
+	@echo " make clean                      - remove unneeded files"
+	@echo " make download-snap              - download snap release from github release assets"
+	@echo " make build                      - build the charm"
+	@echo " make integration                - run the tests defined in the integration subdirectory"
 	@echo ""
 
 
@@ -41,7 +41,7 @@ build: clean
 download-snap:
 	wget -q https://github.com/canonical/openstack-exporter-operator/releases/download/rev2/golang-openstack-exporter_amd64.snap -O ./golang-openstack-exporter_amd64.snap
 
-integration: download-snap build
+integration: build download-snap
 	CHARM_LOCATION=${CHARM_LOCATION} CHARM_SNAP_LOCATION=${CHARM_SNAP_LOCATION} tox -e integration
 
 .PHONY: help update-charm-libs check-dashboard-updates clean build download-snap integration
