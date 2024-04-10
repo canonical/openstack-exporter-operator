@@ -26,13 +26,11 @@ check-dashboard-updates:
 	./scripts/check-dashboard-updates.sh
 
 clean:
-	@echo "clean files"
-	@git clean -ffXd -e '!.idea' -e '!.vscode'
 	@echo "Cleaning existing build"
-	@rm -rf ${PROJECTPATH}/${CHARM_NAME}*.charm
+	@rm -f ${PROJECTPATH}/${CHARM_NAME}*.charm
 	@charmcraft clean
 	@echo "Remove download snap"
-	@rm -rf ${PROJECTPATH}/*.snap
+	@rm -f ${PROJECTPATH}/golang-openstack-exporter*.snap
 
 build: clean
 	@echo "Building charm"
