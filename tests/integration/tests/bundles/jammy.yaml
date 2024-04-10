@@ -1,6 +1,8 @@
 series: jammy
 
 applications:
+  openstack-exporter:
+    num_units: 1
   ubuntu:
     charm: ch:ubuntu
     num_units: 1
