@@ -5,7 +5,8 @@ import sys
 import argparse
 from urllib.request import urlretrieve
 
-# sync the dashboards from https://opendev.org/openstack/sunbeam-charms/src/branch/main/charms/openstack-exporter-k8s/src/grafana_dashboards
+# Sync the dashboards from https://opendev.org/openstack/sunbeam-charms/src/branch/main/charms/openstack-exporter-k8s/src/grafana_dashboards
+# Note: the base_url below is expected to be a 404 by itself.
 BASE_URL = "https://opendev.org/openstack/sunbeam-charms/raw/branch/main/charms/openstack-exporter-k8s/src/grafana_dashboards/"
 BASE_LOCAL_PATH = "./src/grafana_dashboards/"
 DASHBOARDS = [
