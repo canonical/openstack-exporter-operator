@@ -1,11 +1,13 @@
 charm_name: openstack-exporter
 gate_bundles:
   - jammy-yoga
-tests:
-  - tests.charm_tests.openstack_exporter.OpenstackExporterBasicTest
 configure:
   - zaza.openstack.charm_tests.vault.setup.auto_initialize_no_validation_no_wait
   - tests.charm_tests.setup.setup_export_ssl_ca_config
+tests:
+  - tests.charm_tests.openstack_exporter.OpenstackExporterConfigTest
+  - tests.charm_tests.openstack_exporter.OpenstackExporterStatusTest
+  - tests.charm_tests.openstack_exporter.OpenstackExporterLifeCycleTest
 target_deploy_status:
   openstack-exporter:
     workload-status: active
