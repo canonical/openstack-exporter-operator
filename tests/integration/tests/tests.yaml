@@ -3,10 +3,25 @@ gate_bundles:
   - jammy
 tests:
   - tests.charm_tests.openstack_exporter.OpenstackExporterBasicTest
+configure:
+  - zaza.openstack.charm_tests.vault.setup.auto_initialize_no_validation_no_wait
+  - tests.charm_tests.setup.setup_export_ssl_ca_config
 target_deploy_status:
-  ubuntu:
-    workload-status: active
-    workload-status-message-regex: "^$"
-  openstack-exporter:
+  vault:
     workload-status: blocked
-    workload-status-message: "Keystone is not related"
+    workload-status-message-prefix: "Vault needs to be initialized"
+  neutron-api-plugin-ovn:
+    workload-status: waiting
+    workload-status-message-prefix: "'certificates' awaiting server certificate data, 'ovsdb-cms' incomplete"
+  nova-compute:
+    workload-status: waiting
+    workload-status-message-prefix: "Incomplete relations: vault"
+  ovn-chassis:
+    workload-status: waiting
+    workload-status-message-prefix: "'certificates' awaiting server certificate data, 'ovsdb' incomplete"
+  ovn-central:
+    workload-status: waiting
+    workload-status-message-prefix: "'ovsdb-peer' incomplete, 'certificates' awaiting server certificate data"
+  grafana-agent:
+    workload-status: blocked
+    workload-status-message-regex: "^Missing .* for cos-agent$"

@@ -1,8 +1,288 @@
+variables:
+  openstack-origin: &openstack-origin distro
 series: jammy
 
 applications:
   openstack-exporter:
     num_units: 1
-  ubuntu:
-    charm: ch:ubuntu
+  grafana-agent:
+    charm: grafana-agent
+    channel: edge
+  ceph-mon:
+    charm: ceph-mon
+    channel: quincy/stable
     num_units: 1
+    options:
+      expected-osd-count: 3
+      loglevel: 1
+      monitor-count: 1
+      source: *openstack-origin
+    constraints: arch=amd64 mem=2048
+  ceph-osd:
+    charm: ceph-osd
+    channel: quincy/stable
+    num_units: 3
+    options:
+      loglevel: 1
+      osd-devices: ""
+      source: *openstack-origin
+    constraints: arch=amd64 mem=2048
+    storage:
+      osd-devices: '10G'
+  keystone:
+    charm: ch:keystone
+    channel: yoga/edge
+    num_units: 1
+    options:
+      openstack-origin: *openstack-origin
+    constraints: arch=amd64 mem=1024
+  keystone-mysql-router:
+    charm: mysql-router
+    channel: latest/edge
+  vault:
+    charm: ch:vault
+    channel: latest/edge
+    num_units: 1
+  vault-mysql-router:
+    charm: mysql-router
+    channel: latest/edge
+  mysql:
+    charm: ch:mysql-innodb-cluster
+    channel: latest/edge
+    options:
+      source: *openstack-origin
+    num_units: 3
+    options:
+      innodb-buffer-pool-size: 50%
+      max-connections: 20000
+      tuning-level: fast
+    constraints: arch=amd64 mem=4096
+  glance:
+    charm: glance
+    channel: yoga/edge
+    num_units: 1
+    options:
+      openstack-origin: *openstack-origin
+    constraints: arch=amd64 mem=1024
+  glance-mysql-router:
+    charm: mysql-router
+    channel: latest/edge
+    revision: 137
+  nova-compute:
+    charm: nova-compute
+    channel: yoga/edge
+    num_units: 1
+    options:
+      enable-live-migration: true
+      enable-resize: true
+      encrypt: true
+      force-raw-images: true
+      libvirt-image-backend: rbd
+      migration-auth-type: ssh
+      openstack-origin: *openstack-origin
+      verbose: true
+      debug: true
+    constraints: arch=amd64 mem=4096
+    storage:
+      ephemeral-device: cinder,1,51200M
+  nova-cloud-controller-mysql-router:
+    charm: mysql-router
+    channel: latest/edge
+    revision: 137
+  nova-cloud-controller:
+    charm: nova-cloud-controller
+    channel: yoga/edge
+    num_units: 1
+    options:
+      debug: true
+      network-manager: Neutron
+      openstack-origin: distro
+      verbose: true
+    constraints: arch=amd64 mem=2048
+  nova-cloud-controller-mysql-router:
+    charm: mysql-router
+    channel: latest/edge
+  cinder:
+    charm: cinder
+    channel: yoga/edge
+    num_units: 1
+    options:
+      block-device: ""
+      debug: true
+      ephemeral-unmount: ""
+      glance-api-version: 2
+      openstack-origin: *openstack-origin
+      overwrite: "false"
+      verbose: true
+    constraints: arch=amd64 mem=2048
+    storage:
+      block-devices: loop,10240M
+  cinder-ceph:
+    charm: cinder-ceph
+    channel: yoga/edge
+    revision: 527
+  cinder-mysql-router:
+    charm: mysql-router
+    channel: latest/edge
+    revision: 137
+  neutron-api:
+    charm: neutron-api
+    channel: yoga/edge
+    num_units: 1
+    options:
+      debug: true
+      flat-network-providers: physnet1
+      manage-neutron-plugin-legacy-mode: false
+      neutron-security-groups: true
+      openstack-origin: *openstack-origin
+      path-mtu: 1550
+      physical-network-mtus: physnet1:1500
+      verbose: true
+    constraints: arch=amd64 mem=2048
+  neutron-api-mysql-router:
+    charm: mysql-router
+    channel: latest/edge
+    revision: 137
+  rabbitmq-server:
+    charm: rabbitmq-server
+    channel: 3.9/stable
+    num_units: 1
+    options:
+      min-cluster-size: 1
+    constraints: arch=amd64 mem=1024
+  placement:
+    charm: placement
+    channel: yoga/edge
+    num_units: 1
+    options:
+      debug: true
+      openstack-origin: *openstack-origin
+    constraints: arch=amd64 mem=1024
+  placement-mysql-router:
+    charm: mysql-router
+    channel: latest/edge
+  neutron-api-plugin-ovn:
+    charm: neutron-api-plugin-ovn
+    channel: yoga/edge
+  ovn-central:
+    charm: ovn-central
+    channel: 22.03/stable
+    num_units: 3
+    options:
+      source: distro
+    constraints: arch=amd64 mem=2048
+  ovn-chassis:
+    charm: ovn-chassis
+    channel: 22.03/stable
+    options:
+      debug: true
+      ovn-bridge-mappings: physnet1:br-data
+relations:
+- - nova-cloud-controller:shared-db
+  - nova-cloud-controller-mysql-router:shared-db
+- - nova-cloud-controller:amqp
+  - rabbitmq-server:amqp
+- - nova-cloud-controller:image-service
+  - glance:image-service
+- - nova-cloud-controller:identity-service
+  - keystone:identity-service
+- - nova-compute:cloud-compute
+  - nova-cloud-controller:cloud-compute
+- - nova-compute:amqp
+  - rabbitmq-server:amqp
+- - nova-compute:image-service
+  - glance:image-service
+- - glance:image-service
+  - cinder:image-service
+- - glance:amqp
+  - rabbitmq-server:amqp
+- - cinder:shared-db
+  - cinder-mysql-router:shared-db
+- - cinder:amqp
+  - rabbitmq-server:amqp
+- - cinder:cinder-volume-service
+  - nova-cloud-controller:cinder-volume-service
+- - cinder:identity-service
+  - keystone:identity-service
+- - neutron-api:shared-db
+  - neutron-api-mysql-router:shared-db
+- - neutron-api:amqp
+  - rabbitmq-server:amqp
+- - neutron-api:neutron-api
+  - nova-cloud-controller:neutron-api
+- - neutron-api:identity-service
+  - keystone:identity-service
+- - glance:shared-db
+  - glance-mysql-router:shared-db
+- - glance:identity-service
+  - keystone:identity-service
+- - keystone:shared-db
+  - keystone-mysql-router:shared-db
+- - ceph-mon:osd
+  - ceph-osd:mon
+- - glance:ceph
+  - ceph-mon:client
+- - cinder:storage-backend
+  - cinder-ceph:storage-backend
+- - cinder-ceph:ceph
+  - ceph-mon:client
+- - nova-compute:ceph-access
+  - cinder-ceph:ceph-access
+- - nova-compute:ceph
+  - ceph-mon:client
+- - vault:shared-db
+  - vault-mysql-router:shared-db
+- - nova-compute:secrets-storage
+  - vault:secrets
+- - cinder:certificates
+  - vault:certificates
+- - glance:certificates
+  - vault:certificates
+- - keystone:certificates
+  - vault:certificates
+- - neutron-api:certificates
+  - vault:certificates
+- - nova-cloud-controller:certificates
+  - vault:certificates
+- - placement:certificates
+  - vault:certificates
+- - ceph-osd:secrets-storage
+  - vault:secrets
+- - mysql:db-router
+  - cinder-mysql-router:db-router
+- - mysql:db-router
+  - glance-mysql-router:db-router
+- - mysql:db-router
+  - keystone-mysql-router:db-router
+- - mysql:db-router
+  - neutron-api-mysql-router:db-router
+- - mysql:db-router
+  - nova-cloud-controller-mysql-router:db-router
+- - mysql:db-router
+  - placement-mysql-router:db-router
+- - mysql:db-router
+  - vault-mysql-router:db-router
+- - placement:shared-db
+  - placement-mysql-router:shared-db
+- - placement:identity-service
+  - keystone:identity-service
+- - placement:placement
+  - nova-cloud-controller:placement
+- - neutron-api-plugin-ovn:neutron-plugin
+  - neutron-api:neutron-plugin-api-subordinate
+- - neutron-api-plugin-ovn:ovsdb-cms
+  - ovn-central:ovsdb-cms
+- - ovn-chassis:ovsdb
+  - ovn-central:ovsdb
+- - ovn-chassis:nova-compute
+  - nova-compute:neutron-plugin
+- - neutron-api-plugin-ovn:certificates
+  - vault:certificates
+- - ovn-central:certificates
+  - vault:certificates
+- - ovn-chassis:certificates
+  - vault:certificates
+- - openstack-exporter:credentials
+  - keystone:identity-admin
+- - grafana-agent:cos-agent
+  - openstack-exporter:cos-agent
