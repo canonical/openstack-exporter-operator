@@ -51,12 +51,18 @@ And add the corresponding command to `./scripts/update-charm-libs.sh`.
 
 ## Checking for dashboard updates
 
-The openstack exporter dashboard is a shared file managed by the upstream repository which is
-hosted in the [Sunbeam](https://opendev.org/openstack/sunbeam-charms). To check if a new version of
-the dashboard is available you can run the make target:
+The openstack exporter dashboards are shared files managed
+in the [upstream repository (sunbeam-charms)](https://opendev.org/openstack/sunbeam-charms).
+To check if a new version of the dashboards are available you can run the make target:
 
 ```shell
 make check-dashboard-updates
+```
+
+If it reports updates, you can update them by running:
+
+```shell
+make sync-dashboards
 ```
 
 ## Build the charm
