@@ -12,6 +12,7 @@ help:
 	@echo " make                            - show help text"
 	@echo " make update-charm-libs          - update charm's libraries"
 	@echo " make check-dashboard-updates    - check if there's a new dashboard from the upstream"
+	@echo " make sync-dashboards            - update the dashboards from upstream"
 	@echo " make clean                      - remove unneeded files"
 	@echo " make download-snap              - download snap release from github release assets"
 	@echo " make build                      - build the charm"
@@ -23,7 +24,10 @@ update-charm-libs:
 	./scripts/update-charm-libs.sh
 
 check-dashboard-updates:
-	./scripts/check-dashboard-updates.sh
+	./scripts/sync-dashboards --check
+
+sync-dashboards:
+	./scripts/sync-dashboards
 
 clean:
 	@echo "Cleaning existing build"
@@ -42,4 +46,4 @@ download-snap:
 integration: build download-snap
 	CHARM_LOCATION=${CHARM_LOCATION} CHARM_SNAP_LOCATION=${CHARM_SNAP_LOCATION} tox -e integration
 
-.PHONY: help update-charm-libs check-dashboard-updates clean build download-snap integration
+.PHONY: help update-charm-libs check-dashboard-updates clean build download-snap integration sync-dashboards
