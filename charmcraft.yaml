@@ -47,8 +47,6 @@ links:
   - https://github.com/canonical/openstack-exporter-operator/issues
   source:
   - https://github.com/canonical/openstack-exporter-operator
-  website:
-  - https://charmhub.io/openstack-exporter
 
 resources:
   openstack-exporter:
