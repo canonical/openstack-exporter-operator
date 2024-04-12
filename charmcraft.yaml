@@ -41,19 +41,14 @@ config:
         (no base64 encoding required).
 
 
-#
-# TODO: fix these links after the charm is published
-#
-
-# links:
-#   contact: Please send your answer to Old Pink, care of the Funny Farm, Chalfont
-#   documentation: https://discourse.charmhub.io/t/openstack-exporter-operator/XXXXX
-#   issues:
-#   - https://github.com/canonical/openstack-exporter-operator/issues
-#   source:
-#   - https://github.com/canonical/openstack-exporter-operator
-#   website:
-#   - https://charmhub.io/openstack-exporter
+links:
+  documentation: https://discourse.charmhub.io/t/openstack-exporter-docs-index/13876
+  issues:
+  - https://github.com/canonical/openstack-exporter-operator/issues
+  source:
+  - https://github.com/canonical/openstack-exporter-operator
+  website:
+  - https://charmhub.io/openstack-exporter
 
 resources:
   openstack-exporter:
