@@ -2,12 +2,13 @@ series: jammy
 
 applications:
   openstack-exporter:
+    charm: openstack-expoter # this will be overridden by overlay
     num_units: 1
   keystone:
-    charm: ch:keystone
+    charm: keystone
     num_units: 1
   grafana-agent:
-    charm: ch:grafana-agent
+    charm: grafana-agent
 
 relations:
 - - openstack-exporter:cos-agent
