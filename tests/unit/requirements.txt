@@ -1,3 +1,5 @@
 # For cos_agent library
 cosl
 pydantic < 2
+pytest
+pytest-mock

@@ -33,13 +33,23 @@ config:
         The openstack-exporter service (metrics endpoint for prometheus scraping)
         will listen at this port.
     ssl_ca:
-      default: ''
+      default: ""
       type: string
       description: |
         Custom SSL CA for keystone if required.
 
         The format should be the raw contents of a PEM encoded file.
         (no base64 encoding).
+    cache_ttl:
+      default: "300s"
+      type: string
+      description: |
+        TTL duration for cache expiry(eg. 10s, 11m, 1h)
+    cache:
+      default: false
+      type: boolean
+      description: |
+        Enable exporter cache globally
 
 
 links:
