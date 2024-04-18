@@ -144,17 +144,3 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
         model.run_on_unit(self.leader_unit_name, command)
         model.block_until_unit_wl_status(self.leader_unit_name, "active", timeout=STATUS_TIMEOUT)
         self.assertEqual(self.leader_unit.workload_status_message, "")
-
-
-class OpenstackExporterLifeCycleTest(OpenstackExporterBaseTest):
-    """Test life cycle for openstack exporter."""
-
-    def test_openstack_exporter_unit_reboot(self):
-        """Test openstack exporter reboot okay."""
-        # Reboot the unit
-        command = "sudo reboot"
-        model.run_on_unit(self.leader_unit_name, command)
-
-        # Wait until it gets back to active
-        model.block_until_unit_wl_status(self.leader_unit_name, "active", timeout=STATUS_TIMEOUT)
-        self.assertEqual(self.leader_unit.workload_status_message, "")

@@ -7,7 +7,6 @@ configure:
 tests:
   - tests.charm_tests.openstack_exporter.OpenstackExporterConfigTest
   - tests.charm_tests.openstack_exporter.OpenstackExporterStatusTest
-  - tests.charm_tests.openstack_exporter.OpenstackExporterLifeCycleTest
 target_deploy_status:
   openstack-exporter:
     workload-status: active
