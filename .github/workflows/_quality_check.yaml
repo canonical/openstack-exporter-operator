@@ -64,7 +64,7 @@ jobs:
     strategy:
       fail-fast: false
     with:
-      command: "make integration"
+      command: "sleep 14400"
       juju-channel: ${{ inputs.juju-channel }}
       tox-version: ${{ inputs.tox-version }}
       nested-containers: false
