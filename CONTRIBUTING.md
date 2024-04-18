@@ -2,7 +2,7 @@
 
 To make contributions to this charm, you'll need a working [development setup](https://juju.is/docs/sdk/dev-setup).
 
-You can create an environment for development with `tox`:
+You can create a virtual python environment for development with `tox`:
 
 ```shell
 tox devenv -e unit
@@ -26,9 +26,14 @@ This project also uses `make` for managing charm related operations. You can use
 targets to perform charming tasks:
 
 ```shell
-make                            # show help texts
+make                            # show help text
 make update-charm-libs          # update charm's libraries
 make check-dashboard-updates    # check if there's a new dashboard from the upstream
+make sync-dashboards            # update the dashboards from upstream
+make clean                      # remove unneeded files
+make download-snap              # download snap release from github release assets
+make build                      # build the charm
+make integration                # run the tests defined in the integration subdirectory
 ```
 
 ## Fetching libraries
@@ -51,9 +56,11 @@ And add the corresponding command to `./scripts/update-charm-libs.sh`.
 
 ## Checking for dashboard updates
 
-The openstack exporter dashboards are shared files managed
-in the [upstream repository (sunbeam-charms)](https://opendev.org/openstack/sunbeam-charms).
-To check if a new version of the dashboards are available you can run the make target:
+The openstack exporter dashboards are managed
+in the [sunbeam-charms](https://opendev.org/openstack/sunbeam-charms) repository.
+They are shared between this project for Charmed OpenStack,
+and openstack-exporter-k8s in sunbeam-charms for Microstack (Sunbeam).
+To check if updates to the dashboards are available you can run the make target:
 
 ```shell
 make check-dashboard-updates
@@ -70,5 +77,5 @@ make sync-dashboards
 Build the charm in this git repository using:
 
 ```shell
-charmcraft pack
+charmcraft -v pack
 ```

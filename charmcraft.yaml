@@ -30,30 +30,24 @@ config:
       type: int
       default: 9180
       description: |
-        Start the exporter at "port".
+        The openstack-exporter service (metrics endpoint for prometheus scraping)
+        will listen at this port.
     ssl_ca:
       default: ''
       type: string
       description: |
         Custom SSL CA for keystone if required.
 
-        The format should be the contents of a PEM encoded file.
-        (no base64 encoding required).
+        The format should be the raw contents of a PEM encoded file.
+        (no base64 encoding).
 
 
-#
-# TODO: fix these links after the charm is published
-#
-
-# links:
-#   contact: Please send your answer to Old Pink, care of the Funny Farm, Chalfont
-#   documentation: https://discourse.charmhub.io/t/openstack-exporter-operator/XXXXX
-#   issues:
-#   - https://github.com/canonical/openstack-exporter-operator/issues
-#   source:
-#   - https://github.com/canonical/openstack-exporter-operator
-#   website:
-#   - https://charmhub.io/openstack-exporter
+links:
+  documentation: https://discourse.charmhub.io/t/openstack-exporter-docs-index/13876
+  issues:
+  - https://github.com/canonical/openstack-exporter-operator/issues
+  source:
+  - https://github.com/canonical/openstack-exporter-operator
 
 resources:
   openstack-exporter:
