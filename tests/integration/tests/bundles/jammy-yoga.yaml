@@ -82,7 +82,6 @@ applications:
   nova-cloud-controller-mysql-router:
     charm: mysql-router
     channel: latest/edge
-    revision: 137
   nova-cloud-controller:
     charm: nova-cloud-controller
     channel: yoga/edge
@@ -114,11 +113,9 @@ applications:
   cinder-ceph:
     charm: cinder-ceph
     channel: yoga/edge
-    revision: 527
   cinder-mysql-router:
     charm: mysql-router
     channel: latest/edge
-    revision: 137
   neutron-api:
     charm: neutron-api
     channel: yoga/edge
@@ -136,7 +133,6 @@ applications:
   neutron-api-mysql-router:
     charm: mysql-router
     channel: latest/edge
-    revision: 137
   rabbitmq-server:
     charm: rabbitmq-server
     channel: 3.9/stable

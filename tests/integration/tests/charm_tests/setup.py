@@ -11,10 +11,5 @@ def setup_export_ssl_ca_config():
     model.block_until_file_has_contents(
         "openstack-exporter",
         "/var/snap/golang-openstack-exporter/common/clouds.yaml",
-        "cacert",
-    )
-    model.block_until_file_has_contents(
-        "openstack-exporter",
-        "/var/snap/golang-openstack-exporter/common/clouds.yaml",
         "-----BEGIN CERTIFICATE-----",
     )

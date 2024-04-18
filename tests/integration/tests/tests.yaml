@@ -1,6 +1,6 @@
 charm_name: openstack-exporter
 gate_bundles:
-  - jammy
+  - jammy-yoga
 tests:
   - tests.charm_tests.openstack_exporter.OpenstackExporterBasicTest
 configure:
