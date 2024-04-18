@@ -1,0 +1,14 @@
+series: jammy
+applications:
+  openstack-exporter:
+    exposed-endpoints:
+      "":
+        expose-to-cidrs:
+        - 0.0.0.0/0
+        - ::/0
+  vault:
+    exposed-endpoints:
+      "":
+        expose-to-cidrs:
+        - 0.0.0.0/0
+        - ::/0
