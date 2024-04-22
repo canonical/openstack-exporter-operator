@@ -44,12 +44,16 @@ config:
       default: "300s"
       type: string
       description: |
-        TTL duration for cache expiry(eg. 10s, 11m, 1h)
+        Cache expiry time-to-live (TTL), e.g., 10s, 11m, 12h. Cache refreshes at
+        intervals of cache_ttl/2.
+        Customizable based on the size of the OpenStack cluster.
+        Format details: https://pkg.go.dev/time#ParseDuration
     cache:
       default: false
       type: boolean
       description: |
-        Enable exporter cache globally
+        Enables the exporter cache globally. Refreshes at intervals of cache_ttl/2.
+        If the cache is empty, the response will be empty.
 
 
 links:

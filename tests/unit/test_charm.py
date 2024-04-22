@@ -25,7 +25,7 @@ class TestCharm:
     )
     def test_config_changed(self, config, mocker):
         mock_get_installed_snap_service = mocker.patch("charm.get_installed_snap_service")
-        mock_snap_service = mocker.Mock()
+        mock_snap_service = mocker.Mock(spec_set=["configure", "restart_and_enable", "stop"])
         mock_get_installed_snap_service.return_value = mock_snap_service
 
         self.harness.begin()
