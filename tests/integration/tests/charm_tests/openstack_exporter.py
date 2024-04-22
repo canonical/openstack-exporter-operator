@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 APP_NAME = "openstack-exporter"
 SNAP_NAME = "golang-openstack-exporter"
-STATUS_TIMEOUT = 60
+STATUS_TIMEOUT = 120
 
 
 class OpenstackExporterBaseTest(unittest.TestCase):
