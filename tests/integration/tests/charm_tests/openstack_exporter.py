@@ -34,14 +34,14 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
         """Test clouds.yaml exists and not empty."""
         # Make sure the clouds yaml is set to the place we expect
         command = f"sudo snap get {SNAP_NAME} os-client-config"
-        results = model.run_on_unit(self.leader_unit_name, command)
+        results = model.run_on_leader(APP_NAME, command)
         clouds_yaml_path = results.get("Stdout", "").strip()
         self.assertEqual(int(results.get("Code", "-1")), 0)
         self.assertEqual(clouds_yaml_path, OS_CLIENT_CONFIG)
 
         # Make sure the clouds yaml is not empty and it's a valid yaml
         command = f"cat $(sudo snap get {SNAP_NAME} os-client-config)"
-        results = model.run_on_unit(self.leader_unit_name, command)
+        results = model.run_on_leader(APP_NAME, command)
         clouds_yaml = results.get("Stdout", "").strip()
         data = yaml.safe_load(clouds_yaml)
         openstack_auths = data["clouds"][CLOUD_NAME]
@@ -59,12 +59,12 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
 
         # Get snap config: web.listen-address and verify it's applied
         command = f"sudo snap get {SNAP_NAME} web.listen-address"
-        results = model.run_on_unit(self.leader_unit_name, command)
+        results = model.run_on_leader(APP_NAME, command)
         self.assertEqual(results.get("Stdout", "").strip(), f":{new_value}")
 
         # Verify that we can curl at new listening address
         command = f"curl -q localhost:{new_value}/metrics"
-        results = model.run_on_unit(self.leader_unit_name, command)
+        results = model.run_on_leader(APP_NAME, command)
         self.assertEqual(int(results.get("Code", "-1")), 0)
 
         # Reset config: port
@@ -73,7 +73,7 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
 
         # Verify that we can curl at old listening address
         command = "curl -q localhost:9180/metric"  # curl at default port
-        results = model.run_on_unit(self.leader_unit_name, command)
+        results = model.run_on_leader(APP_NAME, command)
         self.assertEqual(int(results.get("Code", "-1")), 0)
 
     def test_configure_ssl_ca(self):
@@ -87,7 +87,7 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
 
         # Get snap config: os-client-config and verify it's applied
         command = f"cat $(sudo snap get {SNAP_NAME} os-client-config)"
-        results = model.run_on_unit(self.leader_unit_name, command)
+        results = model.run_on_leader(APP_NAME, command)
         clouds_yaml = results.get("Stdout", "").strip()
         data = yaml.safe_load(clouds_yaml)
         cacert = data["clouds"][CLOUD_NAME]["cacert"]
@@ -95,7 +95,7 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
 
         # Verify the exporter crashes because of wrong ssl_ca
         command = "curl -q localhost:9180/metrics"
-        results = model.run_on_unit(self.leader_unit_name, command)
+        results = model.run_on_leader(APP_NAME, command)
         self.assertNotEqual(int(results.get("Code", "-1")), 0)
 
         # Reset config: ssl_ca
@@ -104,7 +104,7 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
 
         # Verify the exporter is active again because of good ssl_ca
         command = "curl -q localhost:9180/metrics"
-        results = model.run_on_unit(self.leader_unit_name, command)
+        results = model.run_on_leader(APP_NAME, command)
         self.assertEqual(int(results.get("Code", "-1")), 0)
 
 
@@ -157,7 +157,7 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
         """
         # Stop the exporter snap
         command = f"sudo snap stop {SNAP_NAME}.service"
-        model.run_on_unit(self.leader_unit_name, command)
+        model.run_on_leader(APP_NAME, command)
         model.block_until_unit_wl_status(self.leader_unit_name, "blocked", timeout=STATUS_TIMEOUT)
         self.assertEqual(
             self.leader_unit.workload_status_message,
@@ -166,6 +166,6 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
 
         # Start the exporter snap
         command = f"sudo snap start {SNAP_NAME}.service"
-        model.run_on_unit(self.leader_unit_name, command)
+        model.run_on_leader(APP_NAME, command)
         model.block_until_unit_wl_status(self.leader_unit_name, "active", timeout=STATUS_TIMEOUT)
         self.assertEqual(self.leader_unit.workload_status_message, "")
