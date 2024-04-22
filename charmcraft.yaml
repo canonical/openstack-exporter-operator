@@ -53,7 +53,7 @@ config:
       type: boolean
       description: |
         Enables the exporter cache globally. Refreshes at intervals of cache_ttl/2.
-        If the cache is empty, the response will be empty.
+        If the cache is empty or expired, the response will be empty.
 
 
 links:
