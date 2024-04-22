@@ -24,7 +24,7 @@ class OpenstackExporterBaseTest(unittest.TestCase):
     def setUpClass(cls):
         """Run setup for the test class."""
         cls.leader_unit = model.get_lead_unit(APP_NAME)
-        cls.leader_unit_name = model.get_lead_unit_name(APP_NAME)
+        cls.leader_unit_entity_id = cls.leader_unit.entity_id
 
 
 class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
@@ -119,7 +119,9 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
         """
         # Remove keystone relation
         model.remove_relation(APP_NAME, "credentials", "keystone:identity-admin")
-        model.block_until_unit_wl_status(self.leader_unit_name, "blocked", timeout=STATUS_TIMEOUT)
+        model.block_until_unit_wl_status(
+            self.leader_unit_entity_id, "blocked", timeout=STATUS_TIMEOUT
+        )
         self.assertEqual(self.leader_unit.workload_status_message, "Keystone is not related")
 
         # Be patient: wait until the relation is completely removed
@@ -127,7 +129,9 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
 
         # Add back keystone relation
         model.add_relation(APP_NAME, "credentials", "keystone:identity-admin")
-        model.block_until_unit_wl_status(self.leader_unit_name, "active", timeout=STATUS_TIMEOUT)
+        model.block_until_unit_wl_status(
+            self.leader_unit_entity_id, "active", timeout=STATUS_TIMEOUT
+        )
         self.assertEqual(self.leader_unit.workload_status_message, "")
 
     def test_grafana_agent_relation_changed(self):
@@ -138,7 +142,9 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
         """
         # Remove grafana-agent relation
         model.remove_relation(APP_NAME, "cos-agent", "grafana-agent:cos-agent")
-        model.block_until_unit_wl_status(self.leader_unit_name, "blocked", timeout=STATUS_TIMEOUT)
+        model.block_until_unit_wl_status(
+            self.leader_unit_entity_id, "blocked", timeout=STATUS_TIMEOUT
+        )
         self.assertEqual(self.leader_unit.workload_status_message, "Grafana Agent is not related")
 
         # Be patient: wait until the relation is completely removed
@@ -146,7 +152,9 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
 
         # Add back grafan-agent relation
         model.add_relation(APP_NAME, "cos-agent", "grafana-agent:cos-agent")
-        model.block_until_unit_wl_status(self.leader_unit_name, "active", timeout=STATUS_TIMEOUT)
+        model.block_until_unit_wl_status(
+            self.leader_unit_entity_id, "active", timeout=STATUS_TIMEOUT
+        )
         self.assertEqual(self.leader_unit.workload_status_message, "")
 
     def test_openstack_exporter_snap_down(self):
@@ -158,7 +166,9 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
         # Stop the exporter snap
         command = f"sudo snap stop {SNAP_NAME}.service"
         model.run_on_leader(APP_NAME, command)
-        model.block_until_unit_wl_status(self.leader_unit_name, "blocked", timeout=STATUS_TIMEOUT)
+        model.block_until_unit_wl_status(
+            self.leader_unit_entity_id, "blocked", timeout=STATUS_TIMEOUT
+        )
         self.assertEqual(
             self.leader_unit.workload_status_message,
             "snap service is not running, please check snap service",
@@ -167,5 +177,7 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
         # Start the exporter snap
         command = f"sudo snap start {SNAP_NAME}.service"
         model.run_on_leader(APP_NAME, command)
-        model.block_until_unit_wl_status(self.leader_unit_name, "active", timeout=STATUS_TIMEOUT)
+        model.block_until_unit_wl_status(
+            self.leader_unit_entity_id, "active", timeout=STATUS_TIMEOUT
+        )
         self.assertEqual(self.leader_unit.workload_status_message, "")
