@@ -53,7 +53,7 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
         """Test changing the listening port."""
         # Change config: port
         key = "port"
-        new_value = "-10000"  # bad port (will be reset shortly)
+        new_value = "10000"  # different port (will be reset shortly)
         model.set_application_config(APP_NAME, {key: new_value})
         model.block_until_all_units_idle()
 
@@ -62,10 +62,10 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
         results = model.run_on_unit(self.leader_unit_name, command)
         self.assertEqual(results.get("Stdout", "").strip(), f":{new_value}")
 
-        # Verify that we cannot curl at new listening address
+        # Verify that we can curl at new listening address
         command = f"curl -q localhost:{new_value}/metrics"
         results = model.run_on_unit(self.leader_unit_name, command)
-        self.assertNotEqual(int(results.get("Code", "-1")), 0)
+        self.assertEqual(int(results.get("Code", "-1")), 0)
 
         # Reset config: port
         model.reset_application_config(APP_NAME, [key])
