@@ -7,6 +7,7 @@ import logging
 import unittest
 
 import yaml
+from charm import CLOUD_NAME, OS_CLIENT_CONFIG
 from zaza import model
 
 logger = logging.getLogger(__name__)
@@ -31,10 +32,22 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
 
     def test_clouds_yaml(self):
         """Test clouds.yaml exists and not empty."""
+        # Make sure the clouds yaml is set to the place we expect
+        command = f"sudo snap get {SNAP_NAME} os-client-config"
+        results = model.run_on_unit(self.leader_unit_name, command)
+        clouds_yaml_path = results.get("Stdout", "").strip()
+        self.assertEqual(int(results.get("Code", "-1")), 0)
+        self.assertEqual(clouds_yaml_path, OS_CLIENT_CONFIG)
+
+        # Make sure the clouds yaml is not empty and it's a valid yaml
         command = f"cat $(sudo snap get {SNAP_NAME} os-client-config)"
         results = model.run_on_unit(self.leader_unit_name, command)
+        clouds_yaml = results.get("Stdout", "").strip()
+        data = yaml.safe_load(clouds_yaml)
+        openstack_auths = data["clouds"][CLOUD_NAME]
         self.assertEqual(int(results.get("Code", "-1")), 0)
-        self.assertNotEqual(results.get("Stdout", "").strip(), "")
+        self.assertNotEqual(clouds_yaml, "")
+        self.assertNotEqual(openstack_auths, {})
 
     def test_configure_port(self):
         """Test changing the listening port."""
@@ -77,7 +90,7 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
         results = model.run_on_unit(self.leader_unit_name, command)
         clouds_yaml = results.get("Stdout", "").strip()
         data = yaml.safe_load(clouds_yaml)
-        cacert = data["clouds"]["openstack"]["cacert"]
+        cacert = data["clouds"][CLOUD_NAME]["cacert"]
         self.assertEqual(cacert, f"{new_value}")
 
         # Verify the exporter crashes because of wrong ssl_ca
