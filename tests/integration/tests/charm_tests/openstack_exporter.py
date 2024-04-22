@@ -112,7 +112,11 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
     """Test status changes for openstack exporter."""
 
     def test_keystone_relation_changed(self):
-        """Test keystone relation changed will reach expected status."""
+        """Test keystone relation changed will reach expected status.
+
+        Test the expected charm status when removing keystone relation and
+        adding keystone relation back.
+        """
         # Remove keystone relation
         model.remove_relation(APP_NAME, "credentials", "keystone:identity-admin")
         model.block_until_unit_wl_status(self.leader_unit_name, "blocked", timeout=STATUS_TIMEOUT)
@@ -127,7 +131,11 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
         self.assertEqual(self.leader_unit.workload_status_message, "")
 
     def test_grafana_agent_relation_changed(self):
-        """Test grafana-agent relation changed will reach expected status."""
+        """Test grafana-agent relation changed will reach expected status.
+
+        Test the expected charm status when removing grafana-agent relation and
+        adding grafana-agent relation back.
+        """
         # Remove grafana-agent relation
         model.remove_relation(APP_NAME, "cos-agent", "grafana-agent:cos-agent")
         model.block_until_unit_wl_status(self.leader_unit_name, "blocked", timeout=STATUS_TIMEOUT)
@@ -142,7 +150,11 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
         self.assertEqual(self.leader_unit.workload_status_message, "")
 
     def test_openstack_exporter_snap_down(self):
-        """Test openstack exporter snap down will reach expected status."""
+        """Test openstack exporter snap down will reach expected status.
+
+        Manually stop (to simulate exporter snap down) the exporter snap and
+        test the charm will go to expected status.
+        """
         # Stop the exporter snap
         command = f"sudo snap stop {SNAP_NAME}.service"
         model.run_on_unit(self.leader_unit_name, command)
