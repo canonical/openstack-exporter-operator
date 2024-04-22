@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 APP_NAME = "openstack-exporter"
 SNAP_NAME = "golang-openstack-exporter"
-STATUS_TIMEOUT = 120
+STATUS_TIMEOUT = 120  # must be larger than the time defined in zaza-yaml
 
 
 class OpenstackExporterBaseTest(unittest.TestCase):

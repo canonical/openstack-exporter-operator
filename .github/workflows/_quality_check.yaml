@@ -73,7 +73,7 @@ jobs:
       external-controller: true
       runs-on: "['self-hosted', 'runner-openstack-exporter']"
       juju-controller: soleng-ci-ctrl
-      zaza-yaml: "LS0tCm1vZGVsX3NldHRpbmdzOgogIGltYWdlLXN0cmVhbTogcmVsZWFzZWQKcmVnaW9uOiBwcm9kc3RhY2s2CmNsb3VkOiBidWlsZGVyLWNsb3VkCmNyZWRlbnRpYWw6IGJ1aWxkZXItY2xvdWQtY3JlZAo="
+      zaza-yaml: "LS0tCm1vZGVsX3NldHRpbmdzOgogIGltYWdlLXN0cmVhbTogcmVsZWFzZWQKICB1cGRhdGUtc3RhdHVzLWhvb2staW50ZXJ2YWw6IDMwcwpyZWdpb246IHByb2RzdGFjazYKY2xvdWQ6IGJ1aWxkZXItY2xvdWQKY3JlZGVudGlhbDogYnVpbGRlci1jbG91ZC1jcmVkCg=="
     secrets:
       juju-controllers-yaml: ${{ secrets.JUJU_CONTROLLERS_YAML }}
       juju-accounts-yaml: ${{ secrets.JUJU_ACCOUNTS_YAML }}
