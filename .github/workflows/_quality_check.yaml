@@ -13,11 +13,6 @@ on:
         description: "Python version (default to 3.10)"
         type: string
         default: "3.10"
-      juju-channel:
-        required: false
-        description: "Juju snap channel (default to 3.1/stable)"
-        type: string
-        default: "3.1/stable"
     secrets:
       JUJU_CONTROLLERS_YAML:
         required: True
@@ -63,9 +58,13 @@ jobs:
     uses: canonical/bootstack-actions/.github/workflows/func.yaml@v3
     strategy:
       fail-fast: false
+      matrix:
+        include:
+          - juju-channel: "3.4/stable"
+            command: "TEST_JUJU3=true make integration"  # using TEST_JUJU3 due to https://github.com/openstack-charmers/zaza/commit/af7eea953dd5d74d3d074fe67b5765dca3911ca6
     with:
-      command: "make integration"
-      juju-channel: ${{ inputs.juju-channel }}
+      command: ${{ matrix.command }}
+      juju-channel: ${{ matrix.juju-channel }}
       tox-version: ${{ inputs.tox-version }}
       nested-containers: false
       timeout-minutes: 120
@@ -77,4 +76,3 @@ jobs:
     secrets:
       juju-controllers-yaml: ${{ secrets.JUJU_CONTROLLERS_YAML }}
       juju-accounts-yaml: ${{ secrets.JUJU_ACCOUNTS_YAML }}
-      openstack-auth-env: ${{ secrets.OPENSTACK_AUTH_ENV }}

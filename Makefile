@@ -44,6 +44,6 @@ download-snap:
 	wget -q https://github.com/canonical/openstack-exporter-operator/releases/download/rev2/golang-openstack-exporter_amd64.snap -O ./golang-openstack-exporter_amd64.snap
 
 integration: build download-snap
-	CHARM_LOCATION=${CHARM_LOCATION} CHARM_SNAP_LOCATION=${CHARM_SNAP_LOCATION} tox -e integration
+	CHARM_LOCATION=${CHARM_LOCATION} CHARM_SNAP_LOCATION=${CHARM_SNAP_LOCATION} tox -e integration -- ${FUNC_ARGS}
 
 .PHONY: help update-charm-libs check-dashboard-updates clean build download-snap integration sync-dashboards
