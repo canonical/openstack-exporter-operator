@@ -7,6 +7,7 @@ import ops
 import ops.testing
 import pytest
 from charm import CLOUD_NAME, OS_CLIENT_CONFIG, SNAP_NAME, OpenstackExporterOperatorCharm
+from service import SnapService
 
 
 class TestCharm:
@@ -25,18 +26,19 @@ class TestCharm:
     )
     def test_config_changed(self, config, mocker):
         mock_get_installed_snap_service = mocker.patch("charm.get_installed_snap_service")
-        mock_snap_service = mocker.Mock(spec_set=["configure", "restart_and_enable", "stop"])
+        mock_snap_service = mocker.Mock(spec_set=SnapService)
         mock_get_installed_snap_service.return_value = mock_snap_service
 
         self.harness.begin()
 
-        mock_get_keystone_data = mocker.Mock()
-        mock_keystone_data = mocker.Mock()
-        mock_get_keystone_data.return_value = mock_keystone_data
-        self.harness.charm._get_keystone_data = mock_get_keystone_data
+        # mock get_keystone_data
+        mock_expect_keystone_data = mocker.Mock()
+        self.harness.charm._get_keystone_data = mocker.Mock()
+        self.harness.charm._get_keystone_data.return_value = mock_expect_keystone_data
 
-        mock_write_cloud_config = mocker.Mock()
-        self.harness.charm._write_cloud_config = mock_write_cloud_config
+        # mock _write_cloud_config
+        self.harness.charm._write_cloud_config = mocker.Mock()
+
         self.harness.add_relation("cos-agent", "openstack-exporter")
 
         self.harness.update_config(config)
@@ -52,6 +54,6 @@ class TestCharm:
                 "cache-ttl": config.get("cache_ttl", "300s"),
             }
         )
-        mock_write_cloud_config.assert_called_with(mock_keystone_data)
+        self.harness.charm._write_cloud_config.assert_called_with(mock_expect_keystone_data)
         mock_snap_service.restart_and_enable.assert_called()
         mock_snap_service.stop.assert_not_called()
