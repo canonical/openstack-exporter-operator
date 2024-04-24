@@ -14,9 +14,8 @@ jobs:
     uses: ./.github/workflows/_quality_check.yaml
     secrets: inherit
     with:
-      tox-version: ""
+      tox-version: ""  # latest tox
       python-version: "3.10"
-      juju-channel: "3.1/stable"
 
   release-to-edge:
     needs: [check-code-quality]

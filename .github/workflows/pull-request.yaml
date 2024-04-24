@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
 
   check-code-quality:
@@ -12,9 +16,8 @@ jobs:
     uses: ./.github/workflows/_quality_check.yaml
     secrets: inherit
     with:
-      tox-version: ""
+      tox-version: ""  # latest tox
       python-version: "3.10"
-      juju-channel: "3.1/stable"
 
   check-file-updates:
     name: Check updates for charm files
