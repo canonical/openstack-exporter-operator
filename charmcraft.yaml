@@ -68,4 +68,17 @@ resources:
     type: file
     filename: openstack-exporter.snap
     description: |
-      Snap that implements actual data collection and export.
+      Snap for openstack-exporter.
+      This is the software that implements actual metrics collection and endpoint for prometheus scraping.
+
+      The snap resource on Charmhub is intended to be an empty file.
+      The charm will ignore an empty file resource,
+      so that the resource can be used as an override by the user,
+      if they wish to provide a local snap.
+
+      Currently a local snap must be provided via the resource,
+      since the supported snap isn't published on the snap store.
+      When it is published, the charm will use the snap from the store,
+      and a user can provide a local snap to use instead.
+
+      This override may be useful for testing or in environments with network restrictions.
