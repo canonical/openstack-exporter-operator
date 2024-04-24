@@ -183,6 +183,8 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
                 "cloud": CLOUD_NAME,
                 "os-client-config": str(OS_CLIENT_CONFIG),
                 "web": {"listen-address": f":{self.model.config['port']}"},
+                "cache": self.model.config["cache"],
+                "cache-ttl": self.model.config["cache_ttl"],
             }
         )
 
