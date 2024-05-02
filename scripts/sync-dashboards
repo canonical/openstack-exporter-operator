@@ -10,9 +10,9 @@ from urllib.request import urlretrieve
 BASE_URL = "https://opendev.org/openstack/sunbeam-charms/raw/branch/main/charms/openstack-exporter-k8s/src/grafana_dashboards/"
 BASE_LOCAL_PATH = "./src/grafana_dashboards/"
 DASHBOARDS = [
-    "hypervisor-openstack-exporter-dashboard.json",
-    "openstack-exporter.json",
-    "overview-openstack-exporter-dashboard.json",
+    "cloud.json",
+    "compute.json",
+    "service.json",
 ]
 
 
