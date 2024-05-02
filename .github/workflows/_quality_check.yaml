@@ -34,7 +34,7 @@ jobs:
         with:
           python-version: ${{ inputs.python-version }}
       - name: Install dependencies
-        run: python3 -m pip install tox
+        run: python3 -m pip install tox${{ inputs.tox-version }}
       - name: Run linters
         run: tox -e lint
 
@@ -49,7 +49,7 @@ jobs:
         with:
           python-version: ${{ inputs.python-version }}
       - name: Install dependencies
-        run: python3 -m pip install tox
+        run: python3 -m pip install tox${{ inputs.tox-version }}
       - name: Run unit test
         run: tox -e unit
 

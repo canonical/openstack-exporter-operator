@@ -16,7 +16,7 @@ jobs:
     uses: ./.github/workflows/_quality_check.yaml
     secrets: inherit
     with:
-      tox-version: ""  # latest tox
+      tox-version: ""
       python-version: "3.10"
 
   check-file-updates:
