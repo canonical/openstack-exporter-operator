@@ -62,6 +62,8 @@ links:
   - https://github.com/canonical/openstack-exporter-operator/issues
   source:
   - https://github.com/canonical/openstack-exporter-operator
+  website:
+  - https://github.com/canonical/openstack-exporter-operator
 
 resources:
   openstack-exporter:
