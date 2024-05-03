@@ -5,7 +5,9 @@ on:
     inputs:
       tox-version:
         required: false
-        description: "Tox version (default to latest)"
+        description: |
+          Tox version, which should be used, e.g. `<4`. If not specified, the
+          latest version of tox will be installed.
         type: string
         default: ""
       python-version:
