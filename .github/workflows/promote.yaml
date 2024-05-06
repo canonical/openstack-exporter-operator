@@ -17,7 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Release charm to channel
-        uses: canonical/charming-actions/release-charm@2.4.0
+        # Note(rgildein): Since this charm uses the metadata defined in charmcraft.yaml, we need to use the pre-release version that includes https://github.com/canonical/charming-actions/pull/132.
+        uses: canonical/charming-actions/upload-charm@2.5.0-rc
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
