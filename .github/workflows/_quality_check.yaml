@@ -63,18 +63,15 @@ jobs:
       matrix:
         include:
           - juju-channel: "3.4/stable"
-            command: "TEST_JUJU3=true make integration"  # using TEST_JUJU3 due to https://github.com/openstack-charmers/zaza/commit/af7eea953dd5d74d3d074fe67b5765dca3911ca6
+            command: "TEST_JUJU3=1 make integration" # using TEST_JUJU3 due to https://github.com/openstack-charmers/zaza/commit/af7eea953dd5d74d3d074fe67b5765dca3911ca6
     with:
       command: ${{ matrix.command }}
       juju-channel: ${{ matrix.juju-channel }}
       tox-version: ${{ inputs.tox-version }}
       nested-containers: false
-      timeout-minutes: 120
-      action-operator: false
-      external-controller: true
-      runs-on: "['self-hosted', 'runner-openstack-exporter']"
-      juju-controller: soleng-ci-ctrl
-      zaza-yaml: "LS0tCm1vZGVsX3NldHRpbmdzOgogIGltYWdlLXN0cmVhbTogcmVsZWFzZWQKICB1cGRhdGUtc3RhdHVzLWhvb2staW50ZXJ2YWw6IDMwcwpyZWdpb246IHByb2RzdGFjazYKY2xvdWQ6IGJ1aWxkZXItY2xvdWQKY3JlZGVudGlhbDogYnVpbGRlci1jbG91ZC1jcmVkCg=="
+      timeout-minutes: 150
+      action-operator: true
+      runs-on: "['self-hosted', 'x64', 'jammy', 'xlarge']"
     secrets:
       juju-controllers-yaml: ${{ secrets.JUJU_CONTROLLERS_YAML }}
       juju-accounts-yaml: ${{ secrets.JUJU_ACCOUNTS_YAML }}
