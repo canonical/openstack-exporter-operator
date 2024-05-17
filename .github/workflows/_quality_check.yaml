@@ -57,21 +57,23 @@ jobs:
 
   integration-test:
     needs: [lint-test, unit-test]
-    uses: canonical/bootstack-actions/.github/workflows/func.yaml@v3
+    runs-on: ['self-hosted', 'x64', 'jammy', 'xlarge']
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
         include:
           - juju-channel: "3.4/stable"
             command: "TEST_JUJU3=1 make integration" # using TEST_JUJU3 due to https://github.com/openstack-charmers/zaza/commit/af7eea953dd5d74d3d074fe67b5765dca3911ca6
-    with:
-      command: ${{ matrix.command }}
-      juju-channel: ${{ matrix.juju-channel }}
-      tox-version: ${{ inputs.tox-version }}
-      nested-containers: false
-      timeout-minutes: 150
-      action-operator: true
-      runs-on: "['self-hosted', 'x64', 'jammy', 'xlarge']"
-    secrets:
-      juju-controllers-yaml: ${{ secrets.JUJU_CONTROLLERS_YAML }}
-      juju-accounts-yaml: ${{ secrets.JUJU_ACCOUNTS_YAML }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Juju ${{ matrix.juju-channel }} environment
+        uses: charmed-kubernetes/actions-operator@main
+        with:
+          provider: lxd
+          juju-channel: ${{ matrix.juju-channel }}
+      - name: Run functional tests
+        run: ${{ matrix.command }}
+      - name: Collect juju-crashdump
+        if: failure()
+        run: juju-crashdump --model "$(juju models | grep 'zaza-' | awk '{print $1}')"
