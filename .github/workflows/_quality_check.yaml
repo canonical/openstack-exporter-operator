@@ -15,13 +15,6 @@ on:
         description: "Python version (default to 3.10)"
         type: string
         default: "3.10"
-    secrets:
-      JUJU_CONTROLLERS_YAML:
-        required: True
-      JUJU_ACCOUNTS_YAML:
-        required: True
-      OPENSTACK_AUTH_ENV:
-        required: True
 
 jobs:
 
