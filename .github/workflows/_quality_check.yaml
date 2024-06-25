@@ -65,6 +65,7 @@ jobs:
         with:
           provider: lxd
           juju-channel: ${{ matrix.juju-channel }}
+          bootstrap-options: '--bootstrap-constraints="virt-type=virtual-machine mem=8G"'
       - name: Run functional tests
         run: ${{ matrix.command }}
       - name: Collect juju-crashdump
