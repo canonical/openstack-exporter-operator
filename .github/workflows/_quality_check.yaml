@@ -69,7 +69,7 @@ jobs:
       # Enable tmate debugging of manually-triggered workflows if the input option was provided
       - name: Setup tmate session
         uses: canonical/action-tmate@main
-        if: ${{ inputs.debug_enabled }}
+        #if: ${{ inputs.debug_enabled }}
         with:
           detached: true
       - uses: actions/checkout@v4
