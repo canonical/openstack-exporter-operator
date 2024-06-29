@@ -15,6 +15,11 @@ on:
         description: "Python version (default to 3.10)"
         type: string
         default: "3.10"
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
 
 jobs:
 
@@ -59,6 +64,12 @@ jobs:
           - juju-channel: "3.4/stable"
             command: "TEST_JUJU3=1 make integration" # using TEST_JUJU3 due to https://github.com/openstack-charmers/zaza/commit/af7eea953dd5d74d3d074fe67b5765dca3911ca6
     steps:
+      # Enable tmate debugging of manually-triggered workflows if the input option was provided
+      - name: Setup tmate session
+        uses: canonical/action-tmate@main
+        if: ${{ inputs.debug_enabled }}
+        with:
+          detached: true
       - uses: actions/checkout@v4
       - name: Setup Juju ${{ matrix.juju-channel }} environment
         uses: charmed-kubernetes/actions-operator@main
