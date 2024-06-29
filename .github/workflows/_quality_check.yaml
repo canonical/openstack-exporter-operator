@@ -70,6 +70,8 @@ jobs:
       - name: Setup tmate session
         uses: canonical/action-tmate@main
         #if: ${{ inputs.debug_enabled }}
+        with:
+          detached: true
       - uses: actions/checkout@v4
       - name: Setup Juju ${{ matrix.juju-channel }} environment
         uses: charmed-kubernetes/actions-operator@main
