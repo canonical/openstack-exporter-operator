@@ -78,7 +78,7 @@ jobs:
         with:
           provider: lxd
           juju-channel: ${{ matrix.juju-channel }}
-          bootstrap-options: '--model-default="num-container-provision-workers=2" --model-default="num-provision-workers=4" --model-default="provisioner-harvest-mode=none"'
+          bootstrap-options: '--model-default="num-container-provision-workers=1" --model-default="num-provision-workers=1" --model-default="provisioner-harvest-mode=none"'
       - name: Run functional tests
         run: ${{ matrix.command }}
       - name: Collect juju-crashdump
