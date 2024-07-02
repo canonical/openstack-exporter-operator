@@ -52,7 +52,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             metrics_endpoints=[
                 {"path": "/metrics", "port": self.config["port"]},
             ],
-            metrics_rules_dir="./sunbeam/charms/openstack-exporter-k8s/src/prometheus_alert_rules"
+            metrics_rules_dir="./sunbeam/charms/openstack-exporter-k8s/src/prometheus_alert_rules",
         )
 
         self.framework.observe(self.on.install, self._on_install)

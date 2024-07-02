@@ -24,8 +24,6 @@ from typing import (
     Optional,
 )
 
-import charms.grafana_k8s.v0.grafana_dashboard as grafana_dashboard
-import charms.prometheus_k8s.v0.prometheus_scrape as prometheus_scrape
 import ops
 import ops.charm
 import ops_sunbeam.charm as sunbeam_charm
@@ -33,6 +31,8 @@ import ops_sunbeam.config_contexts as sunbeam_config_contexts
 import ops_sunbeam.container_handlers as sunbeam_chandlers
 import ops_sunbeam.core as sunbeam_core
 import ops_sunbeam.relation_handlers as sunbeam_rhandlers
+from charms.grafana_k8s.v0 import grafana_dashboard
+from charms.prometheus_k8s.v0 import prometheus_scrape
 from ops.main import (
     main,
 )
@@ -268,22 +268,20 @@ class OSExporterOperatorCharm(sunbeam_charm.OSBaseOperatorCharmK8S):
     def get_relation_handlers(self) -> List[sunbeam_rhandlers.RelationHandler]:
         """Relation handlers for the service."""
         handlers = super().get_relation_handlers()
-        self.user_id_ops = (
-            sunbeam_rhandlers.UserIdentityResourceRequiresHandler(
-                self,
-                "identity-ops",
-                self.configure_charm,
-                mandatory="identity-ops" in self.mandatory_relations,
-                name=self.os_exporter_user,
-                domain=self.domain,
-                project=self.project,
-                project_domain=self.domain,
-                role="admin",
-                add_suffix=True,
-                rotate=ops.SecretRotate.MONTHLY,
-                extra_ops=self._get_list_endpoint_ops(),
-                extra_ops_process=self._handle_list_endpoint_response,
-            )
+        self.user_id_ops = sunbeam_rhandlers.UserIdentityResourceRequiresHandler(
+            self,
+            "identity-ops",
+            self.configure_charm,
+            mandatory="identity-ops" in self.mandatory_relations,
+            name=self.os_exporter_user,
+            domain=self.domain,
+            project=self.project,
+            project_domain=self.domain,
+            role="admin",
+            add_suffix=True,
+            rotate=ops.SecretRotate.MONTHLY,
+            extra_ops=self._get_list_endpoint_ops(),
+            extra_ops_process=self._handle_list_endpoint_response,
         )
         handlers.append(self.user_id_ops)
         self.metrics_endpoint = MetricsEndpointRelationHandler(
@@ -359,9 +357,7 @@ class OSExporterOperatorCharm(sunbeam_charm.OSBaseOperatorCharmK8S):
         )
         return credentials_secret.id
 
-    def _handle_list_endpoint_response(
-        self, event: ops.EventBase, response: dict
-    ) -> None:
+    def _handle_list_endpoint_response(self, event: ops.EventBase, response: dict) -> None:
         """Handle response from identity-ops."""
         logger.info("%r", response)
         if {

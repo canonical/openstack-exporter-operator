@@ -22,10 +22,10 @@ from unittest.mock import (
 )
 
 import charm
-import ops_sunbeam.test_utils as test_utils
 from ops.testing import (
     Harness,
 )
+from ops_sunbeam import test_utils
 
 
 class _OSExporterTestOperatorCharm(charm.OSExporterOperatorCharm):
@@ -62,9 +62,7 @@ class TestOSExporterOperatorCharm(test_utils.CharmTestCase):
         """Add complete Identity resource relation."""
         rel_id = harness.add_relation("identity-ops", "keystone")
         harness.add_relation_unit(rel_id, "keystone/0")
-        harness.charm.user_id_ops.get_config_credentials = Mock(
-            return_value=("test", "test")
-        )
+        harness.charm.user_id_ops.get_config_credentials = Mock(return_value=("test", "test"))
         harness.update_relation_data(
             rel_id,
             "keystone",
