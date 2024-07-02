@@ -6,6 +6,7 @@ applications:
   openstack-exporter:
     charm: openstack-exporter  # To be overridden by overlay
     num_units: 1
+    constraints: cores=1 mem=2048
   grafana-agent:
     charm: grafana-agent
     channel: stable
@@ -18,6 +19,7 @@ applications:
       loglevel: 1
       monitor-count: 1
       source: *openstack-origin
+    constraints: cores=1 mem=2048
   ceph-osd:
     charm: ceph-osd
     channel: quincy/stable
@@ -34,6 +36,7 @@ applications:
     num_units: 1
     options:
       openstack-origin: *openstack-origin
+    constraints: cores=1 mem=2048
   keystone-mysql-router:
     charm: mysql-router
     channel: 8.0/stable
@@ -41,6 +44,7 @@ applications:
     charm: vault
     channel: 1.8/stable
     num_units: 1
+    constraints: cores=1 mem=2048
   vault-mysql-router:
     charm: mysql-router
     channel: 8.0/stable
@@ -50,12 +54,14 @@ applications:
     options:
       source: *openstack-origin
     num_units: 3
+    constraints: cores=1 mem=2048
   glance:
     charm: glance
     channel: yoga/stable
     num_units: 1
     options:
       openstack-origin: *openstack-origin
+    constraints: cores=1 mem=2048
   glance-mysql-router:
     charm: mysql-router
     channel: 8.0/stable
@@ -86,6 +92,7 @@ applications:
       network-manager: Neutron
       openstack-origin: distro
       verbose: true
+    constraints: cores=1 mem=2048
   nova-cloud-controller-mysql-router:
     charm: mysql-router
     channel: 8.0/stable
@@ -101,6 +108,7 @@ applications:
       openstack-origin: *openstack-origin
       overwrite: "false"
       verbose: true
+    constraints: cores=1 mem=2048
   cinder-ceph:
     charm: cinder-ceph
     channel: yoga/stable
@@ -120,6 +128,7 @@ applications:
       path-mtu: 1550
       physical-network-mtus: physnet1:1500
       verbose: true
+    constraints: cores=1 mem=2048
   neutron-api-mysql-router:
     charm: mysql-router
     channel: 8.0/stable
@@ -129,6 +138,7 @@ applications:
     num_units: 1
     options:
       min-cluster-size: 1
+    constraints: cores=1 mem=2048
   placement:
     charm: placement
     channel: yoga/stable
@@ -136,6 +146,7 @@ applications:
     options:
       debug: true
       openstack-origin: *openstack-origin
+    constraints: cores=1 mem=2048
   placement-mysql-router:
     charm: mysql-router
     channel: 8.0/stable
@@ -148,6 +159,7 @@ applications:
     num_units: 3
     options:
       source: distro
+    constraints: cores=1 mem=2048
   ovn-chassis:
     charm: ovn-chassis
     channel: 22.03/stable
