@@ -1,0 +1,5 @@
+options:
+  region:
+    default: RegionOne
+    description: Name of the OpenStack region
+    type: string

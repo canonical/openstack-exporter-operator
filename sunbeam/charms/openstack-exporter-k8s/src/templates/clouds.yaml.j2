@@ -1,0 +1,17 @@
+clouds:
+  default:
+    region_name: {{ options.region }}
+    identity_api_version: 3
+    identity_interface: admin
+    auth:
+      username: {{ os_exporter.username }}
+      password: {{ os_exporter.password }}
+      project_name: {{ os_exporter.project_name }}
+      project_domain_name: {{ os_exporter.domain_name }}
+      user_domain_name: {{ os_exporter.domain_name }}
+      auth_url: {{ os_exporter.auth_url }}
+{% if receive_ca_cert and receive_ca_cert.ca_bundle -%}
+    cacert: {{ receive_ca_cert.ca_bundle }}
+{% else -%}
+    verify: false
+{% endif -%}
