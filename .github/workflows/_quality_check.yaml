@@ -1,6 +1,13 @@
 name: Quality Checks
 
 on:
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
   workflow_call:
     inputs:
       tox-version:
@@ -15,13 +22,6 @@ on:
         description: "Python version (default to 3.10)"
         type: string
         default: "3.10"
-    secrets:
-      JUJU_CONTROLLERS_YAML:
-        required: True
-      JUJU_ACCOUNTS_YAML:
-        required: True
-      OPENSTACK_AUTH_ENV:
-        required: True
 
 jobs:
 
@@ -57,24 +57,31 @@ jobs:
 
   integration-test:
     needs: [lint-test, unit-test]
-    uses: canonical/bootstack-actions/.github/workflows/func.yaml@v3
+    runs-on: ['self-hosted', 'x64', 'jammy', 'xlarge']
+    timeout-minutes: 240
     strategy:
       fail-fast: false
       matrix:
         include:
           - juju-channel: "3.4/stable"
-            command: "TEST_JUJU3=true make integration"  # using TEST_JUJU3 due to https://github.com/openstack-charmers/zaza/commit/af7eea953dd5d74d3d074fe67b5765dca3911ca6
-    with:
-      command: ${{ matrix.command }}
-      juju-channel: ${{ matrix.juju-channel }}
-      tox-version: ${{ inputs.tox-version }}
-      nested-containers: false
-      timeout-minutes: 120
-      action-operator: false
-      external-controller: true
-      runs-on: "['self-hosted', 'runner-openstack-exporter']"
-      juju-controller: soleng-ci-ctrl-34
-      zaza-yaml: "LS0tCm1vZGVsX3NldHRpbmdzOgogIGltYWdlLXN0cmVhbTogcmVsZWFzZWQKICB1cGRhdGUtc3RhdHVzLWhvb2staW50ZXJ2YWw6IDMwcwpyZWdpb246IHByb2RzdGFjazYKY2xvdWQ6IGJ1aWxkZXItY2xvdWQKY3JlZGVudGlhbDogYnVpbGRlci1jbG91ZC1jcmVkCg=="
-    secrets:
-      juju-controllers-yaml: ${{ secrets.JUJU_CONTROLLERS_YAML }}
-      juju-accounts-yaml: ${{ secrets.JUJU_ACCOUNTS_YAML }}
+            command: "TEST_JUJU3=1 make integration" # using TEST_JUJU3 due to https://github.com/openstack-charmers/zaza/commit/af7eea953dd5d74d3d074fe67b5765dca3911ca6
+    steps:
+      # Enable tmate debugging of manually-triggered workflows if the input option was provided
+      - name: Setup tmate session
+        uses: canonical/action-tmate@main
+        #if: ${{ inputs.debug_enabled }}
+        with:
+          detached: true
+      - uses: actions/checkout@v4
+      - name: Setup Juju ${{ matrix.juju-channel }} environment
+        uses: charmed-kubernetes/actions-operator@main
+        with:
+          provider: lxd
+          juju-channel: ${{ matrix.juju-channel }}
+          # slow things down as we're on a single VM
+          bootstrap-options: '--model-default="num-container-provision-workers=1" --model-default="num-provision-workers=1"'
+      - name: Run functional tests
+        run: ${{ matrix.command }}
+      - name: Collect juju-crashdump
+        if: failure()
+        run: juju-crashdump --model "$(juju models | grep 'zaza-' | awk '{print $1}')"
