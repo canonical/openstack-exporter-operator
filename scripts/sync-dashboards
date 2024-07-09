@@ -13,6 +13,7 @@ DASHBOARDS = [
     "cloud.json",
     "compute.json",
     "service.json",
+    "project.json",
 ]
 
 
