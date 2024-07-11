@@ -6,5 +6,6 @@ git checkout -b staging-branch sunbeam/main
 git subtree split -P charms/openstack-exporter-k8s/src -b k8s-exporter
 git checkout k8s-exporter
 git rm -r $(ls | grep -vE '^grafana_dashboards$|^prometheus_alert_rules$')
+git commit -m "Remove unwanted files"
 git checkout main
 git subtree add -P src/sunbeam k8s-exporter --squash
