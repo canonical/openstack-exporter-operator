@@ -29,6 +29,9 @@ check-dashboard-updates:
 sync-dashboards:
 	./scripts/sync-dashboards
 
+sync-dashboards-alert-rules:
+	./scripts/sync-dashboards-and-alert-rules.sh
+
 clean:
 	@echo "Cleaning existing build"
 	@rm -f ${PROJECTPATH}/${CHARM_NAME}*.charm

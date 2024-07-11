@@ -1,0 +1,44 @@
+name: Update files
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '43 1 * * 1'
+
+jobs:
+
+  pull-from-sunbeam:
+    name: Pull files from sunbeam
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout local repository
+        uses: actions/checkout@v4
+        
+      - name: Check differences
+        run: make sync-dashboards-alert-rules
+
+      - name: Import and configure the GPG key for Noctua
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.NOCTUA_GPG_PRIVATE }}
+          passphrase: ${{ secrets.NOCTUA_GPG_PASSPHRASE }}
+          git_config_global: true
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      - name: Create a PR for local changes
+        uses: peter-evans/create-pull-request@v6
+        id: cpr
+        with:
+          token: ${{ secrets.OBSERVABILITY_NOCTUA_TOKEN }}
+          commit-message: "chore: update charm libraries"
+          committer: "Noctua <webops+observability-noctua-bot@canonical.com>"
+          author: "Noctua <webops+observability-noctua-bot@canonical.com>"
+          title: "chore: update charm libraries"
+          body: |
+            Automated action to fetch the latest minor and major versions of all charm libraries used by this charm. The branch of this PR 
+            will be overwritten during the next check. Unless you really know what you're doing, you 
+            most likely don't want to push any commits to this branch.
+
+            The PR will be auto-merged if the CI is green, on the next iteration of the workflow.
+          branch: chore/auto-libs
+          delete-branch: true
