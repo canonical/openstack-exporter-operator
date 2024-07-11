@@ -23,12 +23,6 @@ help:
 update-charm-libs:
 	./scripts/update-charm-libs.sh
 
-check-dashboard-updates:
-	./scripts/sync-dashboards --check
-
-sync-dashboards:
-	./scripts/sync-dashboards
-
 sync-dashboards-alert-rules:
 	./scripts/sync-dashboards-and-alert-rules.sh
 

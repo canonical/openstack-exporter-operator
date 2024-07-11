@@ -53,7 +53,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
                 {"path": "/metrics", "port": self.config["port"]},
             ],
             metrics_rules_dir="./src/sunbeam/prometheus_alert_rules",
-            dashboard_dirs=["./src/grafana_dashboards", "./src/sunbeam/grafana_dashboards"],
+            dashboard_dirs=["./src/sunbeam/grafana_dashboards"],
         )
 
         self.framework.observe(self.on.install, self._on_install)
