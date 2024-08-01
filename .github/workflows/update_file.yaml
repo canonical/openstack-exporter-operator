@@ -1,6 +1,7 @@
 name: Update files
 on:
   workflow_dispatch:
+  workflow_call:
   schedule:
     - cron: '43 1 * * 1'
 
