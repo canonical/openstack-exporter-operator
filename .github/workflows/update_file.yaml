@@ -1,3 +1,4 @@
+# This workflow is to sync dashboards and alert rules from the Sunbeam repo and create a PR if there is an update.
 name: Update files
 on:
   workflow_dispatch:
