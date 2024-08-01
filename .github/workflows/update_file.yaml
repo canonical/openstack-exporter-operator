@@ -21,8 +21,15 @@ jobs:
           git config --global user.name "$(gh api /users/${GITHUB_ACTOR} | jq .name -r)"
           git config -l
           
-      - name: Check pull from sunbeam
-        run: make sync-dashboards-alert-rules
+      - name: Pull dashboard and alert rules from sunbeam
+        run: |
+          git clone --sparse https://opendev.org/openstack/sunbeam-charms.git
+          cd sunbeam-charms
+          git sparse-checkout set charms/openstack-exporter-k8s/src/grafana_dashboards charms/openstack-exporter-k8s/src/prometheus_alert_rules
+          cp -r charms/openstack-exporter-k8s/src/grafana_dashboards ../src/
+          cp -r charms/openstack-exporter-k8s/src/prometheus_alert_rules ../src/
+          cd ..
+          rm -rf sunbeam-charms
 
       - name: Create a PR for local changes
         uses: peter-evans/create-pull-request@v6
