@@ -16,9 +16,6 @@ jobs:
   pull-from-sunbeam:
     name: Pull files from sunbeam
     runs-on: ubuntu-latest
-    secrets:
-      APP_ID: ${{ secrets.APP_ID }}
-      APP_PEM: ${{ secrets.APP_PEM }}
     steps:
       - name: Checkout local repository
         uses: actions/checkout@v4
