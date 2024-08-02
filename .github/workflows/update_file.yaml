@@ -5,13 +5,7 @@ on:
   workflow_call:
   schedule:
     - cron: '43 1 * * 1'
-    secrets:
-      APP_ID:
-        description: The id for the github app used to generate the github app token
-        required: true
-      APP_PEM:
-        description: The PEM file for the github app used to generate the github app token
-        required: true
+
 
 env:
   REPO_OWNER: canonical
@@ -22,6 +16,13 @@ jobs:
   pull-from-sunbeam:
     name: Pull files from sunbeam
     runs-on: ubuntu-latest
+    secrets:
+      APP_ID:
+        description: The id for the github app used to generate the github app token
+        required: true
+      APP_PEM:
+        description: The PEM file for the github app used to generate the github app token
+        required: true
     steps:
       - name: Checkout local repository
         uses: actions/checkout@v4
