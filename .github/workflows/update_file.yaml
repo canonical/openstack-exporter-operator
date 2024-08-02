@@ -17,12 +17,8 @@ jobs:
     name: Pull files from sunbeam
     runs-on: ubuntu-latest
     secrets:
-      APP_ID:
-        description: The id for the github app used to generate the github app token
-        required: true
-      APP_PEM:
-        description: The PEM file for the github app used to generate the github app token
-        required: true
+      APP_ID: ${{ secrets.APP_ID }}
+      APP_PEM: ${{ secrets.APP_PEM }}
     steps:
       - name: Checkout local repository
         uses: actions/checkout@v4

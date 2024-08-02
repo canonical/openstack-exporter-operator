@@ -24,6 +24,4 @@ jobs:
   update-file:
     name: Check updates for charm files
     uses: ./.github/workflows/update_file.yaml
-    secrets:
-      APP_ID: ${{ secrets.APP_ID }}
-      APP_PEM: ${{ secrets.APP_PEM }}
+
