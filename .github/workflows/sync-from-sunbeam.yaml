@@ -3,14 +3,8 @@ name: sync-from-sunbeam
 on:
   workflow_dispatch:
   workflow_call:
-    secrets:
-      APP_ID:
-        description: The id for the github app used to generate the github app token
-        required: true
-      APP_PEM:
-        description: The PEM file for the github app used to generate the github app token
-        required: true
-
+  schedule:
+    - cron: '43 1 * * 1'
 
 
 env:
