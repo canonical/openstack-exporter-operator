@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Clone the repository with sparse checkout
-git clone --sparse https://opendev.org/openstack/sunbeam-charms.git
+git clone --sparse --single-branch --depth=1 https://opendev.org/openstack/sunbeam-charms.git
 cd sunbeam-charms
 
 # Set sparse checkout paths

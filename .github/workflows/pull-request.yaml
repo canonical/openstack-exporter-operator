@@ -23,5 +23,5 @@ jobs:
 
   update-file:
     name: Check updates for charm files
-    uses: ./.github/workflows/update_file.yaml
+    uses: ./.github/workflows/sync-from-sunbeam.yaml
 
