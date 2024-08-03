@@ -22,7 +22,7 @@ jobs:
           
       - name: Pull dashboard and alert rules from sunbeam
         run: |
-          bash scripts/sync_sunbeam.sh
+          bash scripts/sync-from-sunbeam.sh
 
       - uses: actions/create-github-app-token@v1
         id: app_token
