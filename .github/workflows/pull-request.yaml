@@ -24,7 +24,7 @@ jobs:
   sync-from-sunbeam:
     name: Check updates for charm files
     uses: ./.github/workflows/sync-from-sunbeam.yaml
-      secrets:
-        APP_ID: ${{ secrets.APP_ID }}
-        APP_PEM: ${{ secrets.APP_PEM }}
+    secrets:
+      APP_ID: ${{ secrets.APP_ID }}
+      APP_PEM: ${{ secrets.APP_PEM }}
 
