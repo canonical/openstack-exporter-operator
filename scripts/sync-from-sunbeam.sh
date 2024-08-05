@@ -1,9 +1,9 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # the directory of the script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# the temp directory used, within $DIR
+# the temp directory used, under $TMPDIR or /tmp
 WORK_DIR=$(mktemp -d)
 
 # check if tmp dir was created
@@ -13,7 +13,7 @@ if [[ ! "$WORK_DIR" || ! -d "$WORK_DIR" ]]; then
 fi
 
 # deletes the temp directory
-function cleanup {      
+function cleanup {
   rm -rf "$WORK_DIR"
   echo "Deleted temp working directory $WORK_DIR"
 }

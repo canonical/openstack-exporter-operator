@@ -54,23 +54,19 @@ charmcraft fetch-lib <operator-libs>
 
 And add the corresponding command to `./scripts/update-charm-libs.sh`.
 
-## Checking for dashboard updates
+## Checking for dashboard and alert rule updates
 
-The openstack exporter dashboards are managed
+The openstack exporter dashboards and alert rules are managed
 in the [sunbeam-charms](https://opendev.org/openstack/sunbeam-charms) repository.
 They are shared between this project for Charmed OpenStack,
 and openstack-exporter-k8s in sunbeam-charms for Microstack (Sunbeam).
-To check if updates to the dashboards are available you can run the make target:
+The files located in src/grafana_dashboards and src/prometheus_alert_rules are synchronized using the script located at src/sync-from-sunbeam.sh. To update these files, execute the following command:
 
 ```shell
-make check-dashboard-updates
+./scripts/sync-from-sunbeam.sh
 ```
 
-If it reports updates, you can update them by running:
-
-```shell
-make sync-dashboards
-```
+This script is also executed periodically as part of a GitHub Actions workflow to automatically synchronize the files and create a pull request.
 
 ## Build the charm
 

@@ -20,9 +20,3 @@ jobs:
     with:
       tox-version: ""
       python-version: "3.10"
-
-  sync-from-sunbeam:
-    name: Check updates for charm files
-    uses: ./.github/workflows/sync-from-sunbeam.yaml
-
-
