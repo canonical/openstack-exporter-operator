@@ -35,7 +35,7 @@ jobs:
         uses: canonical/create-pull-request@main
         with:
           upsert: true  # Allow update PRs
-          ignore-no-changes: false # Enabling this option allows the action to do nothing and exit successfully when there are no changes.
+          ignore-no-changes: true # Enabling this option allows the action to do nothing and exit successfully when there are no changes.
           branch-name: chore/sync-from-sunbeam  # create new branch with the changes as the source branch for the PR
           repository: ${{ env.REPO_OWNER }}/${{ env.REPO_PATH }}
           title: "Update dashboards and alerts"
