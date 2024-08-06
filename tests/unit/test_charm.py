@@ -50,8 +50,8 @@ class TestCharm:
                 "cloud": CLOUD_NAME,
                 "os-client-config": str(OS_CLIENT_CONFIG),
                 "web": {"listen-address": f":{config.get('port', 9180)}"},
-                "cache": config.get("cache", False),
-                "cache-ttl": config.get("cache_ttl", "300s"),
+                "cache": config["cache"],
+                "cache-ttl": config["cache_ttl"],
             }
         )
         self.harness.charm._write_cloud_config.assert_called_with(mock_expect_keystone_data)

@@ -49,7 +49,7 @@ config:
         Customizable based on the size of the OpenStack cluster.
         Format details: https://pkg.go.dev/time#ParseDuration
     cache:
-      default: false
+      default: true
       type: boolean
       description: |
         Enables the exporter cache globally. Refreshes at intervals of cache_ttl/2.
