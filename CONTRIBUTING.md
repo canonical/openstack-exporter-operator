@@ -60,7 +60,7 @@ The openstack exporter dashboards and alert rules are managed
 in the [sunbeam-charms](https://opendev.org/openstack/sunbeam-charms) repository.
 They are shared between this project for Charmed OpenStack,
 and openstack-exporter-k8s in sunbeam-charms for Microstack (Sunbeam).
-The files located in src/grafana_dashboards and src/prometheus_alert_rules are synchronized using the script located at src/sync-from-sunbeam.sh. To update these files, execute the following command:
+The files located in src/grafana_dashboards and src/prometheus_alert_rules are synchronized using the script located at ./scripts/sync-from-sunbeam.sh. To update these files, execute the following command:
 
 ```shell
 ./scripts/sync-from-sunbeam.sh
