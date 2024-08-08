@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout local repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Pull dashboard and alert rules from sunbeam
         run: |
@@ -38,7 +40,6 @@ jobs:
           ignore-no-changes: true # Enabling this option allows the action to do nothing and exit successfully when there are no changes.
           branch-name: chore/sync-from-sunbeam  # create new branch with the changes as the source branch for the PR
           base: main
-          fetch-depth: 0
           github-token: ${{ steps.app_token.outputs.token }}
           repository: ${{ env.REPO_OWNER }}/${{ env.REPO_PATH }}
           title: "Update dashboards and alerts"
