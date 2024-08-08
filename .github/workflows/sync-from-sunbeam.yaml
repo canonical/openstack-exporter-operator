@@ -19,12 +19,10 @@ jobs:
     steps:
       - name: Checkout local repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: List all branches (local and remote)
+      - name: List all branches
         run: |
-          echo "Listing all branches (local and remote):"
+          echo "Listing all branches:"
           git branch -a
 
       - name: Pull dashboard and alert rules from sunbeam
@@ -44,7 +42,7 @@ jobs:
           upsert: true  # Allow update PRs
           ignore-no-changes: true # Enabling this option allows the action to do nothing and exit successfully when there are no changes.
           branch-name: chore/sync-from-sunbeam  # create new branch with the changes as the source branch for the PR
-          base: main
+          base: remotes/origin/main
           github-token: ${{ steps.app_token.outputs.token }}
           repository: ${{ env.REPO_OWNER }}/${{ env.REPO_PATH }}
           title: "Update dashboards and alerts"
