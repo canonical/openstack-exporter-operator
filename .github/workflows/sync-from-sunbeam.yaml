@@ -22,10 +22,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: List all branches
+      - name: Echo everything under refs/heads
         run: |
-          echo "Listing all branches:"
-          git branch -a
+          echo "Contents of refs/heads:"
+          ls -R .git/refs/heads
 
       - name: Pull dashboard and alert rules from sunbeam
         run: |
