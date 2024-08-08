@@ -22,6 +22,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: List all branches (local and remote)
+        run: |
+          echo "Listing all branches (local and remote):"
+          git branch -a
+
       - name: Pull dashboard and alert rules from sunbeam
         run: |
           ./scripts/sync-from-sunbeam.sh
