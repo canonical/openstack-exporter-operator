@@ -8,7 +8,7 @@ applications:
     num_units: 1
   grafana-agent:
     charm: grafana-agent
-    channel: edge
+    channel: stable
   ceph-mon:
     charm: ceph-mon
     channel: quincy/stable
