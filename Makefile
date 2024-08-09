@@ -23,12 +23,6 @@ help:
 update-charm-libs:
 	./scripts/update-charm-libs.sh
 
-check-dashboard-updates:
-	./scripts/sync-dashboards --check
-
-sync-dashboards:
-	./scripts/sync-dashboards
-
 clean:
 	@echo "Cleaning existing build"
 	@rm -f ${PROJECTPATH}/${CHARM_NAME}*.charm
