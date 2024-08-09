@@ -83,6 +83,8 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
         new_value = "random_ca"  # bad ssl_ca (will be reset shortly)
         old_value = model.get_application_config(APP_NAME).get(key)
         model.set_application_config(APP_NAME, {key: new_value})
+        # Change cache to false to not get previous scrape results
+        model.set_application_config(APP_NAME, {"cache": "false"})
         model.block_until_all_units_idle()
 
         # Get snap config: os-client-config and verify it's applied
@@ -106,6 +108,10 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
         command = "curl -q localhost:9180/metrics"
         results = model.run_on_leader(APP_NAME, command)
         self.assertEqual(int(results.get("Code", "-1")), 0)
+
+        # Enable cache again
+        model.set_application_config(APP_NAME, {"cache": "true"})
+        model.block_until_all_units_idle()
 
 
 class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
