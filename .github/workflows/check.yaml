@@ -1,0 +1,109 @@
+name: Tests
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: python3 -m pip install tox
+
+      - name: Run linters
+        run: tox -e lint
+
+  unit:
+    name: Unit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: python3 -m pip install tox
+
+      - name: Run unit test
+        run: tox -e unit
+
+  integration:
+    name: Integration
+    needs: [lint, unit]
+    runs-on: ['self-hosted', 'jammy', 'runner-openstack-exporter']
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install tox latest release
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox
+
+      - name: external controller juju config
+        run: |
+          mkdir -p $HOME/.local/share/juju
+          # TODO: can we remove the base64 encoding?
+          echo ${{ secrets.JUJU_CONTROLLERS_YAML }} | base64 -d > $HOME/.local/share/juju/controllers.yaml
+          echo ${{ secrets.JUJU_ACCOUNTS_YAML }} | base64 -d > $HOME/.local/share/juju/accounts.yaml
+
+      - name: append to zaza yaml
+        run: |
+           cat >> $HOME/.zaza.yaml <<EOF
+           ---
+           model_settings:
+             image-stream: released
+             update-status-hook-interval: 30s
+           region: prodstack6
+           cloud: builder-cloud
+           credential: builder-cloud-cred
+           EOF
+
+      - name: install external controller required packages
+        run: |
+           sudo snap install charmcraft --channel 2.x/stable --classic
+           sudo snap install juju --channel 3.4/stable --classic
+           sudo --preserve-env=http_proxy,https_proxy,no_proxy pip3 install tox
+           juju switch soleng-ci-ctrl-34
+           # Workaround to avoid missing cookies bug
+           # https://github.com/search?q=repo%3Ajuju%2Fpython-libjuju%20cookies_for_controller&type=code
+           juju show-controller soleng-ci-ctrl-34 &>/dev/null
+
+      - name: Show juju information
+        run: |
+          juju version
+          juju controllers | grep Version -A 1 | awk '{print $9}'
+
+      - name: Run tests
+        run: make integration
+        env:
+          TEST_JUJU3: "1"  # https://github.com/openstack-charmers/zaza/pull/653
