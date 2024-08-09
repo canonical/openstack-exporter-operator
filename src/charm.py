@@ -4,7 +4,7 @@
 # See LICENSE file for licensing details.
 """OpenStack Exporter Operator.
 
-This charm provide golang-openstack-exporter snap as part of the Charmed
+This charm provide charmed-openstack-exporter snap as part of the Charmed
 OpenStack deployment.
 """
 
@@ -21,15 +21,12 @@ from ops.model import (
     ModelError,
     WaitingStatus,
 )
-from service import get_installed_snap_service, snap_install
+from service import SNAP_NAME, get_installed_snap_service, snap_install
 
 logger = logging.getLogger(__name__)
 
 # charm global constants
 RESOURCE_NAME = "openstack-exporter"
-
-# snap global constants
-SNAP_NAME = "golang-openstack-exporter"
 
 # Snap config options global constants
 # This is to match between openstack-exporter and the entry in clouds.yaml
@@ -37,7 +34,7 @@ CLOUD_NAME = "openstack"
 # store the clouds.yaml where it's easily accessible by the openstack-exporter snap
 # This is the SNAP_COMMON directory for the exporter snap, which is accessible,
 # unversioned, and retained across updates of the snap.
-OS_CLIENT_CONFIG = "/var/snap/golang-openstack-exporter/common/clouds.yaml"
+OS_CLIENT_CONFIG = "/var/snap/charmed-openstack-exporter/common/clouds.yaml"
 
 
 class OpenstackExporterOperatorCharm(ops.CharmBase):
@@ -156,8 +153,6 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
     def install(self) -> None:
         """Install or upgrade charm."""
         resource = self.get_resource()
-        if not resource:
-            raise ValueError("resource is invalid or not found.")
         snap_install(resource)
 
     def _configure(self, event: ops.HookEvent) -> None:

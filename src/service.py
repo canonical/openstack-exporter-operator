@@ -8,6 +8,8 @@ from charms.operator_libs_linux.v2 import snap
 
 logger = getLogger(__name__)
 
+SNAP_NAME = "charmed-openstack-exporter"
+
 
 class SnapService:
     """A class representing the snap service(s)."""
@@ -49,15 +51,21 @@ class SnapService:
         self.snap_client.set(snap_config, typed=True)
 
 
-def snap_install(resource: str) -> SnapService:
+def snap_install(resource: Optional[str]) -> SnapService:
     """Install or refresh the snap, and return the snap service.
+
+    If resource is passed it will have preference over the one in the snapcraft store.
 
     Raises an exception on error.
     """
     try:
         logger.debug("installing snap.")
-        logger.debug("fetching from resource.")
-        snap_client = snap.install_local(resource, dangerous=True)
+        if resource:
+            logger.debug("fetching from resource.")
+            snap_client = snap.install_local(resource, dangerous=True)
+        else:
+            logger.debug("fetching %d from snapcraft store", SNAP_NAME)
+            snap_client = snap.add(SNAP_NAME)
     except snap.SnapError as e:
         logger.error("failed to install snap: %s", str(e))
         raise e  # need to crash on_install event if it's not okay
@@ -88,7 +96,7 @@ def workaround_bug_268() -> None:
     https://github.com/openstack-exporter/openstack-exporter/issues/268
     """
     logger.info("Adding service override to workaround bug 268")
-    dir = "/etc/systemd/system/snap.golang-openstack-exporter.service.service.d"
+    dir = "/etc/systemd/system/snap.charmed-openstack-exporter.service.service.d"
     os.makedirs(dir, exist_ok=True)
     with open(f"{dir}/bug_268.conf", "w") as f:
         f.write("[Service]\nEnvironment=OS_COMPUTE_API_VERSION=2.87\n")

@@ -7,13 +7,12 @@ import logging
 import unittest
 
 import yaml
-from charm import CLOUD_NAME, OS_CLIENT_CONFIG
+from charm import CLOUD_NAME, OS_CLIENT_CONFIG, SNAP_NAME
 from zaza import model
 
 logger = logging.getLogger(__name__)
 
 APP_NAME = "openstack-exporter"
-SNAP_NAME = "golang-openstack-exporter"
 STATUS_TIMEOUT = 120  # must be larger than the time defined in zaza-yaml
 
 

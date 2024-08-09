@@ -4,7 +4,7 @@ PROJECTPATH=$(dir $(realpath $(MAKEFILE_LIST)))
 CHARMCRAFT_FILE="charmcraft.yaml"
 CHARM_NAME=$(shell cat ${PROJECTPATH}/${CHARMCRAFT_FILE} | grep -E "^name:" | awk '{print $$2}')
 CHARM_LOCATION=$(shell find ${PROJECTPATH} -type f -name "${CHARM_NAME}*.charm" | head -n 1)
-CHARM_SNAP_LOCATION=$(shell find ${PROJECTPATH} -type f -name "golang-openstack-exporter*.snap" | head -n 1)
+CHARM_SNAP_LOCATION=$(shell find ${PROJECTPATH} -type f -name "charmed-openstack-exporter*.snap" | head -n 1)
 
 help:
 	@echo "This project supports the following targets"
@@ -34,14 +34,11 @@ clean:
 	@rm -f ${PROJECTPATH}/${CHARM_NAME}*.charm
 	@charmcraft clean
 	@echo "Remove download snap"
-	@rm -f ${PROJECTPATH}/golang-openstack-exporter*.snap
+	@rm -f ${PROJECTPATH}/charmed-openstack-exporter*.snap
 
 build: clean
 	@echo "Building charm"
 	@charmcraft -v pack
-
-download-snap:
-	wget -q https://github.com/canonical/openstack-exporter-operator/releases/download/rev2/golang-openstack-exporter_amd64.snap -O ./golang-openstack-exporter_amd64.snap
 
 integration: build download-snap
 	CHARM_LOCATION=${CHARM_LOCATION} CHARM_SNAP_LOCATION=${CHARM_SNAP_LOCATION} tox -e integration -- ${FUNC_ARGS}
