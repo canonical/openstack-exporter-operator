@@ -8,7 +8,7 @@ on:
 
 jobs:
   check:
-    uses: ./.github/workflows/pull-request.yaml
+    uses: ./.github/workflows/check.yaml
     secrets: inherit
 
   release:
