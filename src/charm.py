@@ -141,7 +141,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         try:
             snap_path = self.model.resources.fetch(RESOURCE_NAME).absolute()
         except ModelError:
-            logger.warning("cannot fetch charm resource")
+            logger.debug("cannot fetch charm resource")
             return None
 
         if not os.path.getsize(snap_path) > 0:

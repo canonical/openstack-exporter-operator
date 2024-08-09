@@ -61,10 +61,10 @@ def snap_install(resource: Optional[str]) -> SnapService:
     try:
         logger.debug("installing snap.")
         if resource:
-            logger.debug("fetching from resource.")
+            logger.debug("fetching %s from resource.", SNAP_NAME)
             snap_client = snap.install_local(resource, dangerous=True)
         else:
-            logger.debug("fetching %d from snapcraft store", SNAP_NAME)
+            logger.debug("fetching %s from snapcraft store", SNAP_NAME)
             snap_client = snap.add(SNAP_NAME)
     except snap.SnapError as e:
         logger.error("failed to install snap: %s", str(e))
