@@ -88,6 +88,11 @@ jobs:
            credential: builder-cloud-cred
            EOF
 
+      - name: Configure latest lxd (to build the charm in)
+        uses: canonical/setup-lxd@2aa6f7caf7d1484298a64192f7f63a6684e648a4  # latest main at time of writing
+        with:
+          channel: latest/stable
+
       - name: install external controller required packages
         run: |
            sudo snap install charmcraft --channel 2.x/stable --classic
@@ -103,7 +108,7 @@ jobs:
           juju version
           juju controllers | grep Version -A 1 | awk '{print $9}'
 
-      - name: Run tests
+      - name: Build charm and run tests
         run: make integration
         env:
           TEST_JUJU3: "1"  # https://github.com/openstack-charmers/zaza/pull/653
