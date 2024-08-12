@@ -56,16 +56,26 @@ def snap_install(resource: Optional[str]) -> SnapService:
 
     If resource is passed it will have preference over the one in the snapcraft store.
 
+
+    When the revision of a snap has "x" on it e.g. "x1" this means that the snap was installed by
+    a local file. The way to return to the one from snapstore is by passing an empty file. In such
+    scenario, the local installation will be removed to be able to install from the snapstore.
+
     Raises an exception on error.
     """
     try:
         logger.debug("installing snap.")
         if resource:
-            logger.debug("fetching %s from resource.", SNAP_NAME)
+            logger.debug("installing %s from resource.", SNAP_NAME)
             snap_client = snap.install_local(resource, dangerous=True)
         else:
-            logger.debug("fetching %s from snapcraft store", SNAP_NAME)
-            snap_client = snap.add(SNAP_NAME)
+            snap_cache = snap.SnapCache()
+            o7k_exporter = snap_cache[SNAP_NAME]
+            if o7k_exporter.present and "x" in o7k_exporter.revision:
+                logger.info("removing local resource snap before installing from snapstore")
+                snap.remove(SNAP_NAME)
+            logger.debug("installing %s from snapcraft store", SNAP_NAME)
+            snap_client = snap.add(SNAP_NAME, channel="latest/stable")
     except snap.SnapError as e:
         logger.error("failed to install snap: %s", str(e))
         raise e  # need to crash on_install event if it's not okay
