@@ -28,8 +28,6 @@ targets to perform charming tasks:
 ```shell
 make                            # show help text
 make update-charm-libs          # update charm's libraries
-make check-dashboard-updates    # check if there's a new dashboard from the upstream
-make sync-dashboards            # update the dashboards from upstream
 make clean                      # remove unneeded files
 make build                      # build the charm
 make integration                # run the tests defined in the integration subdirectory
