@@ -35,11 +35,6 @@ make build                      # build the charm
 make integration                # run the tests defined in the integration subdirectory
 ```
 
-Note: You can use a local snap exporter to use in the integration test by placing it in the root of
-the repo and naming the snap file with the `charmed-openstack-exporter` prefix. When this happens,
-the Makefile will detect the file and save the path to the `CHARM_SNAP_LOCATION` environment
-variable. With this environment variable set, the zaza test will attach this file as a resource.
-
 ## Fetching libraries
 
 Charm libraries are managed with charmcraft and recorded in `./scripts/update-charm-libs.sh`.
