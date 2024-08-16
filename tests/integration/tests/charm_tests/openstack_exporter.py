@@ -7,8 +7,9 @@ import logging
 import unittest
 
 import yaml
-from charm import CLOUD_NAME, OS_CLIENT_CONFIG, SNAP_NAME
 from zaza import model
+
+from charm import CLOUD_NAME, OS_CLIENT_CONFIG
 
 logger = logging.getLogger(__name__)
 
