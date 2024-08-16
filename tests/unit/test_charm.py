@@ -6,6 +6,7 @@
 import ops
 import ops.testing
 import pytest
+
 from charm import CLOUD_NAME, OS_CLIENT_CONFIG, SNAP_NAME, OpenstackExporterOperatorCharm
 from service import SnapService
 
