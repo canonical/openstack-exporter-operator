@@ -21,6 +21,7 @@ from ops.model import (
     ModelError,
     WaitingStatus,
 )
+
 from service import get_installed_snap_service, snap_install
 
 logger = logging.getLogger(__name__)
