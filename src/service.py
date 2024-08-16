@@ -9,7 +9,6 @@ from charms.operator_libs_linux.v2 import snap
 logger = getLogger(__name__)
 
 SNAP_NAME = "charmed-openstack-exporter"
-UPSTREAM_SNAP = "golang-openstack-exporter"
 
 
 class SnapService:
@@ -52,23 +51,16 @@ class SnapService:
         self.snap_client.set(snap_config, typed=True)
 
 
-def snap_install(resource: Optional[str]) -> SnapService:
+def snap_install() -> SnapService:
     """Install the snap, and return the snap service.
 
-    Before installing the snap, it will remove the canonical and the upstream snap to ensure that
-    the snap installed is not a resource. Removing the golang exporter also ensure that there is
-    no conflict using the one from Canonical.
+    Before installing the snap, it will try to remove the upstream snap that could be installed on
+    older versions of this charm.
 
     Raises an exception on error.
     """
-    snap.remove([SNAP_NAME, UPSTREAM_SNAP])
+    remove_upstream_snap()
     try:
-        logger.debug("installing %s from snapcraft store", SNAP_NAME)
-        if resource:
-            logger.warning(
-                "Local resources cannot be used. Installing the exporter %s from snap store",
-                SNAP_NAME,
-            )
         snap_client = snap.add(SNAP_NAME, channel="latest/stable")
 
     except snap.SnapError as e:
@@ -78,6 +70,14 @@ def snap_install(resource: Optional[str]) -> SnapService:
         logger.info("installed %s snap.", snap_client.name)
         workaround_bug_268()
         return SnapService(snap_client)
+
+
+def remove_upstream_snap() -> None:
+    """Remove the old snap from upstream to not override with the charmed-openstack-exporter."""
+    try:
+        snap.remove(["golang-openstack-exporter"])
+    except snap.SnapError as e:
+        logger.error("failed to remove snap: %s", str(e))
 
 
 def get_installed_snap_service(snap_name: str) -> Optional[SnapService]:
@@ -101,7 +101,7 @@ def workaround_bug_268() -> None:
     https://github.com/openstack-exporter/openstack-exporter/issues/268
     """
     logger.info("Adding service override to workaround bug 268")
-    dir = "/etc/systemd/system/snap.charmed-openstack-exporter.service.service.d"
+    dir = f"/etc/systemd/system/snap.{SNAP_NAME}.service.service.d"
     os.makedirs(dir, exist_ok=True)
     with open(f"{dir}/bug_268.conf", "w") as f:
         f.write("[Service]\nEnvironment=OS_COMPUTE_API_VERSION=2.87\n")

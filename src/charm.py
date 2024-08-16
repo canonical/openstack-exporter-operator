@@ -10,7 +10,7 @@ OpenStack deployment.
 
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 
 import ops
 import yaml
@@ -18,15 +18,12 @@ from charms.grafana_agent.v0.cos_agent import COSAgentProvider
 from ops.model import (
     ActiveStatus,
     BlockedStatus,
-    ModelError,
     WaitingStatus,
 )
+
 from service import SNAP_NAME, get_installed_snap_service, snap_install
 
 logger = logging.getLogger(__name__)
-
-# charm global constants
-RESOURCE_NAME = "openstack-exporter"
 
 # Snap config options global constants
 # This is to match between openstack-exporter and the entry in clouds.yaml
@@ -34,7 +31,7 @@ CLOUD_NAME = "openstack"
 # store the clouds.yaml where it's easily accessible by the openstack-exporter snap
 # This is the SNAP_COMMON directory for the exporter snap, which is accessible,
 # unversioned, and retained across updates of the snap.
-OS_CLIENT_CONFIG = "/var/snap/charmed-openstack-exporter/common/clouds.yaml"
+OS_CLIENT_CONFIG = f"/var/snap/{SNAP_NAME}/common/clouds.yaml"
 
 
 class OpenstackExporterOperatorCharm(ops.CharmBase):
@@ -131,29 +128,9 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
                     return data
         return {}
 
-    def get_resource(self) -> Optional[str]:
-        """Return the path-to-resource or None if the resource is empty.
-
-        Fetch the charm's resource and check if the resource is an empty file
-        or not. If it's empty, return None. Otherwise, return the path to the
-        resource.
-        """
-        try:
-            snap_path = self.model.resources.fetch(RESOURCE_NAME).absolute()
-        except ModelError:
-            logger.debug("cannot fetch charm resource")
-            return None
-
-        if not os.path.getsize(snap_path) > 0:
-            logger.warning("resource is an empty file")
-            return None
-
-        return snap_path
-
     def install(self) -> None:
         """Install or upgrade charm."""
-        resource = self.get_resource()
-        snap_install(resource)
+        snap_install()
 
     def _configure(self, event: ops.HookEvent) -> None:
         """Configure the charm.
