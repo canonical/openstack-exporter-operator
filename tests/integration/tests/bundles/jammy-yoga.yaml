@@ -6,6 +6,7 @@ applications:
   openstack-exporter:
     charm: openstack-exporter  # To be overridden by overlay
     num_units: 1
+    constraints: cores=1 mem=2048 virt-type=virtual-machine
   grafana-agent:
     charm: grafana-agent
     channel: stable
@@ -18,7 +19,7 @@ applications:
       loglevel: 1
       monitor-count: 1
       source: *openstack-origin
-    constraints: arch=amd64 mem=2048
+    constraints: cores=1 mem=2048 virt-type=virtual-machine
   ceph-osd:
     charm: ceph-osd
     channel: quincy/stable
@@ -26,46 +27,47 @@ applications:
     options:
       loglevel: 1
       source: *openstack-origin
-    constraints: arch=amd64 mem=2048
+    constraints: cores=2 mem=2048 root-disk=5G virt-type=virtual-machine
     storage:
-      osd-devices: '10G'
+      osd-devices: '1G'
   keystone:
     charm: keystone
-    channel: yoga/edge
+    channel: yoga/stable
     num_units: 1
     options:
       openstack-origin: *openstack-origin
-    constraints: arch=amd64 mem=1024
+    constraints: cores=1 mem=2048 virt-type=virtual-machine
   keystone-mysql-router:
     charm: mysql-router
-    channel: latest/edge
+    channel: 8.0/stable
   vault:
     charm: vault
-    channel: latest/edge
+    channel: 1.8/stable
     num_units: 1
+    constraints: cores=1 mem=2048 virt-type=virtual-machine
   vault-mysql-router:
     charm: mysql-router
-    channel: latest/edge
+    channel: 8.0/stable
   mysql:
     charm: mysql-innodb-cluster
-    channel: latest/edge
+    channel: 8.0/stable
     options:
       source: *openstack-origin
     num_units: 3
-    constraints: arch=amd64 mem=4096
+    constraints: cores=1 mem=2048 virt-type=virtual-machine
   glance:
     charm: glance
-    channel: yoga/edge
+    channel: yoga/stable
     num_units: 1
     options:
       openstack-origin: *openstack-origin
-    constraints: arch=amd64 mem=1024
+    constraints: cores=1 mem=2048 virt-type=virtual-machine
   glance-mysql-router:
     charm: mysql-router
-    channel: latest/edge
+    channel: 8.0/stable
   nova-compute:
     charm: nova-compute
-    channel: yoga/edge
+    channel: yoga/stable
     num_units: 1
     options:
       enable-live-migration: true
@@ -77,28 +79,26 @@ applications:
       openstack-origin: *openstack-origin
       verbose: true
       debug: true
-    constraints: arch=amd64 mem=4096
-    storage:
-      ephemeral-device: cinder,1,51200M
+    constraints: cores=4 mem=4096 root-disk=5G virt-type=virtual-machine
   nova-cloud-controller-mysql-router:
     charm: mysql-router
-    channel: latest/edge
+    channel: 8.0/stable
   nova-cloud-controller:
     charm: nova-cloud-controller
-    channel: yoga/edge
+    channel: yoga/stable
     num_units: 1
     options:
       debug: true
       network-manager: Neutron
       openstack-origin: distro
       verbose: true
-    constraints: arch=amd64 mem=2048
+    constraints: cores=1 mem=2048 virt-type=virtual-machine
   nova-cloud-controller-mysql-router:
     charm: mysql-router
-    channel: latest/edge
+    channel: 8.0/stable
   cinder:
     charm: cinder
-    channel: yoga/edge
+    channel: yoga/stable
     num_units: 1
     options:
       block-device: ""
@@ -108,18 +108,16 @@ applications:
       openstack-origin: *openstack-origin
       overwrite: "false"
       verbose: true
-    constraints: arch=amd64 mem=2048
-    storage:
-      block-devices: loop,10240M
+    constraints: cores=1 mem=2048 virt-type=virtual-machine
   cinder-ceph:
     charm: cinder-ceph
-    channel: yoga/edge
+    channel: yoga/stable
   cinder-mysql-router:
     charm: mysql-router
-    channel: latest/edge
+    channel: 8.0/stable
   neutron-api:
     charm: neutron-api
-    channel: yoga/edge
+    channel: yoga/stable
     num_units: 1
     options:
       debug: true
@@ -130,38 +128,38 @@ applications:
       path-mtu: 1550
       physical-network-mtus: physnet1:1500
       verbose: true
-    constraints: arch=amd64 mem=2048
+    constraints: cores=1 mem=2048 virt-type=virtual-machine
   neutron-api-mysql-router:
     charm: mysql-router
-    channel: latest/edge
+    channel: 8.0/stable
   rabbitmq-server:
     charm: rabbitmq-server
     channel: 3.9/stable
     num_units: 1
     options:
       min-cluster-size: 1
-    constraints: arch=amd64 mem=1024
+    constraints: cores=1 mem=2048 virt-type=virtual-machine
   placement:
     charm: placement
-    channel: yoga/edge
+    channel: yoga/stable
     num_units: 1
     options:
       debug: true
       openstack-origin: *openstack-origin
-    constraints: arch=amd64 mem=1024
+    constraints: cores=1 mem=2048 virt-type=virtual-machine
   placement-mysql-router:
     charm: mysql-router
-    channel: latest/edge
+    channel: 8.0/stable
   neutron-api-plugin-ovn:
     charm: neutron-api-plugin-ovn
-    channel: yoga/edge
+    channel: yoga/stable
   ovn-central:
     charm: ovn-central
     channel: 22.03/stable
     num_units: 3
     options:
       source: distro
-    constraints: arch=amd64 mem=2048
+    constraints: cores=1 mem=2048 virt-type=virtual-machine
   ovn-chassis:
     charm: ovn-chassis
     channel: 22.03/stable
