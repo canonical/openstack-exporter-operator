@@ -84,3 +84,8 @@ resources:
       and a user can provide a local snap to use instead.
 
       This override may be useful for testing or in environments with network restrictions.
+
+extra-bindings:
+  admin-interface:
+  public-interface:
+  internal-interface:
