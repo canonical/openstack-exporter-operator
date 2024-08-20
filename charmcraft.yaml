@@ -24,6 +24,14 @@ provides:
   cos-agent:
     interface: cos_agent
 
+# These bindings can be used to explicitly request interfaces in all the OpenStack
+# network spaces. Needed when APIs are not exposed in the same network as the one bound
+# to the credentials endpoint
+extra-bindings:
+  admin-interface:
+  public-interface:
+  internal-interface:
+
 config:
   options:
     port:
@@ -84,8 +92,3 @@ resources:
       and a user can provide a local snap to use instead.
 
       This override may be useful for testing or in environments with network restrictions.
-
-extra-bindings:
-  admin-interface:
-  public-interface:
-  internal-interface:
