@@ -28,9 +28,9 @@ provides:
 # network spaces. Needed when APIs are not exposed in the same network as the one bound
 # to the credentials endpoint
 extra-bindings:
-  admin-interface:
-  public-interface:
-  internal-interface:
+  admin:
+  public:
+  internal:
 
 config:
   options:
