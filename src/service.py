@@ -51,21 +51,32 @@ class SnapService:
         self.snap_client.set(snap_config, typed=True)
 
 
-def snap_install() -> SnapService:
+def snap_install(resource: Optional[str], channel: str) -> SnapService:
     """Install the snap, and return the snap service.
 
     Before installing the snap, it will try to remove the upstream snap that could be installed on
     older versions of this charm.
 
+    If the channel is changed, the snap.add method is able to identify and refresh the charm to the
+    new channel.
+
     Raises an exception on error.
     """
     remove_upstream_snap()
     try:
-        snap_client = snap.add(SNAP_NAME, channel="latest/stable")
-
+        if resource:
+            logger.debug("installing %s from resource.", SNAP_NAME)
+            # installing from a resource if installed from snap store previously is not problematic
+            snap_client = snap.install_local(resource, dangerous=True)
+        else:
+            # installing from snap store if previously installed from resource is problematic, so
+            # it's necessary to remove it first
+            remove_snap_as_resource()
+            logger.debug("installing %s from snapcraft store", SNAP_NAME)
+            snap_client = snap.add(SNAP_NAME, channel=channel)
     except snap.SnapError as e:
         logger.error("failed to install snap: %s", str(e))
-        raise e  # need to crash on_install event if it's not okay
+        raise e
     else:
         logger.info("installed %s snap.", snap_client.name)
         workaround_bug_268()
@@ -73,11 +84,36 @@ def snap_install() -> SnapService:
 
 
 def remove_upstream_snap() -> None:
-    """Remove the old snap from upstream to not override with the charmed-openstack-exporter."""
+    """Remove the old snap from upstream to not conflict with the charmed-openstack-exporter.
+
+    Raises an exception on error.
+    """
     try:
         snap.remove(["golang-openstack-exporter"])
     except snap.SnapError as e:
-        logger.error("failed to remove snap: %s", str(e))
+        logger.error("failed to remove golang-openstack-exporter snap: %s", str(e))
+        raise e
+
+
+def remove_snap_as_resource() -> None:
+    """Remove the snap as resource.
+
+    If the snap as resource is not removed, it's not possible to install from the store and will
+    fail. When the revision of a snap has "x" on it e.g. "x1" this means that the snap was
+    installed by a local file. The way to return to the one from snapstore is by passing an empty
+    file. In such scenario, the local installation will be removed to be able to install from the
+    snapstore.
+    """
+    snap_cache = snap.SnapCache()
+    o7k_exporter = snap_cache[SNAP_NAME]
+    if o7k_exporter.present and "x" in o7k_exporter.revision:
+        logger.info("removing local resource snap before installing from snapstore")
+        try:
+            print("Trying to remove")
+            snap.remove(SNAP_NAME)
+        except snap.SnapError as e:
+            logger.error("failed to remove snap as a resource: %s", str(e))
+            raise e
 
 
 def get_installed_snap_service(snap_name: str) -> Optional[SnapService]:

@@ -3,11 +3,20 @@
 #
 # Learn more about testing at: https://juju.is/docs/sdk/testing
 
+from unittest import mock
+
 import ops
 import ops.testing
 import pytest
+from ops.model import BlockedStatus
 
-from charm import CLOUD_NAME, OS_CLIENT_CONFIG, SNAP_NAME, OpenstackExporterOperatorCharm
+from charm import (
+    CLOUD_NAME,
+    OS_CLIENT_CONFIG,
+    SNAP_NAME,
+    OpenstackExporterOperatorCharm,
+    SnapError,
+)
 from service import SnapService
 
 
@@ -58,3 +67,33 @@ class TestCharm:
         self.harness.charm._write_cloud_config.assert_called_with(mock_expect_keystone_data)
         mock_snap_service.restart_and_enable.assert_called()
         mock_snap_service.stop.assert_not_called()
+
+    @mock.patch("charm.get_installed_snap_service")
+    @mock.patch("charm.OpenstackExporterOperatorCharm.install")
+    def test_config_changed_snap_channel(self, mock_install, _):
+        """Test config changed when the snap channel changes.
+
+        This should also update the snap_channel in _stored.
+        """
+        self.harness.begin()
+        # initially is as the default value
+        assert self.harness.charm._stored.snap_channel == "latest/stable"
+        self.harness.update_config({"snap_channel": "latest/edge"})
+        mock_install.assert_called_once()
+        # after config changed is updated
+        assert self.harness.charm._stored.snap_channel == "latest/edge"
+
+    @mock.patch("charm.OpenstackExporterOperatorCharm.get_resource", return_value="")
+    @mock.patch("charm.snap_install")
+    def test_install_snap(self, mock_install, _):
+        self.harness.begin()
+        self.harness.charm.on.install.emit()
+        mock_install.assert_called_with("", "latest/stable")
+
+    @mock.patch("charm.snap_install")
+    def test_install_snap_error(self, mock_install):
+        mock_install.side_effect = SnapError("My Error")
+        self.harness.begin()
+        self.harness.charm.on.install.emit()
+        expected_msg = "Failed to remove/install openstack-exporter snap"
+        assert self.harness.charm.unit.status == BlockedStatus(expected_msg)

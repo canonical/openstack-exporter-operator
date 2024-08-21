@@ -4,20 +4,22 @@
 # See LICENSE file for licensing details.
 """OpenStack Exporter Operator.
 
-This charm provide charmed-openstack-exporter snap as part of the Charmed
+This charm provides charmed-openstack-exporter snap as part of the Charmed
 OpenStack deployment.
 """
 
 import logging
 import os
-from typing import Any
+from typing import Any, Optional
 
 import ops
 import yaml
 from charms.grafana_agent.v0.cos_agent import COSAgentProvider
+from charms.operator_libs_linux.v2.snap import SnapError
 from ops.model import (
     ActiveStatus,
     BlockedStatus,
+    ModelError,
     WaitingStatus,
 )
 
@@ -25,6 +27,7 @@ from service import SNAP_NAME, get_installed_snap_service, snap_install
 
 logger = logging.getLogger(__name__)
 
+RESOURCE_NAME = "openstack-exporter"
 # Snap config options global constants
 # This is to match between openstack-exporter and the entry in clouds.yaml
 CLOUD_NAME = "openstack"
@@ -37,9 +40,13 @@ OS_CLIENT_CONFIG = f"/var/snap/{SNAP_NAME}/common/clouds.yaml"
 class OpenstackExporterOperatorCharm(ops.CharmBase):
     """Charm the service."""
 
+    _stored = ops.framework.StoredState()
+
     def __init__(self, *args: tuple[Any]) -> None:
         """Initialize the charm."""
         super().__init__(*args)
+
+        self._stored.set_default(snap_channel=self.config["snap_channel"])
 
         self._grafana_agent = COSAgentProvider(
             self,
@@ -128,9 +135,33 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
                     return data
         return {}
 
+    def get_resource(self) -> Optional[str]:
+        """Return the path-to-resource or None if the resource is empty.
+
+        Fetch the charm's resource and check if the resource is an empty file
+        or not. If it's empty, return None. Otherwise, return the path to the
+        resource.
+        """
+        try:
+            snap_path = self.model.resources.fetch(RESOURCE_NAME).absolute()
+        except ModelError:
+            logger.debug("cannot fetch charm resource")
+            return None
+
+        if not os.path.getsize(snap_path) > 0:
+            logger.debug("resource is an empty file")
+            return None
+
+        return snap_path
+
     def install(self) -> None:
         """Install or upgrade charm."""
-        snap_install()
+        try:
+            snap_install(self.get_resource(), self.model.config["snap_channel"])
+        except SnapError:
+            self.model.unit.status = BlockedStatus(
+                "Failed to remove/install openstack-exporter snap"
+            )
 
     def _configure(self, event: ops.HookEvent) -> None:
         """Configure the charm.
@@ -144,6 +175,9 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             logger.warning("snap is not installed, defer configuring the charm.")
             event.defer()
             return
+
+        if self.snap_channel_changed():
+            self.install()
 
         # if cos is not related then we should block and not run anything
         if not self.model.relations.get("cos-agent"):
@@ -201,6 +235,13 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             )
 
         event.add_status(ActiveStatus())
+
+    def snap_channel_changed(self) -> bool:
+        """Check if snap channel of the openstack-exporter changed."""
+        if self._stored.snap_channel != self.model.config["snap_channel"]:
+            self._stored.snap_channel = self.model.config["snap_channel"]
+            return True
+        return False
 
 
 if __name__ == "__main__":  # pragma: nocover

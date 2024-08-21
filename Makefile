@@ -1,9 +1,11 @@
 DEFAULT_GOAL=help
 
+SNAP_NAME="charmed-openstack-exporter"
 PROJECTPATH=$(dir $(realpath $(MAKEFILE_LIST)))
 CHARMCRAFT_FILE="charmcraft.yaml"
 CHARM_NAME=$(shell cat ${PROJECTPATH}/${CHARMCRAFT_FILE} | grep -E "^name:" | awk '{print $$2}')
 CHARM_LOCATION=$(shell find ${PROJECTPATH} -type f -name "${CHARM_NAME}*.charm" | head -n 1)
+CHARM_SNAP_LOCATION=$(shell find ${PROJECTPATH} -type f -name "${SNAP_NAME}*.snap" | head -n 1)
 
 help:
 	@echo "This project supports the following targets"
@@ -29,6 +31,6 @@ build: clean
 	@charmcraft -v pack
 
 integration: build
-	CHARM_LOCATION=${CHARM_LOCATION} tox -e integration -- ${FUNC_ARGS}
+	CHARM_LOCATION=${CHARM_LOCATION} CHARM_SNAP_LOCATION=${CHARM_SNAP_LOCATION} tox -e integration -- ${FUNC_ARGS}
 
 .PHONY: help update-charm-libs clean build integration
