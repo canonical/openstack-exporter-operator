@@ -51,8 +51,8 @@ class SnapService:
         self.snap_client.set(snap_config, typed=True)
 
 
-def snap_install(resource: Optional[str], channel: str) -> SnapService:
-    """Install the snap, and return the snap service.
+def snap_install(resource: Optional[str], channel: str) -> None:
+    """Install or refresh the snap.
 
     Before installing the snap, it will try to remove the upstream snap that could be installed on
     older versions of this charm.
@@ -67,20 +67,19 @@ def snap_install(resource: Optional[str], channel: str) -> SnapService:
         if resource:
             logger.debug("installing %s from resource.", SNAP_NAME)
             # installing from a resource if installed from snap store previously is not problematic
-            snap_client = snap.install_local(resource, dangerous=True)
+            snap.install_local(resource, dangerous=True)
         else:
             # installing from snap store if previously installed from resource is problematic, so
             # it's necessary to remove it first
             remove_snap_as_resource()
             logger.debug("installing %s from snapcraft store", SNAP_NAME)
-            snap_client = snap.add(SNAP_NAME, channel=channel)
+            snap.add(SNAP_NAME, channel=channel)
     except snap.SnapError as e:
         logger.error("failed to install snap: %s", str(e))
         raise e
     else:
-        logger.info("installed %s snap.", snap_client.name)
+        logger.info("installed %s snap.", SNAP_NAME)
         workaround_bug_268()
-        return SnapService(snap_client)
 
 
 def remove_upstream_snap() -> None:
@@ -109,7 +108,6 @@ def remove_snap_as_resource() -> None:
     if o7k_exporter.present and "x" in o7k_exporter.revision:
         logger.info("removing local resource snap before installing from snapstore")
         try:
-            print("Trying to remove")
             snap.remove(SNAP_NAME)
         except snap.SnapError as e:
             logger.error("failed to remove snap as a resource: %s", str(e))

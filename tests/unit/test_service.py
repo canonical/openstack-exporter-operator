@@ -12,46 +12,40 @@ import service
 @mock.patch("service.remove_snap_as_resource")
 @mock.patch("service.workaround_bug_268")
 @mock.patch("service.snap")
-def test_snap_install_with_resource(
+def test_snap_install_or_refresh_with_resource(
     mock_snap, mock_workaround, mock_remove_resource, mock_remove_upstream
 ):
     """Test snap installation with resource."""
-    snap_client = mock.MagicMock()
-    mock_snap.install_local.return_value = snap_client
-    result = service.snap_install("my-resource", "latest/stable")
+    result = service.snap_install_or_refresh("my-resource", "latest/stable")
     mock_remove_upstream.assert_called_once()
     mock_snap.install_local.assert_called_once_with("my-resource", dangerous=True)
     mock_workaround.assert_called_once()
     mock_remove_resource.assert_not_called()
-    assert result.snap_client == snap_client
 
 
 @mock.patch("service.remove_upstream_snap")
 @mock.patch("service.remove_snap_as_resource")
 @mock.patch("service.workaround_bug_268")
 @mock.patch("service.snap")
-def test_snap_install_snap_store(
+def test_snap_install_or_refresh_snap_store(
     mock_snap, mock_workaround, mock_remove_resource, mock_remove_upstream
 ):
     """Test snap installation using the snap store."""
-    snap_client = mock.MagicMock()
-    mock_snap.add.return_value = snap_client
-    result = service.snap_install("", "my-channel")
+    service.snap_install_or_refresh("", "my-channel")
     mock_remove_upstream.assert_called_once()
     mock_snap.install_local.assert_not_called()
     mock_snap.add.assert_called_once_with(service.SNAP_NAME, channel="my-channel")
     mock_workaround.assert_called_once()
     mock_remove_resource.assert_called_once()
-    assert result.snap_client == snap_client
 
 
 @mock.patch("service.workaround_bug_268")
 @mock.patch("service.snap.add")
-def test_snap_install_exception_raises(mock_snap, mock_workaround):
+def test_snap_install_or_refresh_exception_raises(mock_snap, mock_workaround):
     """Test that when an exception happens, it will raise an exception to the caller."""
     mock_snap.side_effect = service.snap.SnapError("My Error")
     with pytest.raises(service.snap.SnapError):
-        service.snap_install("", "my-channel")
+        service.snap_install_or_refresh("", "my-channel")
     mock_workaround.assert_not_called()
 
 

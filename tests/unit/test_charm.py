@@ -39,6 +39,8 @@ class TestCharm:
         mock_snap_service = mocker.Mock(spec_set=SnapService)
         mock_get_installed_snap_service.return_value = mock_snap_service
 
+        mocker.patch("charm.OpenstackExporterOperatorCharm.install")
+
         self.harness.begin()
 
         # mock get_keystone_data
@@ -76,21 +78,17 @@ class TestCharm:
         This should also update the snap_channel in _stored.
         """
         self.harness.begin()
-        # initially is as the default value
-        assert self.harness.charm._stored.snap_channel == "latest/stable"
         self.harness.update_config({"snap_channel": "latest/edge"})
         mock_install.assert_called_once()
-        # after config changed is updated
-        assert self.harness.charm._stored.snap_channel == "latest/edge"
 
     @mock.patch("charm.OpenstackExporterOperatorCharm.get_resource", return_value="")
-    @mock.patch("charm.snap_install")
+    @mock.patch("charm.snap_install_or_refresh")
     def test_install_snap(self, mock_install, _):
         self.harness.begin()
         self.harness.charm.on.install.emit()
         mock_install.assert_called_with("", "latest/stable")
 
-    @mock.patch("charm.snap_install")
+    @mock.patch("charm.snap_install_or_refresh")
     def test_install_snap_error(self, mock_install):
         mock_install.side_effect = SnapError("My Error")
         self.harness.begin()

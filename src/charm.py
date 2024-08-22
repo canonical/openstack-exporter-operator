@@ -23,7 +23,7 @@ from ops.model import (
     WaitingStatus,
 )
 
-from service import SNAP_NAME, get_installed_snap_service, snap_install
+from service import SNAP_NAME, get_installed_snap_service, snap_install_or_refresh
 
 logger = logging.getLogger(__name__)
 
@@ -40,13 +40,9 @@ OS_CLIENT_CONFIG = f"/var/snap/{SNAP_NAME}/common/clouds.yaml"
 class OpenstackExporterOperatorCharm(ops.CharmBase):
     """Charm the service."""
 
-    _stored = ops.framework.StoredState()
-
     def __init__(self, *args: tuple[Any]) -> None:
         """Initialize the charm."""
         super().__init__(*args)
-
-        self._stored.set_default(snap_channel=self.config["snap_channel"])
 
         self._grafana_agent = COSAgentProvider(
             self,
@@ -155,9 +151,9 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         return snap_path
 
     def install(self) -> None:
-        """Install or upgrade charm."""
+        """Install the necessary resources for the charm."""
         try:
-            snap_install(self.get_resource(), self.model.config["snap_channel"])
+            snap_install_or_refresh(self.get_resource(), self.model.config["snap_channel"])
         except SnapError:
             self.model.unit.status = BlockedStatus(
                 "Failed to remove/install openstack-exporter snap"
@@ -166,18 +162,13 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
     def _configure(self, event: ops.HookEvent) -> None:
         """Configure the charm.
 
-        An idempotent method called as the result
-        of several config or relation changed hooks.
+        An idempotent method called as the result of several config or relation changed hooks.
+        It will install the exporter if not already installed or refresh the channel if the it was
+        changed. The method to install or refresh the exporter method is idempotent.
         """
+        self.install()
+
         snap_service = get_installed_snap_service(SNAP_NAME)
-
-        if not snap_service:
-            logger.warning("snap is not installed, defer configuring the charm.")
-            event.defer()
-            return
-
-        if self.snap_channel_changed():
-            self.install()
 
         # if cos is not related then we should block and not run anything
         if not self.model.relations.get("cos-agent"):
@@ -235,13 +226,6 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             )
 
         event.add_status(ActiveStatus())
-
-    def snap_channel_changed(self) -> bool:
-        """Check if snap channel of the openstack-exporter changed."""
-        if self._stored.snap_channel != self.model.config["snap_channel"]:
-            self._stored.snap_channel = self.model.config["snap_channel"]
-            return True
-        return False
 
 
 if __name__ == "__main__":  # pragma: nocover
