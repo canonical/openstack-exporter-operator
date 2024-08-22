@@ -16,7 +16,7 @@ def test_snap_install_or_refresh_with_resource(
     mock_snap, mock_workaround, mock_remove_resource, mock_remove_upstream
 ):
     """Test snap installation with resource."""
-    result = service.snap_install_or_refresh("my-resource", "latest/stable")
+    service.snap_install_or_refresh("my-resource", "latest/stable")
     mock_remove_upstream.assert_called_once()
     mock_snap.install_local.assert_called_once_with("my-resource", dangerous=True)
     mock_workaround.assert_called_once()

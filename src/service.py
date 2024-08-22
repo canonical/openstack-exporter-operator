@@ -50,8 +50,13 @@ class SnapService:
 
         self.snap_client.set(snap_config, typed=True)
 
+    @property
+    def present(self) -> bool:
+        """Check if the snap client is present or not."""
+        return self.snap_client.present
 
-def snap_install(resource: Optional[str], channel: str) -> None:
+
+def snap_install_or_refresh(resource: Optional[str], channel: str) -> None:
     """Install or refresh the snap.
 
     Before installing the snap, it will try to remove the upstream snap that could be installed on
@@ -114,17 +119,13 @@ def remove_snap_as_resource() -> None:
             raise e
 
 
-def get_installed_snap_service(snap_name: str) -> Optional[SnapService]:
+def get_installed_snap_service(snap_name: str) -> SnapService:
     """Return the snap service of the snap if it's installed."""
     try:
         snap_client = snap.SnapCache()[snap_name]
     except snap.SnapNotFoundError as e:
-        logger.warning("unable to get snap client: %s", str(e))
-        return None
-
-    if not snap_client.present:
-        logger.warning("snap %s not installed", snap_name)
-        return None
+        logger.error("unable to get snap client: %s", str(e))
+        raise e
 
     return SnapService(snap_client)
 

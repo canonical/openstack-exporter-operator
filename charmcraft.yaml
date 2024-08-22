@@ -58,9 +58,8 @@ config:
       default: "latest/stable"
       type: string
       description: |
-        By default, installs the snap from the latest/stable channel. If you want to install a
-        customized snap or if you have an airgapped environment that store proxy is not working,
-        you can attach the snap as a resource.
+        The charmed-openstack-exporter snap is by default installed from the latest/stable channel.
+        This option allows the selection of a different channel.
 
 
 links:
@@ -78,8 +77,7 @@ resources:
     filename: openstack-exporter.snap
     description: |
       Snap for openstack-exporter.
-      This is the software that implements actual metrics collection and endpoint for prometheus
+      This is the software that implements actual metrics collection and an endpoint for prometheus
       scraping. The snap resource on Charmhub is intended to be an empty file. The charm will
-      ignore an empty file resource and install from the snap store, so that the resource can be
-      used as an override by the user, if they wish to provide a local snap or if it's an airgapped
-      environment where snap-proxy is not a possible solution.
+      ignore an empty file resource and normally install the snap from the snap store, but a
+      custom snap can also be provided here if needed.

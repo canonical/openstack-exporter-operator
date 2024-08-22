@@ -159,12 +159,12 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
                 "Failed to remove/install openstack-exporter snap"
             )
 
-    def _configure(self, event: ops.HookEvent) -> None:
+    def _configure(self, _: ops.HookEvent) -> None:
         """Configure the charm.
 
         An idempotent method called as the result of several config or relation changed hooks.
         It will install the exporter if not already installed or refresh the channel if the it was
-        changed. The method to install or refresh the exporter method is idempotent.
+        changed.
         """
         self.install()
 
@@ -216,7 +216,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         snap_service = get_installed_snap_service(SNAP_NAME)
 
-        if not snap_service:
+        if not snap_service.present:
             event.add_status(
                 BlockedStatus("snap service is not installed, please check snap service")
             )
