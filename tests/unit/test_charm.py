@@ -81,15 +81,19 @@ class TestCharm:
         self.harness.update_config({"snap_channel": "latest/edge"})
         mock_install.assert_called_once()
 
-    @mock.patch("charm.OpenstackExporterOperatorCharm.get_resource", return_value="")
+    @mock.patch("charm.SnapResource")
     @mock.patch("charm.snap_install_or_refresh")
-    def test_install_snap(self, mock_install, _):
+    def test_install(self, mock_install, mock_resource):
+        """Test install method."""
+        resource = mock.MagicMock()
+        mock_resource.return_value = resource
         self.harness.begin()
         self.harness.charm.on.install.emit()
-        mock_install.assert_called_with("", "latest/stable")
+        mock_install.assert_called_with(resource, "latest/stable")
 
     @mock.patch("charm.snap_install_or_refresh")
-    def test_install_snap_error(self, mock_install):
+    def test_install_error(self, mock_install):
+        """Test install method when install raises exception."""
         mock_install.side_effect = SnapError("My Error")
         self.harness.begin()
         self.harness.charm.on.install.emit()

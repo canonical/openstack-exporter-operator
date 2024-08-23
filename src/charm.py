@@ -10,7 +10,7 @@ OpenStack deployment.
 
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 
 import ops
 import yaml
@@ -19,11 +19,10 @@ from charms.operator_libs_linux.v2.snap import SnapError
 from ops.model import (
     ActiveStatus,
     BlockedStatus,
-    ModelError,
     WaitingStatus,
 )
 
-from service import SNAP_NAME, get_installed_snap_service, snap_install_or_refresh
+from service import SNAP_NAME, SnapResource, get_installed_snap_service, snap_install_or_refresh
 
 logger = logging.getLogger(__name__)
 
@@ -131,29 +130,11 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
                     return data
         return {}
 
-    def get_resource(self) -> Optional[str]:
-        """Return the path-to-resource or None if the resource is empty.
-
-        Fetch the charm's resource and check if the resource is an empty file
-        or not. If it's empty, return None. Otherwise, return the path to the
-        resource.
-        """
-        try:
-            snap_path = self.model.resources.fetch(RESOURCE_NAME).absolute()
-        except ModelError:
-            logger.debug("cannot fetch charm resource")
-            return None
-
-        if not os.path.getsize(snap_path) > 0:
-            logger.debug("resource is an empty file")
-            return None
-
-        return snap_path
-
     def install(self) -> None:
         """Install the necessary resources for the charm."""
         try:
-            snap_install_or_refresh(self.get_resource(), self.model.config["snap_channel"])
+            resource = SnapResource(RESOURCE_NAME, self.model)
+            snap_install_or_refresh(resource, self.model.config["snap_channel"])
         except SnapError:
             self.model.unit.status = BlockedStatus(
                 "Failed to remove/install openstack-exporter snap"
