@@ -4,7 +4,7 @@
 # See LICENSE file for licensing details.
 """OpenStack Exporter Operator.
 
-This charm provide golang-openstack-exporter snap as part of the Charmed
+This charm provides charmed-openstack-exporter snap as part of the Charmed
 OpenStack deployment.
 """
 
@@ -15,6 +15,7 @@ from typing import Any, Optional
 import ops
 import yaml
 from charms.grafana_agent.v0.cos_agent import COSAgentProvider
+from charms.operator_libs_linux.v2.snap import SnapError
 from ops.model import (
     ActiveStatus,
     BlockedStatus,
@@ -22,23 +23,18 @@ from ops.model import (
     WaitingStatus,
 )
 
-from service import get_installed_snap_service, snap_install
+from service import SNAP_NAME, get_installed_snap_service, snap_install_or_refresh
 
 logger = logging.getLogger(__name__)
 
-# charm global constants
 RESOURCE_NAME = "openstack-exporter"
-
-# snap global constants
-SNAP_NAME = "golang-openstack-exporter"
-
 # Snap config options global constants
 # This is to match between openstack-exporter and the entry in clouds.yaml
 CLOUD_NAME = "openstack"
 # store the clouds.yaml where it's easily accessible by the openstack-exporter snap
 # This is the SNAP_COMMON directory for the exporter snap, which is accessible,
 # unversioned, and retained across updates of the snap.
-OS_CLIENT_CONFIG = "/var/snap/golang-openstack-exporter/common/clouds.yaml"
+OS_CLIENT_CONFIG = f"/var/snap/{SNAP_NAME}/common/clouds.yaml"
 
 
 class OpenstackExporterOperatorCharm(ops.CharmBase):
@@ -145,34 +141,34 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         try:
             snap_path = self.model.resources.fetch(RESOURCE_NAME).absolute()
         except ModelError:
-            logger.warning("cannot fetch charm resource")
+            logger.debug("cannot fetch charm resource")
             return None
 
         if not os.path.getsize(snap_path) > 0:
-            logger.warning("resource is an empty file")
+            logger.debug("resource is an empty file")
             return None
 
         return snap_path
 
     def install(self) -> None:
-        """Install or upgrade charm."""
-        resource = self.get_resource()
-        if not resource:
-            raise ValueError("resource is invalid or not found.")
-        snap_install(resource)
+        """Install the necessary resources for the charm."""
+        try:
+            snap_install_or_refresh(self.get_resource(), self.model.config["snap_channel"])
+        except SnapError:
+            self.model.unit.status = BlockedStatus(
+                "Failed to remove/install openstack-exporter snap"
+            )
 
-    def _configure(self, event: ops.HookEvent) -> None:
+    def _configure(self, _: ops.HookEvent) -> None:
         """Configure the charm.
 
-        An idempotent method called as the result
-        of several config or relation changed hooks.
+        An idempotent method called as the result of several config or relation changed hooks.
+        It will install the exporter if not already installed or refresh the channel if the it was
+        changed.
         """
-        snap_service = get_installed_snap_service(SNAP_NAME)
+        self.install()
 
-        if not snap_service:
-            logger.warning("snap is not installed, defer configuring the charm.")
-            event.defer()
-            return
+        snap_service = get_installed_snap_service(SNAP_NAME)
 
         # if cos is not related then we should block and not run anything
         if not self.model.relations.get("cos-agent"):
@@ -220,7 +216,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         snap_service = get_installed_snap_service(SNAP_NAME)
 
-        if not snap_service:
+        if not snap_service.present:
             event.add_status(
                 BlockedStatus("snap service is not installed, please check snap service")
             )

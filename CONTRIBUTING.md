@@ -28,13 +28,14 @@ targets to perform charming tasks:
 ```shell
 make                            # show help text
 make update-charm-libs          # update charm's libraries
-make check-dashboard-updates    # check if there's a new dashboard from the upstream
-make sync-dashboards            # update the dashboards from upstream
 make clean                      # remove unneeded files
-make download-snap              # download snap release from github release assets
 make build                      # build the charm
 make integration                # run the tests defined in the integration subdirectory
 ```
+
+Note: You can use a local snap exporter to use in the integration test by placing it in the root of
+the repo and naming the snap file with the `charmed-openstack-exporter` prefix. When this happens,
+the `CHARM_SNAP_LOCATION` environment variable will detect the file and attach it as a resource.
 
 ## Fetching libraries
 

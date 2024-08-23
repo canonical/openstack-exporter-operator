@@ -4,18 +4,24 @@
 # See LICENSE file for licensing details.
 
 import logging
+import subprocess
+import tempfile
 import unittest
+from pathlib import Path
 
 import yaml
 from zaza import model
 
-from charm import CLOUD_NAME, OS_CLIENT_CONFIG
+from charm import CLOUD_NAME, OS_CLIENT_CONFIG, SNAP_NAME
 
 logger = logging.getLogger(__name__)
 
 APP_NAME = "openstack-exporter"
-SNAP_NAME = "golang-openstack-exporter"
 STATUS_TIMEOUT = 120  # must be larger than the time defined in zaza-yaml
+
+VERSION_COLUMN = 1
+REVISION_COLUMN = 2
+CHANNEL_COLUMN = 3
 
 
 class OpenstackExporterBaseTest(unittest.TestCase):
@@ -76,6 +82,67 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
         command = "curl -q localhost:9180/metric"  # curl at default port
         results = model.run_on_leader(APP_NAME, command)
         self.assertEqual(int(results.get("Code", "-1")), 0)
+
+    def test_configure_snap_channel(self):
+        """Test changing the snap channel."""
+        snap_info_before = get_snap_exporter_info()
+        self.assertEqual(snap_info_before["channel"], "latest/stable")
+
+        # Change snap channel
+        new_channel = "latest/edge"
+        model.set_application_config(APP_NAME, {"snap_channel": new_channel})
+        model.block_until_all_units_idle()
+
+        snap_info_after = get_snap_exporter_info()
+        self.assertEqual(snap_info_after["channel"], new_channel)
+
+        model.reset_application_config(APP_NAME, ["snap_channel"])
+
+    def test_snap_as_resource(self):
+        """Test using the snap as resource.
+
+        Snap when used as resource will have 'x' in the revision. E.g: x1 and won't be affected
+        by the user changing the snap channel charm configuration.
+        """
+        # snap from snapstore won't have "x" in the revision
+        snap_info_before = get_snap_exporter_info()
+        self.assertNotIn("x", snap_info_before["revision"])
+
+        # juju cannot access resources at /tmp, so we create a tmp folder at the current directory
+        with tempfile.TemporaryDirectory(dir="./") as tmpdir:
+            tmp_path = Path(tmpdir)
+            download_cmd = f"snap download --target-directory={tmpdir} {SNAP_NAME}"
+            subprocess.run(download_cmd.split(), check=False)
+
+            resource_file = [file for file in tmp_path.iterdir() if ".snap" in file.name][0]
+            model.attach_resource(APP_NAME, "openstack-exporter", str(resource_file))
+            model.block_until_all_units_idle()
+
+            # local installed snaps will have "x" in the revision
+            snap_info_resource = get_snap_exporter_info()
+            self.assertIn("x", snap_info_resource["revision"])
+
+            # changing channel won't affect the snap installed as resource
+            # Change snap channel
+            new_channel = "latest/beta"
+            model.set_application_config(APP_NAME, {"snap_channel": new_channel})
+            model.block_until_all_units_idle()
+            channel_after = get_snap_exporter_info()["channel"]
+            self.assertNotEqual(channel_after, new_channel)
+            self.assertEqual(channel_after, snap_info_resource["channel"])
+
+            # passing an empty file will re-install the snap from the store and use the charm
+            # channel config
+            temp_file_path = Path(tmpdir) / f"{SNAP_NAME}.snap"
+            temp_file_path.touch()
+            model.attach_resource(APP_NAME, "openstack-exporter", str(temp_file_path))
+            model.block_until_all_units_idle()
+
+            snap_info_after = get_snap_exporter_info()
+            self.assertNotIn("x", snap_info_after["revision"])
+            self.assertEqual(snap_info_after["channel"], new_channel)
+
+            model.reset_application_config(APP_NAME, ["snap_channel"])
 
     def test_configure_ssl_ca(self):
         """Test changing the ssl_ca."""
@@ -188,3 +255,19 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
             self.leader_unit_entity_id, "active", timeout=STATUS_TIMEOUT
         )
         self.assertEqual(self.leader_unit.workload_status_message, "")
+
+
+def get_snap_exporter_info() -> dict[str, str]:
+    """Get the openstack exporter snap information.
+
+    The snap list expected format as input is:
+    Name                        Version            Rev    Tracking       Publisher   Notes
+    charmed-openstack-exporter  1.7.0-26-g3be9ddb  4      latest/stable  canonical✓  -
+    """
+    results = model.run_on_leader(APP_NAME, f"snap list {SNAP_NAME}").get("Stdout", "").strip()
+    snap_info = results.splitlines()[1].split()
+    return {
+        "version": snap_info[VERSION_COLUMN],
+        "revision": snap_info[REVISION_COLUMN],
+        "channel": snap_info[CHANNEL_COLUMN],
+    }

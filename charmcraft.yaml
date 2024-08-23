@@ -62,6 +62,12 @@ config:
       description: |
         By default, enables the exporter cache globally. Refreshes at intervals of cache_ttl/2.
         If the cache is empty or expired, the response will be empty.
+    snap_channel:
+      default: "latest/stable"
+      type: string
+      description: |
+        The charmed-openstack-exporter snap is by default installed from the latest/stable channel.
+        This option allows the selection of a different channel.
 
 
 links:
@@ -79,16 +85,7 @@ resources:
     filename: openstack-exporter.snap
     description: |
       Snap for openstack-exporter.
-      This is the software that implements actual metrics collection and endpoint for prometheus scraping.
-
-      The snap resource on Charmhub is intended to be an empty file.
-      The charm will ignore an empty file resource,
-      so that the resource can be used as an override by the user,
-      if they wish to provide a local snap.
-
-      Currently a local snap must be provided via the resource,
-      since the supported snap isn't published on the snap store.
-      When it is published, the charm will use the snap from the store,
-      and a user can provide a local snap to use instead.
-
-      This override may be useful for testing or in environments with network restrictions.
+      This is the software that implements actual metrics collection and an endpoint for prometheus
+      scraping. The snap resource on Charmhub is intended to be an empty file. The charm will
+      ignore an empty file resource and normally install the snap from the snap store, but a
+      custom snap can also be provided here if needed.

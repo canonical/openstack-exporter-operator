@@ -71,6 +71,7 @@ per-file-ignores = {"tests/*" = ["D100","D101","D102","D103","D104"]}
 
 [tool.codespell]
 skip = "build,lib,venv,icon.svg,.tox,.git,.mypy_cache,.ruff_cache,.coverage,./tests/unit/report"
+ignore-words-list = "assertIn"
 
 [tool.mypy]
 warn_unused_ignores = true
