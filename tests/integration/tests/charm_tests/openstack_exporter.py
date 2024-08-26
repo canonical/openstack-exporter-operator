@@ -147,11 +147,7 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
             model.reset_application_config(APP_NAME, ["snap_channel"])
 
     def test_upstream_exporter_as_resource(self):
-        """Test that using the upstream golang as resource won't be installed."""
-        # snap from snapstore won't have "x" in the revision
-        snap_info_before = get_snap_info(SNAP_NAME)
-        self.assertNotIn("x", snap_info_before["revision"])
-
+        """Test using the upstream golang as resource won't be installed and block the unit."""
         # juju cannot access resources at /tmp, so we create a tmp folder at the current directory
         with tempfile.TemporaryDirectory(dir="./") as tmpdir:
             tmp_path = Path(tmpdir)
@@ -160,12 +156,22 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
 
             resource_file = [file for file in tmp_path.iterdir() if ".snap" in file.name][0]
             model.attach_resource(APP_NAME, "openstack-exporter", str(resource_file))
-            model.block_until_all_units_idle()
+            model.block_until_unit_wl_status(
+                self.leader_unit_entity_id, "blocked", timeout=STATUS_TIMEOUT
+            )
+            self.assertEqual(
+                self.leader_unit.workload_status_message,
+                f"snap resource {UPSTREAM_SNAP} is not valid.",
+            )
 
             snaps = [snap["name"] for snap in get_snaps_installed()]
-            breakpoint()
-            self.assertIn(SNAP_NAME, snaps)
             self.assertNotIn(UPSTREAM_SNAP, snaps)
+
+            # passing an empty file will unblock the unit
+            temp_file_path = Path(tmpdir) / f"{SNAP_NAME}.snap"
+            temp_file_path.touch()
+            model.attach_resource(APP_NAME, "openstack-exporter", str(temp_file_path))
+            model.block_until_all_units_idle()
 
     def test_configure_ssl_ca(self):
         """Test changing the ssl_ca."""

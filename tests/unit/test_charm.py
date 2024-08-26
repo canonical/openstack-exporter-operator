@@ -15,9 +15,8 @@ from charm import (
     OS_CLIENT_CONFIG,
     SNAP_NAME,
     OpenstackExporterOperatorCharm,
-    SnapError,
 )
-from service import SnapService
+from service import SnapResource, SnapService
 
 
 class TestCharm:
@@ -85,17 +84,18 @@ class TestCharm:
     @mock.patch("charm.snap_install_or_refresh")
     def test_install(self, mock_install, mock_resource):
         """Test install method."""
-        resource = mock.MagicMock()
+        resource = mock.MagicMock(spec_set=SnapResource)
         mock_resource.return_value = resource
         self.harness.begin()
         self.harness.charm.on.install.emit()
         mock_install.assert_called_with(resource, "latest/stable")
 
     @mock.patch("charm.snap_install_or_refresh")
-    def test_install_error(self, mock_install):
-        """Test install method when install raises exception."""
-        mock_install.side_effect = SnapError("My Error")
+    def test_install_snap_error(self, mock_install):
+        """Test install method when install raises exception from the snap lib."""
+        mock_install.side_effect = Exception("My Error")
         self.harness.begin()
         self.harness.charm.on.install.emit()
-        expected_msg = "Failed to remove/install openstack-exporter snap"
-        assert self.harness.charm.unit.status == BlockedStatus(expected_msg)
+        assert self.harness.charm.unit.status == BlockedStatus(
+            "Failed to install/refresh openstack-exporter snap"
+        )

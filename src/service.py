@@ -69,6 +69,13 @@ class SnapResource:
         self.name = name
         self.model = model
 
+    def __bool__(self) -> bool:
+        """Boolean magic method for SnapResource.
+
+        Returns True if it has a name, False otherwise.
+        """
+        return bool(self.snap_name)
+
     @property
     def path(self) -> Optional[str]:
         """Get the path of the resource.
@@ -118,23 +125,27 @@ def snap_install_or_refresh(resource: SnapResource, channel: str) -> None:
     Raises an exception on error.
     """
     remove_upstream_snap()
-    try:
-        if resource.size and resource.snap_name != UPSTREAM_SNAP:
-            logger.info("installing %s from resource.", resource.snap_name)
-            # installing from a resource if installed from snap store previously is not problematic
-            snap.install_local(resource.path, dangerous=True)
-        else:
-            # installing from snap store if previously installed from resource is problematic, so
-            # it's necessary to remove it first
-            remove_snap_as_resource()
-            logger.debug("installing %s from snapcraft store", SNAP_NAME)
-            snap.add(SNAP_NAME, channel=channel)
-    except snap.SnapError as e:
-        logger.error("failed to install snap: %s", str(e))
-        raise e
+
+    if not resource:
+        # installing from snap store if previously installed from resource is problematic, so
+        # it's necessary to remove it first
+        remove_snap_as_resource()
+        logger.debug("installing %s from snapcraft store", SNAP_NAME)
+        snap.add(SNAP_NAME, channel=channel)
+    elif resource.snap_name == SNAP_NAME:
+        logger.info("installing %s from resource.", resource.snap_name)
+        # installing from a resource if installed from snap store previously is not problematic
+        snap.install_local(resource.path, dangerous=True)
     else:
-        logger.info("installed %s snap.", SNAP_NAME)
-        workaround_bug_268()
+        logger.warning("%s is not a valid resource.", resource.snap_name)
+        logger.warning(
+            "Please remove the current resource to install from snap store or pass a "
+            "charmed-openstack-exporter snap file."
+        )
+        return
+
+    logger.info("installed %s snap.", SNAP_NAME)
+    workaround_bug_268()
 
 
 def remove_upstream_snap() -> None:
