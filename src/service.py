@@ -4,16 +4,11 @@ import os
 from logging import getLogger
 from typing import Any, Optional
 
-import yaml
 from charms.operator_libs_linux.v2 import snap
-from ops.model import Model, ModelError
-from PySquashfsImage import SquashFsImage
 
 logger = getLogger(__name__)
 
 SNAP_NAME = "charmed-openstack-exporter"
-# the upstream snap
-UPSTREAM_SNAP = "golang-openstack-exporter"
 
 
 class SnapService:
@@ -61,52 +56,7 @@ class SnapService:
         return self.snap_client.present
 
 
-class SnapResource:
-    """A class representing the snap resource."""
-
-    def __init__(self, name: str, model: Model) -> None:
-        """Initialize the class."""
-        self.name = name
-        self.model = model
-
-    @property
-    def path(self) -> Optional[str]:
-        """Get the path of the resource.
-
-        If cannot fetch the resource it returns None.
-        """
-        try:
-            return self.model.resources.fetch(self.name).absolute()
-        except ModelError:
-            logger.debug("cannot fetch charm resource")
-            return None
-
-    @property
-    def size(self) -> Optional[int]:
-        """Get the snap size."""
-        return os.path.getsize(self.path) if self.path else None
-
-    @property
-    def snap_name(self) -> Optional[str]:
-        """Get the snap name from the resource passed.
-
-        Raise exception if not able to get the snap name
-        """
-        if self.size is None or self.path is None:
-            return None
-
-        try:
-            with SquashFsImage.from_file(self.path) as image:
-                # on snap files when unsquashfs it's possible to find the snap.yaml file that
-                # will have the snap name
-                snap_file = [file for file in image if "snap.yaml" == file.name][0].read_text()
-                return yaml.safe_load(snap_file)["name"]
-        except Exception as e:
-            logger.error("Failed to get the snap name from the resource: %s", self.path)
-            raise snap.SnapError("") from e
-
-
-def snap_install_or_refresh(resource: SnapResource, channel: str) -> None:
+def snap_install_or_refresh(resource: Optional[str], channel: str) -> None:
     """Install or refresh the snap.
 
     Before installing the snap, it will try to remove the upstream snap that could be installed on
@@ -119,10 +69,10 @@ def snap_install_or_refresh(resource: SnapResource, channel: str) -> None:
     """
     remove_upstream_snap()
     try:
-        if resource.size and resource.snap_name != UPSTREAM_SNAP:
-            logger.info("installing %s from resource.", resource.snap_name)
+        if resource:
+            logger.debug("installing %s from resource.", SNAP_NAME)
             # installing from a resource if installed from snap store previously is not problematic
-            snap.install_local(resource.path, dangerous=True)
+            snap.install_local(resource, dangerous=True)
         else:
             # installing from snap store if previously installed from resource is problematic, so
             # it's necessary to remove it first
@@ -143,9 +93,9 @@ def remove_upstream_snap() -> None:
     Raises an exception on error.
     """
     try:
-        snap.remove([UPSTREAM_SNAP])
+        snap.remove(["golang-openstack-exporter"])
     except snap.SnapError as e:
-        logger.error(f"failed to remove {UPSTREAM_SNAP} snap: %s", str(e))
+        logger.error("failed to remove golang-openstack-exporter snap: %s", str(e))
         raise e
 
 

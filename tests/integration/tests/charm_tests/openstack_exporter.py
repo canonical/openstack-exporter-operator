@@ -3,7 +3,6 @@
 #
 # See LICENSE file for licensing details.
 
-import json
 import logging
 import subprocess
 import tempfile
@@ -14,7 +13,6 @@ import yaml
 from zaza import model
 
 from charm import CLOUD_NAME, OS_CLIENT_CONFIG, SNAP_NAME
-from service import UPSTREAM_SNAP
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +85,7 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
 
     def test_configure_snap_channel(self):
         """Test changing the snap channel."""
-        snap_info_before = get_snap_info(SNAP_NAME)
+        snap_info_before = get_snap_exporter_info()
         self.assertEqual(snap_info_before["channel"], "latest/stable")
 
         # Change snap channel
@@ -95,7 +93,7 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
         model.set_application_config(APP_NAME, {"snap_channel": new_channel})
         model.block_until_all_units_idle()
 
-        snap_info_after = get_snap_info(SNAP_NAME)
+        snap_info_after = get_snap_exporter_info()
         self.assertEqual(snap_info_after["channel"], new_channel)
 
         model.reset_application_config(APP_NAME, ["snap_channel"])
@@ -107,7 +105,7 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
         by the user changing the snap channel charm configuration.
         """
         # snap from snapstore won't have "x" in the revision
-        snap_info_before = get_snap_info(SNAP_NAME)
+        snap_info_before = get_snap_exporter_info()
         self.assertNotIn("x", snap_info_before["revision"])
 
         # juju cannot access resources at /tmp, so we create a tmp folder at the current directory
@@ -121,7 +119,7 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
             model.block_until_all_units_idle()
 
             # local installed snaps will have "x" in the revision
-            snap_info_resource = get_snap_info(SNAP_NAME)
+            snap_info_resource = get_snap_exporter_info()
             self.assertIn("x", snap_info_resource["revision"])
 
             # changing channel won't affect the snap installed as resource
@@ -129,7 +127,7 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
             new_channel = "latest/beta"
             model.set_application_config(APP_NAME, {"snap_channel": new_channel})
             model.block_until_all_units_idle()
-            channel_after = get_snap_info(SNAP_NAME)["channel"]
+            channel_after = get_snap_exporter_info()["channel"]
             self.assertNotEqual(channel_after, new_channel)
             self.assertEqual(channel_after, snap_info_resource["channel"])
 
@@ -140,32 +138,11 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
             model.attach_resource(APP_NAME, "openstack-exporter", str(temp_file_path))
             model.block_until_all_units_idle()
 
-            snap_info_after = get_snap_info(SNAP_NAME)
+            snap_info_after = get_snap_exporter_info()
             self.assertNotIn("x", snap_info_after["revision"])
             self.assertEqual(snap_info_after["channel"], new_channel)
 
             model.reset_application_config(APP_NAME, ["snap_channel"])
-
-    def test_upstream_exporter_as_resource(self):
-        """Test that using the upstream golang as resource won't be installed."""
-        # snap from snapstore won't have "x" in the revision
-        snap_info_before = get_snap_info(SNAP_NAME)
-        self.assertNotIn("x", snap_info_before["revision"])
-
-        # juju cannot access resources at /tmp, so we create a tmp folder at the current directory
-        with tempfile.TemporaryDirectory(dir="./") as tmpdir:
-            tmp_path = Path(tmpdir)
-            download_cmd = f"snap download --target-directory={tmpdir} {UPSTREAM_SNAP}"
-            subprocess.run(download_cmd.split(), check=False)
-
-            resource_file = [file for file in tmp_path.iterdir() if ".snap" in file.name][0]
-            model.attach_resource(APP_NAME, "openstack-exporter", str(resource_file))
-            model.block_until_all_units_idle()
-
-            snaps = [snap["name"] for snap in get_snaps_installed()]
-            breakpoint()
-            self.assertIn(SNAP_NAME, snaps)
-            self.assertNotIn(UPSTREAM_SNAP, snaps)
 
     def test_configure_ssl_ca(self):
         """Test changing the ssl_ca."""
@@ -280,13 +257,17 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
         self.assertEqual(self.leader_unit.workload_status_message, "")
 
 
-def get_snaps_installed() -> dict[str, str]:
-    """Get the snaps installed in the leader unit."""
-    cmd = "curl -sS --unix-socket /run/snapd.socket http://localhost/v2/snaps"
-    return json.loads(model.run_on_leader(APP_NAME, cmd).get("Stdout", ""))["result"]
+def get_snap_exporter_info() -> dict[str, str]:
+    """Get the openstack exporter snap information.
 
-
-def get_snap_info(snap_name: str) -> list[dict[str, str]]:
-    """Get the snap information."""
-    snaps = get_snaps_installed()
-    return [snap for snap in snaps if snap["name"] == snap_name][0]
+    The snap list expected format as input is:
+    Name                        Version            Rev    Tracking       Publisher   Notes
+    charmed-openstack-exporter  1.7.0-26-g3be9ddb  4      latest/stable  canonical✓  -
+    """
+    results = model.run_on_leader(APP_NAME, f"snap list {SNAP_NAME}").get("Stdout", "").strip()
+    snap_info = results.splitlines()[1].split()
+    return {
+        "version": snap_info[VERSION_COLUMN],
+        "revision": snap_info[REVISION_COLUMN],
+        "channel": snap_info[CHANNEL_COLUMN],
+    }
