@@ -15,18 +15,14 @@ from typing import Any
 import ops
 import yaml
 from charms.grafana_agent.v0.cos_agent import COSAgentProvider
+from charms.operator_libs_linux.v2.snap import SnapError
 from ops.model import (
     ActiveStatus,
     BlockedStatus,
     WaitingStatus,
 )
 
-from service import (
-    SNAP_NAME,
-    SnapResource,
-    get_installed_snap_service,
-    snap_install_or_refresh,
-)
+from service import SNAP_NAME, SnapResource, get_installed_snap_service, snap_install_or_refresh
 
 logger = logging.getLogger(__name__)
 
@@ -139,10 +135,9 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         try:
             resource = SnapResource(RESOURCE_NAME, self.model)
             snap_install_or_refresh(resource, self.model.config["snap_channel"])
-        except Exception as e:
-            logging.error("Failed to install/refresh openstack-exporter snap: %s", e)
+        except SnapError:
             self.model.unit.status = BlockedStatus(
-                "Failed to install/refresh openstack-exporter snap"
+                "Failed to remove/install openstack-exporter snap"
             )
 
     def _configure(self, _: ops.HookEvent) -> None:
@@ -193,32 +188,23 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         """Handle collect unit status event (called after every event)."""
         if not self.model.relations.get("credentials"):
             event.add_status(BlockedStatus("Keystone is not related"))
-            return
 
         if not self._get_keystone_data():
             event.add_status(WaitingStatus("Waiting for credentials from keystone"))
-            return
 
         if not self.model.relations.get("cos-agent"):
             event.add_status(BlockedStatus("Grafana Agent is not related"))
-            return
-
-        resource = SnapResource(RESOURCE_NAME, self.model)
-        if resource and resource.snap_name != SNAP_NAME:
-            event.add_status(BlockedStatus(f"snap resource {resource.snap_name} is not valid."))
-            return
 
         snap_service = get_installed_snap_service(SNAP_NAME)
+
         if not snap_service.present:
             event.add_status(
                 BlockedStatus("snap service is not installed, please check snap service")
             )
-            return
-        if not snap_service.is_active():
+        elif not snap_service.is_active():
             event.add_status(
                 BlockedStatus("snap service is not running, please check snap service")
             )
-            return
 
         event.add_status(ActiveStatus())
 

@@ -42,9 +42,9 @@ def test_snap_install_or_refresh_with_resource_from_upstream(
     service.snap_install_or_refresh(resource, "my-channel")
     mock_remove_upstream.assert_called_once()
     mock_snap.install_local.assert_not_called()
-    mock_workaround.assert_not_called()
-    mock_remove_resource.assert_not_called()
-    mock_snap.add.assert_not_called()
+    mock_workaround.assert_called_once()
+    mock_remove_resource.assert_called_once()
+    mock_snap.add.assert_called_once_with(service.SNAP_NAME, channel="my-channel")
 
 
 @mock.patch("service.remove_upstream_snap")
@@ -58,7 +58,6 @@ def test_snap_install_or_refresh_snap_store(
     resource = mock.MagicMock(spec_set=service.SnapResource)
     resource.size = 0
     resource.snap_name = None
-    resource.__bool__.return_value = False
     service.snap_install_or_refresh(resource, "my-channel")
     resource.path = "/var/resources/openstack-exporter.snap"
     mock_remove_upstream.assert_called_once()
@@ -73,9 +72,6 @@ def test_snap_install_or_refresh_snap_store(
 def test_snap_install_or_refresh_exception_raises(mock_snap, mock_workaround):
     """Test that when an exception happens, it will raise an exception to the caller."""
     resource = mock.MagicMock(spec_set=service.SnapResource)
-    resource.size = 128
-    resource.snap_name = service.SNAP_NAME
-    resource.__bool__.return_value = True
     mock_snap.side_effect = service.snap.SnapError("My Error")
     with pytest.raises(service.snap.SnapError):
         service.snap_install_or_refresh(resource, "my-channel")
