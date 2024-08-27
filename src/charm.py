@@ -23,7 +23,7 @@ from ops.model import (
     WaitingStatus,
 )
 
-from service import SNAP_NAME, get_installed_snap_service, snap_install_or_refresh
+from service import SNAP_NAME, UPSTREAM_SNAP, get_installed_snap_service, snap_install_or_refresh
 
 logger = logging.getLogger(__name__)
 
@@ -168,8 +168,11 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         """
         self.install()
 
-        snap_service = get_installed_snap_service(SNAP_NAME)
+        upstream_snap = get_installed_snap_service(UPSTREAM_SNAP)
+        if upstream_snap.present:
+            return
 
+        snap_service = get_installed_snap_service(SNAP_NAME)
         # if cos is not related then we should block and not run anything
         if not self.model.relations.get("cos-agent"):
             snap_service.stop()
@@ -213,6 +216,15 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         if not self.model.relations.get("cos-agent"):
             event.add_status(BlockedStatus("Grafana Agent is not related"))
+
+        upstream_snap = get_installed_snap_service(UPSTREAM_SNAP)
+
+        if upstream_snap.present:
+            event.add_status(
+                BlockedStatus(
+                    f"{UPSTREAM_SNAP} should not be used anymore. Please remove the snap resource."
+                )
+            )
 
         snap_service = get_installed_snap_service(SNAP_NAME)
 

@@ -37,7 +37,11 @@ class TestCharm:
     def test_config_changed(self, config, mocker):
         mock_get_installed_snap_service = mocker.patch("charm.get_installed_snap_service")
         mock_snap_service = mocker.Mock(spec_set=SnapService)
-        mock_get_installed_snap_service.return_value = mock_snap_service
+        mock_upstream_service = mocker.Mock(spec_set=SnapService)
+        mock_upstream_service.present = False
+        mock_get_installed_snap_service.side_effect = (
+            lambda snap: mock_snap_service if snap == SNAP_NAME else mock_upstream_service
+        )
 
         mocker.patch("charm.OpenstackExporterOperatorCharm.install")
 
@@ -80,6 +84,16 @@ class TestCharm:
         self.harness.begin()
         self.harness.update_config({"snap_channel": "latest/edge"})
         mock_install.assert_called_once()
+
+    @mock.patch("charm.get_installed_snap_service")
+    @mock.patch("charm.OpenstackExporterOperatorCharm.install")
+    def test_config_changed_upstream_resource(self, mock_install, mocked_installed_snap):
+        """Test config change when using the upstream resource."""
+        mocked_upstream = mock.MagicMock()
+        mocked_upstream.present = True
+        mocked_installed_snap.return_value = mocked_upstream
+        self.harness.update_config({"snap_channel": "latest/edge"})
+        mock_install.assert_not_called()
 
     @mock.patch("charm.OpenstackExporterOperatorCharm.get_resource", return_value="")
     @mock.patch("charm.snap_install_or_refresh")
