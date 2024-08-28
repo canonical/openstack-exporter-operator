@@ -219,10 +219,13 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         upstream_snap = get_installed_snap_service(UPSTREAM_SNAP)
 
+        # this is necessary when doing a charm upgrade coming from revision 27
         if upstream_snap.present:
             event.add_status(
                 BlockedStatus(
-                    f"{UPSTREAM_SNAP} should not be used anymore. Please remove the snap resource."
+                    f"{UPSTREAM_SNAP} should not be used anymore. "
+                    "Please add an empty file as resource. See more information in the docs: "
+                    "https://charmhub.io/openstack-exporter#known-issues"
                 )
             )
 
