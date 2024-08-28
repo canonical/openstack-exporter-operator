@@ -223,8 +223,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         if upstream_snap.present:
             event.add_status(
                 BlockedStatus(
-                    f"{UPSTREAM_SNAP} should not be used anymore. "
-                    "Please add an empty file as resource. See more information in the docs: "
+                    "Please add an empty file as resource. For more info see: "
                     "https://charmhub.io/openstack-exporter#known-issues"
                 )
             )

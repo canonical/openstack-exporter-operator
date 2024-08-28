@@ -276,8 +276,7 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
             snaps_installed = [snap["name"] for snap in get_snaps_installed()]
             self.assertIn(UPSTREAM_SNAP, snaps_installed)
             expected_msg = (
-                f"{UPSTREAM_SNAP} should not be used anymore. "
-                "Please add an empty file as resource. See more information in the docs: "
+                "Please add an empty file as resource. For more info see: "
                 "https://charmhub.io/openstack-exporter#known-issues"
             )
             self.assertEqual(self.leader_unit.workload_status_message, expected_msg)
