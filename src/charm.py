@@ -223,7 +223,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         if upstream_snap.present:
             event.add_status(
                 BlockedStatus(
-                    "Please add an empty file as resource. For more info see: "
+                    "golang-openstack-exporter detected. Please see: "
                     "https://charmhub.io/openstack-exporter#known-issues"
                 )
             )

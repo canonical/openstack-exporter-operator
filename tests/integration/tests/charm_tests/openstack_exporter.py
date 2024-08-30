@@ -276,7 +276,7 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
             snaps_installed = [snap["name"] for snap in get_snaps_installed()]
             self.assertIn(UPSTREAM_SNAP, snaps_installed)
             expected_msg = (
-                "Please add an empty file as resource. For more info see: "
+                "golang-openstack-exporter detected. Please see: "
                 "https://charmhub.io/openstack-exporter#known-issues"
             )
             self.assertEqual(self.leader_unit.workload_status_message, expected_msg)
