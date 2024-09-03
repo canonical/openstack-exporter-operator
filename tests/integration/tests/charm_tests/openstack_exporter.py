@@ -13,7 +13,7 @@ from pathlib import Path
 import yaml
 from zaza import model
 
-from charm import CLOUD_NAME, OS_CLIENT_CONFIG, SNAP_NAME, UPSTREAM_SNAP, OS_CLIENT_CONFIG_CACERT
+from charm import CLOUD_NAME, OS_CLIENT_CONFIG, OS_CLIENT_CONFIG_CACERT, SNAP_NAME, UPSTREAM_SNAP
 
 logger = logging.getLogger(__name__)
 
