@@ -13,7 +13,7 @@ from pathlib import Path
 import yaml
 from zaza import model
 
-from charm import CLOUD_NAME, OS_CLIENT_CONFIG, SNAP_NAME, UPSTREAM_SNAP
+from charm import CLOUD_NAME, OS_CLIENT_CONFIG, SNAP_NAME, UPSTREAM_SNAP, OS_CLIENT_CONFIG_CACERT
 
 logger = logging.getLogger(__name__)
 
@@ -161,8 +161,11 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
         results = model.run_on_leader(APP_NAME, command)
         clouds_yaml = results.get("Stdout", "").strip()
         data = yaml.safe_load(clouds_yaml)
-        cacert = data["clouds"][CLOUD_NAME]["cacert"]
-        self.assertEqual(cacert, f"{new_value}")
+        cacert_path = data["clouds"][CLOUD_NAME]["cacert"]
+        self.assertEqual(cacert_path, OS_CLIENT_CONFIG_CACERT)
+
+        with open(cacert_path, "r") as f:
+            self.assertEqual(f.read(), f"{new_value}")
 
         # Verify the exporter crashes because of wrong ssl_ca
         command = "curl -q localhost:9180/metrics"

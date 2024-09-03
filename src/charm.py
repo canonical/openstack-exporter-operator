@@ -35,6 +35,7 @@ CLOUD_NAME = "openstack"
 # This is the SNAP_COMMON directory for the exporter snap, which is accessible,
 # unversioned, and retained across updates of the snap.
 OS_CLIENT_CONFIG = f"/var/snap/{SNAP_NAME}/common/clouds.yaml"
+OS_CLIENT_CONFIG_CACERT = f"/var/snap/{SNAP_NAME}/common/cacert.pem"
 
 
 class OpenstackExporterOperatorCharm(ops.CharmBase):
@@ -90,6 +91,11 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         since v2 was removed a long time ago (Queens release)
         https://docs.openstack.org/keystone/latest/contributor/http-api.html
         """
+        os.makedirs(os.path.dirname(OS_CLIENT_CONFIG), exist_ok=True)
+        with open(OS_CLIENT_CONFIG_CACERT, "w") as f:
+            f.write(self.config["ssl_ca"])
+        os.chmod(OS_CLIENT_CONFIG_CACERT, 0o600)
+
         auth_url = "{protocol}://{hostname}:{port}/v3".format(
             protocol=data["service_protocol"],
             hostname=data["service_hostname"],
@@ -110,12 +116,11 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
                         "auth_url": auth_url,
                     },
                     "verify": data["service_protocol"] == "https",
-                    "cacert": self.config["ssl_ca"],
+                    "cacert": OS_CLIENT_CONFIG_CACERT,
                 }
             }
         }
 
-        os.makedirs(os.path.dirname(OS_CLIENT_CONFIG), exist_ok=True)
         with open(OS_CLIENT_CONFIG, "w") as f:
             yaml.dump(contents, f)
 
