@@ -9,6 +9,7 @@ from charms.operator_libs_linux.v2 import snap
 logger = getLogger(__name__)
 
 SNAP_NAME = "charmed-openstack-exporter"
+UPSTREAM_SNAP = "golang-openstack-exporter"
 
 
 class SnapService:
@@ -93,9 +94,9 @@ def remove_upstream_snap() -> None:
     Raises an exception on error.
     """
     try:
-        snap.remove(["golang-openstack-exporter"])
+        snap.remove([UPSTREAM_SNAP])
     except snap.SnapError as e:
-        logger.error("failed to remove golang-openstack-exporter snap: %s", str(e))
+        logger.error("failed to remove %s snap: %s", UPSTREAM_SNAP, str(e))
         raise e
 
 

@@ -53,7 +53,7 @@ def test_snap_install_or_refresh_exception_raises(mock_snap, mock_workaround):
 def test_remove_upstream_snap(mock_snap):
     """Test remove upstream snap function."""
     service.remove_upstream_snap()
-    mock_snap.remove.assert_called_with(["golang-openstack-exporter"])
+    mock_snap.remove.assert_called_with([service.UPSTREAM_SNAP])
 
 
 @mock.patch("service.snap.remove")
