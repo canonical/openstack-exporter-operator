@@ -94,7 +94,6 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         os.makedirs(os.path.dirname(OS_CLIENT_CONFIG), exist_ok=True)
         with open(OS_CLIENT_CONFIG_CACERT, "w") as f:
             f.write(self.config["ssl_ca"])
-        os.chmod(OS_CLIENT_CONFIG_CACERT, 0o644)
 
         auth_url = "{protocol}://{hostname}:{port}/v3".format(
             protocol=data["service_protocol"],
