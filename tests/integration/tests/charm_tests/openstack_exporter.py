@@ -164,8 +164,11 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
         cacert_path = data["clouds"][CLOUD_NAME]["cacert"]
         self.assertEqual(cacert_path, OS_CLIENT_CONFIG_CACERT)
 
-        with open(cacert_path, "r") as f:
-            self.assertEqual(f.read(), f"{new_value}")
+        # Verify ssl_ca was written to the file
+        command = f"sudo cat {cacert_path}"
+        results = model.run_on_leader(APP_NAME, command)
+        cacert = results.get("Stdout", "").strip()
+        self.assertEqual(f"{cacert}", f"{new_value}")
 
         # Verify the exporter crashes because of wrong ssl_ca
         command = "curl -q localhost:9180/metrics"
