@@ -45,7 +45,7 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
         results = model.run_on_leader(APP_NAME, command)
         clouds_yaml_path = results.get("Stdout", "").strip()
         self.assertEqual(int(results.get("Code", "-1")), 0)
-        self.assertEqual(clouds_yaml_path, OS_CLIENT_CONFIG)
+        self.assertEqual(clouds_yaml_path, str(OS_CLIENT_CONFIG))
 
         # Make sure the clouds yaml is not empty and it's a valid yaml
         command = f"cat $(sudo snap get {SNAP_NAME} os-client-config)"
@@ -162,7 +162,7 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
         clouds_yaml = results.get("Stdout", "").strip()
         data = yaml.safe_load(clouds_yaml)
         cacert_path = data["clouds"][CLOUD_NAME]["cacert"]
-        self.assertEqual(cacert_path, OS_CLIENT_CONFIG_CACERT)
+        self.assertEqual(cacert_path, str(OS_CLIENT_CONFIG_CACERT))
 
         # Verify ssl_ca was written to the file
         command = f"sudo cat {cacert_path}"
