@@ -45,7 +45,7 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
         results = model.run_on_leader(APP_NAME, command)
         clouds_yaml_path = results.get("Stdout", "").strip()
         self.assertEqual(int(results.get("Code", "-1")), 0)
-        self.assertEqual(clouds_yaml_path, OS_CLIENT_CONFIG)
+        self.assertEqual(clouds_yaml_path, str(OS_CLIENT_CONFIG))
 
         # Make sure the clouds yaml is not empty and it's a valid yaml
         command = f"cat $(sudo snap get {SNAP_NAME} os-client-config)"
@@ -161,8 +161,10 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
         results = model.run_on_leader(APP_NAME, command)
         clouds_yaml = results.get("Stdout", "").strip()
         data = yaml.safe_load(clouds_yaml)
-        cacert = data["clouds"][CLOUD_NAME]["cacert"]
-        self.assertEqual(cacert, f"{new_value}")
+        cacert_path = data["clouds"][CLOUD_NAME]["cacert"]
+
+        # Verify ssl_ca was written to the file
+        model.block_until_file_has_contents(APP_NAME, cacert_path, new_value)
 
         # Verify the exporter crashes because of wrong ssl_ca
         command = "curl -q localhost:9180/metrics"

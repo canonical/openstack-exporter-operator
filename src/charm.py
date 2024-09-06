@@ -10,6 +10,7 @@ OpenStack deployment.
 
 import logging
 import os
+from pathlib import Path
 from typing import Any, Optional
 
 import ops
@@ -34,7 +35,8 @@ CLOUD_NAME = "openstack"
 # store the clouds.yaml where it's easily accessible by the openstack-exporter snap
 # This is the SNAP_COMMON directory for the exporter snap, which is accessible,
 # unversioned, and retained across updates of the snap.
-OS_CLIENT_CONFIG = f"/var/snap/{SNAP_NAME}/common/clouds.yaml"
+OS_CLIENT_CONFIG = Path(f"/var/snap/{SNAP_NAME}/common/clouds.yaml")
+OS_CLIENT_CONFIG_CACERT = Path(f"/var/snap/{SNAP_NAME}/common/cacert.pem")
 
 
 class OpenstackExporterOperatorCharm(ops.CharmBase):
@@ -90,6 +92,9 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         since v2 was removed a long time ago (Queens release)
         https://docs.openstack.org/keystone/latest/contributor/http-api.html
         """
+        OS_CLIENT_CONFIG.parent.mkdir(parents=True, exist_ok=True)
+        OS_CLIENT_CONFIG_CACERT.write_text(self.config["ssl_ca"])
+
         auth_url = "{protocol}://{hostname}:{port}/v3".format(
             protocol=data["service_protocol"],
             hostname=data["service_hostname"],
@@ -110,14 +115,12 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
                         "auth_url": auth_url,
                     },
                     "verify": data["service_protocol"] == "https",
-                    "cacert": self.config["ssl_ca"],
+                    "cacert": str(OS_CLIENT_CONFIG_CACERT),
                 }
             }
         }
 
-        os.makedirs(os.path.dirname(OS_CLIENT_CONFIG), exist_ok=True)
-        with open(OS_CLIENT_CONFIG, "w") as f:
-            yaml.dump(contents, f)
+        OS_CLIENT_CONFIG.write_text(yaml.dump(contents))
 
     def _get_keystone_data(self) -> dict[str, str]:
         """Get keystone data if ready, otherwise empty dict."""

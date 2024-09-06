@@ -12,6 +12,6 @@ def setup_export_ssl_ca_config():
     model.set_application_config("openstack-exporter", {"ssl_ca": cacert})
     model.block_until_file_has_contents(
         "openstack-exporter",
-        f"/var/snap/{SNAP_NAME}/common/clouds.yaml",
+        f"/var/snap/{SNAP_NAME}/common/cacert.pem",
         "-----BEGIN CERTIFICATE-----",
     )
