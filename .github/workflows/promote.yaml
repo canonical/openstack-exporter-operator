@@ -1,0 +1,28 @@
+name: Promote charm to other tracks and channels
+
+on:
+  workflow_dispatch:
+    inputs:
+      destination-channel:
+        description: 'Destination Channel, e.g. latest/candidate'
+        required: true
+      origin-channel:
+        description: 'Origin Channel, e.g. latest/edge'
+        required: true
+
+jobs:
+  promote-charm:
+    name: Promote charm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Release charm to channel
+        # Note(rgildein): Since this charm uses the metadata defined in charmcraft.yaml, we need to use the pre-release version that includes https://github.com/canonical/charming-actions/pull/132.
+        uses: canonical/charming-actions/release-charm@2.5.0-rc
+        with:
+          credentials: ${{ secrets.CHARMHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          destination-channel: ${{ github.event.inputs.destination-channel }}
+          origin-channel: ${{ github.event.inputs.origin-channel }}
+          # Note(rgildein): The default is 20.04, but this charm has never been released for this base.
+          base-channel: 22.04

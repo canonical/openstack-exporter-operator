@@ -1,0 +1,91 @@
+type: charm
+name: openstack-exporter
+title: OpenStack Exporter
+summary: Openstack exporter for Charmed OpenStack
+description: |
+  This is an exporter that exposes information gathered from Openstack for use
+  by the Prometheus monitoring system. This operator works with the Canonical
+  Observability Stack (COS).
+subordinate: false
+
+bases:
+  - build-on:
+    - name: ubuntu
+      channel: "22.04"
+    run-on:
+    - name: ubuntu
+      channel: "22.04"
+
+requires:
+  credentials:
+    interface: keystone-admin
+
+provides:
+  cos-agent:
+    interface: cos_agent
+
+# These bindings can be used to explicitly request interfaces in all the OpenStack
+# network spaces. Needed when APIs are not exposed in the same network as the one bound
+# to the credentials endpoint
+extra-bindings:
+  admin:
+  public:
+  internal:
+
+config:
+  options:
+    port:
+      type: int
+      default: 9180
+      description: |
+        The openstack-exporter service (metrics endpoint for prometheus scraping)
+        will listen at this port.
+    ssl_ca:
+      default: ""
+      type: string
+      description: |
+        Custom SSL CA for keystone if required.
+
+        The format should be the raw contents of a PEM encoded file.
+        (no base64 encoding).
+    cache_ttl:
+      default: "300s"
+      type: string
+      description: |
+        Cache expiry time-to-live (TTL), e.g., 10s, 11m, 12h. Cache refreshes at
+        intervals of cache_ttl/2.
+        Customizable based on the size of the OpenStack cluster.
+        Format details: https://pkg.go.dev/time#ParseDuration
+    cache:
+      default: true
+      type: boolean
+      description: |
+        By default, enables the exporter cache globally. Refreshes at intervals of cache_ttl/2.
+        If the cache is empty or expired, the response will be empty.
+    snap_channel:
+      default: "latest/stable"
+      type: string
+      description: |
+        The charmed-openstack-exporter snap is by default installed from the latest/stable channel.
+        This option allows the selection of a different channel.
+
+
+links:
+  documentation: https://discourse.charmhub.io/t/openstack-exporter-docs-index/13876
+  issues:
+  - https://github.com/canonical/openstack-exporter-operator/issues
+  source:
+  - https://github.com/canonical/openstack-exporter-operator
+  website:
+  - https://github.com/canonical/openstack-exporter-operator
+
+resources:
+  openstack-exporter:
+    type: file
+    filename: openstack-exporter.snap
+    description: |
+      Snap for openstack-exporter.
+      This is the software that implements actual metrics collection and an endpoint for prometheus
+      scraping. The snap resource on Charmhub is intended to be an empty file. The charm will
+      ignore an empty file resource and normally install the snap from the snap store, but a
+      custom snap can also be provided here if needed.

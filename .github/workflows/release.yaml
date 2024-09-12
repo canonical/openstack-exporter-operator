@@ -1,0 +1,32 @@
+name: Release to Edge
+
+on:
+  push:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+jobs:
+  check:
+    uses: ./.github/workflows/check.yaml
+    secrets: inherit
+
+  release:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize lxd  # This should dropped once it's implemented on charming-actions itself. https://github.com/canonical/charming-actions/issues/140
+        uses: canonical/setup-lxd@v0.1.1
+
+      - name: Upload charm to charmhub
+        uses: canonical/charming-actions/upload-charm@2.6.2
+        with:
+          charmcraft-channel: "2.x/stable"
+          credentials: "${{ secrets.CHARMHUB_TOKEN }}"
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          channel: "latest/edge"
+          # Ensure the charm is built in an isolated environment and on the correct base in an lxd container.
+          destructive-mode: false

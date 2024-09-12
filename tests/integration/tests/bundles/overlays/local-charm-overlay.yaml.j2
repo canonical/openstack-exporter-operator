@@ -1,0 +1,7 @@
+applications:
+  {{ charm_name }}:
+    charm: {{ CHARM_LOCATION }}
+    {% if CHARM_SNAP_LOCATION %}
+    resources:
+      openstack-exporter: {{ CHARM_SNAP_LOCATION }}
+    {% endif %}
