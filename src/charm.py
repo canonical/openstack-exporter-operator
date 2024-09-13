@@ -95,11 +95,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         OS_CLIENT_CONFIG.parent.mkdir(parents=True, exist_ok=True)
         OS_CLIENT_CONFIG_CACERT.write_text(self.config["ssl_ca"])
 
-        auth_url = "{protocol}://{hostname}:{port}/v3".format(
-            protocol=data["service_protocol"],
-            hostname=data["service_hostname"],
-            port=data["service_port"],
-        )
+        auth_url = f"{data['service_protocol']}://data['service_hostname']:{data['service_port']}/v3"
         contents = {
             "clouds": {
                 CLOUD_NAME: {
@@ -147,7 +143,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             logger.debug("cannot fetch charm resource")
             return None
 
-        if not os.path.getsize(snap_path) > 0:
+        if not os.path.getsize(snap_path):
             logger.debug("resource is an empty file")
             return None
 

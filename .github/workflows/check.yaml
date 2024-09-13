@@ -72,7 +72,6 @@ jobs:
       - name: external controller juju config
         run: |
           mkdir -p $HOME/.local/share/juju
-          # TODO: can we remove the base64 encoding?
           echo ${{ secrets.JUJU_CONTROLLERS_YAML }} | base64 -d > $HOME/.local/share/juju/controllers.yaml
           echo ${{ secrets.JUJU_ACCOUNTS_YAML }} | base64 -d > $HOME/.local/share/juju/accounts.yaml
 
@@ -95,7 +94,7 @@ jobs:
 
       - name: install external controller required packages
         run: |
-           sudo snap install charmcraft --channel 2.x/stable --classic
+           sudo snap install charmcraft --channel 3.x/stable --classic
            sudo snap install juju --channel 3.4/stable --classic
            sudo --preserve-env=http_proxy,https_proxy,no_proxy pip3 install tox
            juju switch soleng-ci-ctrl-34
