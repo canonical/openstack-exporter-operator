@@ -22,16 +22,6 @@ tox run -e integration   # run integration tests
 tox                      # run 'lint' and 'unit' environments
 ```
 
-This project also uses `make` for managing charm related operations. You can use the following make
-targets to perform charming tasks:
-
-```shell
-make                            # show help text
-make update-charm-libs          # update charm's libraries
-make clean                      # remove unneeded files
-make build                      # build the charm
-make integration                # run the tests defined in the integration subdirectory
-```
 
 Note: You can use a local snap exporter to use in the integration test by placing it in the root of
 the repo and naming the snap file with the `charmed-openstack-exporter` prefix. When this happens,
@@ -44,7 +34,7 @@ Charm libraries are managed with charmcraft and recorded in `./scripts/update-ch
 To update the libraries included, run
 
 ```shell
-make update-charm-libs
+./scripts/update-charm-libs.sh
 ```
 
 If you need to include more charm libraries, you can run:
@@ -75,4 +65,10 @@ Build the charm in this git repository using:
 
 ```shell
 charmcraft -v pack
+```
+
+To start with a clean environment, run this first:
+
+```shell
+charmcraft clean
 ```

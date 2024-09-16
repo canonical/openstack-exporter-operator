@@ -108,7 +108,10 @@ jobs:
           juju version
           juju controllers | grep Version -A 1 | awk '{print $9}'
 
+      - name: Build the charm
+        run: charmcraft -v pack
+
       - name: Build charm and run tests
-        run: make integration
+        run: CHARM_LOCATION="$(pwd)/openstack-exporter*.charm" tox -e build
         env:
           TEST_JUJU3: "1"  # https://github.com/openstack-charmers/zaza/pull/653
