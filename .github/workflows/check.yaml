@@ -112,6 +112,6 @@ jobs:
         run: charmcraft -v pack
 
       - name: Build charm and run tests
-        run: CHARM_LOCATION="$(pwd)/openstack-exporter*.charm" tox -e build
+        run: CHARM_LOCATION="$(pwd)/openstack-exporter*.charm" tox -e func
         env:
           TEST_JUJU3: "1"  # https://github.com/openstack-charmers/zaza/pull/653
