@@ -23,10 +23,6 @@ tox                      # run 'lint' and 'unit' environments
 ```
 
 
-Note: You can use a local snap exporter to use in the integration test by placing it in the root of
-the repo and naming the snap file with the `charmed-openstack-exporter` prefix. When this happens,
-the `CHARM_SNAP_LOCATION` environment variable will detect the file and attach it as a resource.
-
 ## Fetching libraries
 
 Charm libraries are managed with charmcraft and recorded in `./scripts/update-charm-libs.sh`.

@@ -1,6 +1,11 @@
 series: jammy
 applications:
-  openstack-exporter:
+  {{ charm_name }}:
+    charm: {{ JAMMY_CHARM_PATH }}
+    {% if CHARM_SNAP_LOCATION %}
+    resources:
+      openstack-exporter: {{ CHARM_SNAP_LOCATION }}
+    {% endif %}
     exposed-endpoints:
       "":
         expose-to-cidrs:
