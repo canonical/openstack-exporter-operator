@@ -1,7 +1,7 @@
 series: jammy
 applications:
   {{ charm_name }}:
-    charm: {{ JAMMY_CHARM_PATH }}
+    charm: {{ CHARM_PATH_JAMMY }}
     {% if CHARM_SNAP_LOCATION %}
     resources:
       openstack-exporter: {{ CHARM_SNAP_LOCATION }}
