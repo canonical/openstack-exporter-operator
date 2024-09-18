@@ -92,4 +92,4 @@ resources:
       ignore an empty file resource and normally install the snap from the snap store, but a
       custom snap can also be provided here if needed.
 
-      This resource has top priority when the install hook is triggered. The snap_channel option will have no effect.
+      This resource has top priority. If the resource is present, the snap_channel option will have no effect.
