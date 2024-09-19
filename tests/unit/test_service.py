@@ -7,6 +7,23 @@ import pytest
 
 import service
 
+from exception import SnapConfigurationMissingError
+
+
+class TestSnapService:
+
+    def test_configure(self, mocker):
+        mock_client = mocker.Mock()
+        snap_service = service.SnapService(mock_client)
+        config = {"config-a": "a", "config-b": "b"}
+        snap_service.configure(config)
+        mock_client.set.assert_called_with(config, typed=True)
+
+    def test_configure_missing_snap_configuration(self, mocker):
+        mock_client = mocker.Mock()
+        snap_service = service.SnapService(mock_client)
+        with pytest.raises(SnapConfigurationMissingError):
+            snap_service.configure({})
 
 @mock.patch("service.remove_upstream_snap")
 @mock.patch("service.remove_snap_as_resource")

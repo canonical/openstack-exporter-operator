@@ -5,6 +5,7 @@ from logging import getLogger
 from typing import Any, Optional
 
 from charms.operator_libs_linux.v2 import snap
+from exception import SnapConfigurationMissingError
 
 logger = getLogger(__name__)
 
@@ -47,7 +48,7 @@ class SnapService:
         # Bail out or it will crash on self.snap_client.set() method
         if not snap_config:
             logger.warning("empty snap config: %s, skipping...", snap_config)
-            return
+            raise SnapConfigurationMissingError
 
         self.snap_client.set(snap_config, typed=True)
 
