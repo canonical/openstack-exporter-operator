@@ -5,6 +5,7 @@ from logging import getLogger
 from typing import Any, Optional
 
 from charms.operator_libs_linux.v2 import snap
+
 from exception import SnapConfigurationMissingError
 
 logger = getLogger(__name__)
@@ -74,7 +75,7 @@ def snap_install_or_refresh(resource: Optional[str], channel: str) -> None:
         if resource:
             logger.debug("installing %s from resource.", SNAP_NAME)
             # installing from a resource if installed from snap store previously is not problematic
-            # We allow manaully attaching because some environment don't have the snap proxy.
+            # We allow manually attaching because some environment don't have the snap proxy.
             # It should be deprecated for long term.
             snap.install_local(resource, dangerous=True)
         else:

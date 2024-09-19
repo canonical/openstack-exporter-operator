@@ -6,11 +6,11 @@ from unittest import mock
 import pytest
 
 import service
-
 from exception import SnapConfigurationMissingError
 
 
 class TestSnapService:
+    """Test SnapService class."""
 
     def test_configure(self, mocker):
         mock_client = mocker.Mock()
@@ -24,6 +24,7 @@ class TestSnapService:
         snap_service = service.SnapService(mock_client)
         with pytest.raises(SnapConfigurationMissingError):
             snap_service.configure({})
+
 
 @mock.patch("service.remove_upstream_snap")
 @mock.patch("service.remove_snap_as_resource")

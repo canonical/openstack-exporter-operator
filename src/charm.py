@@ -17,12 +17,7 @@ import ops
 import yaml
 from charms.grafana_agent.v0.cos_agent import COSAgentProvider
 from charms.operator_libs_linux.v2.snap import SnapError
-from ops.model import (
-    ActiveStatus,
-    BlockedStatus,
-    ModelError,
-    WaitingStatus,
-)
+from ops.model import ActiveStatus, BlockedStatus, ModelError, WaitingStatus
 
 from service import SNAP_NAME, UPSTREAM_SNAP, get_installed_snap_service, snap_install_or_refresh
 
@@ -95,7 +90,9 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         OS_CLIENT_CONFIG.parent.mkdir(parents=True, exist_ok=True)
         OS_CLIENT_CONFIG_CACERT.write_text(self.config["ssl_ca"])
 
-        auth_url = f"{data['service_protocol']}://data['service_hostname']:{data['service_port']}/v3"
+        auth_url = (
+            f"{data['service_protocol']}://data['service_hostname']:{data['service_port']}/v3"
+        )
         contents = {
             "clouds": {
                 CLOUD_NAME: {
