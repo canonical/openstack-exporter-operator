@@ -73,6 +73,8 @@ def snap_install_or_refresh(resource: Optional[str], channel: str) -> None:
         if resource:
             logger.debug("installing %s from resource.", SNAP_NAME)
             # installing from a resource if installed from snap store previously is not problematic
+            # We allow manaully attaching because some environment don't have the snap proxy.
+            # It should be deprecated for long term.
             snap.install_local(resource, dangerous=True)
         else:
             # installing from snap store if previously installed from resource is problematic, so
