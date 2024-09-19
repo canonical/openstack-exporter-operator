@@ -1,6 +1,7 @@
 series: jammy
 applications:
-  openstack-exporter:
+  {{ charm_name }}:
+    charm: {{ CHARM_PATH_JAMMY }}
     exposed-endpoints:
       "":
         expose-to-cidrs:
