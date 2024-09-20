@@ -8,6 +8,17 @@ import pytest
 import service
 
 
+class TestSnapService:
+    """Test SnapService class."""
+
+    def test_configure(self, mocker):
+        mock_client = mocker.Mock()
+        snap_service = service.SnapService(mock_client)
+        config = {"config-a": "a", "config-b": "b"}
+        snap_service.configure(config)
+        mock_client.set.assert_called_with(config, typed=True)
+
+
 @mock.patch("service.remove_upstream_snap")
 @mock.patch("service.remove_snap_as_resource")
 @mock.patch("service.workaround_bug_268")
