@@ -140,7 +140,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             logger.debug("cannot fetch charm resource")
             return None
 
-        if not os.path.getsize(snap_path):
+        if os.path.getsize(snap_path) <= 0:
             logger.debug("resource is an empty file")
             return None
 
