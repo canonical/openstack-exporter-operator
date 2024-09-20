@@ -91,7 +91,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         OS_CLIENT_CONFIG_CACERT.write_text(self.config["ssl_ca"])
 
         auth_url = (
-            f"{data['service_protocol']}://data['service_hostname']:{data['service_port']}/v3"
+            f"{data['service_protocol']}://{data['service_hostname']}:{data['service_port']}/v3"
         )
         contents = {
             "clouds": {
