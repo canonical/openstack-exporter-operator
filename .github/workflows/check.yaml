@@ -109,7 +109,15 @@ jobs:
           juju version
           juju controllers | grep Version -A 1 | awk '{print $9}'
 
+      - name: Build the charm
+        run: charmcraft -v pack
+
       - name: Build charm and run tests
-        run: make integration
+        run: |
+          export CHARM_PATH_JAMMY="$(pwd)/$(ls | grep '.*22.04.*\.charm$')"
+          echo "$CHARM_PATH_JAMMY"
+          export CHARM_PATH_FOCAL="$(pwd)/$(ls | grep '.*20.04.*\.charm$')"
+          echo "$CHARM_PATH_FOCAL"
+          tox -e func
         env:
           TEST_JUJU3: "1"  # https://github.com/openstack-charmers/zaza/pull/653
