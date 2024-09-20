@@ -17,12 +17,7 @@ import ops
 import yaml
 from charms.grafana_agent.v0.cos_agent import COSAgentProvider
 from charms.operator_libs_linux.v2.snap import SnapError
-from ops.model import (
-    ActiveStatus,
-    BlockedStatus,
-    ModelError,
-    WaitingStatus,
-)
+from ops.model import ActiveStatus, BlockedStatus, ModelError, WaitingStatus
 
 from service import SNAP_NAME, UPSTREAM_SNAP, get_installed_snap_service, snap_install_or_refresh
 
@@ -95,10 +90,8 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         OS_CLIENT_CONFIG.parent.mkdir(parents=True, exist_ok=True)
         OS_CLIENT_CONFIG_CACERT.write_text(self.config["ssl_ca"])
 
-        auth_url = "{protocol}://{hostname}:{port}/v3".format(
-            protocol=data["service_protocol"],
-            hostname=data["service_hostname"],
-            port=data["service_port"],
+        auth_url = (
+            f"{data['service_protocol']}://{data['service_hostname']}:{data['service_port']}/v3"
         )
         contents = {
             "clouds": {
@@ -147,7 +140,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             logger.debug("cannot fetch charm resource")
             return None
 
-        if not os.path.getsize(snap_path) > 0:
+        if os.path.getsize(snap_path) <= 0:
             logger.debug("resource is an empty file")
             return None
 

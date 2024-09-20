@@ -72,7 +72,8 @@ jobs:
       - name: external controller juju config
         run: |
           mkdir -p $HOME/.local/share/juju
-          # TODO: can we remove the base64 encoding?
+          # The credential are stored in repository's secret as base64 encoded string.
+          # This help to avoid special characters that can interface with the parsing of YAML/JSON files.
           echo ${{ secrets.JUJU_CONTROLLERS_YAML }} | base64 -d > $HOME/.local/share/juju/controllers.yaml
           echo ${{ secrets.JUJU_ACCOUNTS_YAML }} | base64 -d > $HOME/.local/share/juju/accounts.yaml
 
