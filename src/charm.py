@@ -148,12 +148,9 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
     def install(self) -> None:
         """Install the necessary resources for the charm."""
-        try:
-            snap_install_or_refresh(self.get_resource(), self.model.config["snap_channel"])
-        except SnapError:
-            self.model.unit.status = BlockedStatus(
-                "Failed to remove/install openstack-exporter snap"
-            )
+        # If this fails, it's not recoverable.
+        # So we don't catch the error, instead letting this become a charm error status.
+        snap_install_or_refresh(self.get_resource(), self.model.config["snap_channel"])
 
     def _configure(self, _: ops.HookEvent) -> None:
         """Configure the charm.
@@ -227,13 +224,9 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         snap_service = get_installed_snap_service(SNAP_NAME)
 
         if not snap_service.present:
-            event.add_status(
-                BlockedStatus("snap service is not installed, please check snap service")
-            )
+            raise RuntimeError(f"{SNAP_NAME} snap is not installed")
         elif not snap_service.is_active():
-            event.add_status(
-                BlockedStatus("snap service is not running, please check snap service")
-            )
+            raise RuntimeError(f"{SNAP_NAME} snap service is not active")
 
         event.add_status(ActiveStatus())
 
