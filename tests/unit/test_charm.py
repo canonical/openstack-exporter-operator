@@ -8,14 +8,15 @@ from unittest import mock
 import ops
 import ops.testing
 import pytest
-from ops.model import BlockedStatus
+from ops.model import ErrorStatus
+
+from charms.operator_libs_linux.v2.snap import SnapError
 
 from charm import (
     CLOUD_NAME,
     OS_CLIENT_CONFIG,
     SNAP_NAME,
     OpenstackExporterOperatorCharm,
-    SnapError,
 )
 from service import SnapService
 
@@ -106,6 +107,5 @@ class TestCharm:
     def test_install_snap_error(self, mock_install):
         mock_install.side_effect = SnapError("My Error")
         self.harness.begin()
-        self.harness.charm.on.install.emit()
-        expected_msg = "Failed to remove/install openstack-exporter snap"
-        assert self.harness.charm.unit.status == BlockedStatus(expected_msg)
+        with pytest.raises(SnapError, match="My Error"):
+            self.harness.charm.on.install.emit()
