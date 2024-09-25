@@ -16,7 +16,6 @@ from typing import Any, Optional
 import ops
 import yaml
 from charms.grafana_agent.v0.cos_agent import COSAgentProvider
-from charms.operator_libs_linux.v2.snap import SnapError
 from ops.model import ActiveStatus, BlockedStatus, ModelError, WaitingStatus
 
 from service import SNAP_NAME, UPSTREAM_SNAP, get_installed_snap_service, snap_install_or_refresh
