@@ -8,8 +8,6 @@ from unittest import mock
 import ops
 import ops.testing
 import pytest
-from ops.model import ErrorStatus
-
 from charms.operator_libs_linux.v2.snap import SnapError
 
 from charm import (
