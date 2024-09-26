@@ -93,9 +93,6 @@ applications:
       openstack-origin: distro
       verbose: true
     constraints: arch=amd64 mem=2048
-  nova-cloud-controller-mysql-router:
-    charm: mysql-router
-    channel: latest/edge
   cinder:
     charm: cinder
     channel: yoga/edge
