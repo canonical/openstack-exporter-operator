@@ -203,12 +203,10 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         if not self.model.relations.get("credentials"):
             event.add_status(BlockedStatus("Keystone is not related"))
 
-        keystone_data = self._get_keystone_data()
-        if not keystone_data:
+        if not self._get_keystone_data():
             event.add_status(WaitingStatus("Waiting for credentials from keystone"))
 
-        cos_agent_relation = self.model.relations.get("cos-agent")
-        if not cos_agent_relation:
+        if not self.model.relations.get("cos-agent"):
             event.add_status(BlockedStatus("Grafana Agent is not related"))
 
         upstream_snap = get_installed_snap_service(UPSTREAM_SNAP)
@@ -225,11 +223,13 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         snap_service = get_installed_snap_service(SNAP_NAME)
 
         if not snap_service.present:
-            raise RuntimeError(f"{SNAP_NAME} snap is not installed")
-
-        # the snap service should be active, but it isn't, then it's an unknown error
-        if keystone_data and cos_agent_relation and not snap_service.is_active():
-            raise RuntimeError(f"{SNAP_NAME} snap service is not active")
+            event.add_status(
+                BlockedStatus(f"{SNAP_NAME} snap is not installed; please manually check")
+            )
+        elif not snap_service.is_active():
+            event.add_status(
+                BlockedStatus(f"{SNAP_NAME} snap service is not active; please manually check")
+            )
 
         event.add_status(ActiveStatus())
 
