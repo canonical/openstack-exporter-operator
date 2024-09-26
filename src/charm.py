@@ -149,6 +149,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         """Install the necessary resources for the charm."""
         # If this fails, it's not recoverable.
         # So we don't catch the error, instead letting this become a charm error status.
+        # Errored hooks are auto-retried by juju, so the install may work on retry.
         snap_install_or_refresh(self.get_resource(), self.model.config["snap_channel"])
 
     def _configure(self, _: ops.HookEvent) -> None:
