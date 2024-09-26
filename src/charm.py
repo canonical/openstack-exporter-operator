@@ -51,8 +51,10 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         self.framework.observe(self.on.upgrade_charm, self._on_upgrade)
         self.framework.observe(self.on.config_changed, self._configure)
         self.framework.observe(self.on.collect_unit_status, self._on_collect_unit_status)
+        self.framework.observe(self.on.credentials_relation_joined, self._configure)
         self.framework.observe(self.on.credentials_relation_changed, self._configure)
         self.framework.observe(self.on.credentials_relation_broken, self._configure)
+        self.framework.observe(self.on.cos_agent_relation_joined, self._configure)
         self.framework.observe(self.on.cos_agent_relation_changed, self._configure)
         self.framework.observe(self.on.cos_agent_relation_broken, self._configure)
 
@@ -203,16 +205,18 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         """Handle collect unit status event (called after every event)."""
         if not self.model.relations.get("credentials"):
             event.add_status(BlockedStatus("Keystone is not related"))
+            return
 
         if not self._get_keystone_data():
             event.add_status(WaitingStatus("Waiting for credentials from keystone"))
+            return
 
         if not self.model.relations.get("cos-agent"):
             event.add_status(BlockedStatus("Grafana Agent is not related"))
-
-        upstream_snap = get_installed_snap_service(UPSTREAM_SNAP)
+            return
 
         # this is necessary when doing a charm upgrade coming from revision 27
+        upstream_snap = get_installed_snap_service(UPSTREAM_SNAP)
         if upstream_snap.present:
             event.add_status(
                 BlockedStatus(
@@ -220,17 +224,15 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
                     "https://charmhub.io/openstack-exporter#known-issues"
                 )
             )
+            return
 
         snap_service = get_installed_snap_service(SNAP_NAME)
 
         if not snap_service.present:
-            event.add_status(
-                BlockedStatus(f"{SNAP_NAME} snap is not installed; please manually check")
-            )
-        elif not snap_service.is_active():
-            event.add_status(
-                BlockedStatus(f"{SNAP_NAME} snap service is not active; please manually check")
-            )
+            raise RuntimeError(f"{SNAP_NAME} snap is not installed, but it should be")
+
+        if not snap_service.is_active():
+            raise RuntimeError(f"{SNAP_NAME} snap service is not active, but it should be")
 
         event.add_status(ActiveStatus())
 
