@@ -225,11 +225,19 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         if not snap_service.present:
             event.add_status(
-                BlockedStatus(f"{SNAP_NAME} snap is not installed. Please wait for installation to complete, or manually reinstall the snap if the issue persists.")
+                BlockedStatus(
+                    f"{SNAP_NAME} snap is not installed. "
+                    "Please wait for installation to complete, "
+                    "or manually reinstall the snap if the issue persists."
+                )
             )
         elif not snap_service.is_active():
             event.add_status(
-                BlockedStatus(f"{SNAP_NAME} snap service is not active. Please wait for configuration to complete, or manually start the service the issue persists.")
+                BlockedStatus(
+                    f"{SNAP_NAME} snap service is not active. "
+                    "Please wait for configuration to complete, "
+                    "or manually start the service the issue persists."
+                )
             )
 
         event.add_status(ActiveStatus())
