@@ -246,9 +246,9 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
         model.block_until_unit_wl_status(
             self.leader_unit_entity_id, "blocked", timeout=STATUS_TIMEOUT
         )
-        self.assertEqual(
+        self.assertIn(
+            "snap service is not active",
             self.leader_unit.workload_status_message,
-            "snap service is not running, please check snap service",
         )
 
         # Start the exporter snap
