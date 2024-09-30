@@ -16,7 +16,6 @@ from typing import Any, Optional
 import ops
 import yaml
 from charms.grafana_agent.v0.cos_agent import COSAgentProvider
-from charms.operator_libs_linux.v2.snap import SnapError
 from ops.model import ActiveStatus, BlockedStatus, ModelError, WaitingStatus
 
 from service import SNAP_NAME, UPSTREAM_SNAP, get_installed_snap_service, snap_install_or_refresh
@@ -148,12 +147,10 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
     def install(self) -> None:
         """Install the necessary resources for the charm."""
-        try:
-            snap_install_or_refresh(self.get_resource(), self.model.config["snap_channel"])
-        except SnapError:
-            self.model.unit.status = BlockedStatus(
-                "Failed to remove/install openstack-exporter snap"
-            )
+        # If this fails, it's not recoverable.
+        # So we don't catch the error, instead letting this become a charm error status.
+        # Errored hooks are auto-retried by juju, so the install may work on retry.
+        snap_install_or_refresh(self.get_resource(), self.model.config["snap_channel"])
 
     def _configure(self, _: ops.HookEvent) -> None:
         """Configure the charm.
@@ -228,11 +225,19 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         if not snap_service.present:
             event.add_status(
-                BlockedStatus("snap service is not installed, please check snap service")
+                BlockedStatus(
+                    f"{SNAP_NAME} snap is not installed. "
+                    "Please wait for installation to complete, "
+                    "or manually reinstall the snap if the issue persists."
+                )
             )
         elif not snap_service.is_active():
             event.add_status(
-                BlockedStatus("snap service is not running, please check snap service")
+                BlockedStatus(
+                    f"{SNAP_NAME} snap service is not active. "
+                    "Please wait for configuration to complete, "
+                    "or manually start the service the issue persists."
+                )
             )
 
         event.add_status(ActiveStatus())
