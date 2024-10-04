@@ -1,0 +1,15 @@
+series: jammy
+applications:
+  {{ charm_name }}:
+    charm: {{ CHARM_PATH_JAMMY }}
+    exposed-endpoints:
+      "":
+        expose-to-cidrs:
+        - 0.0.0.0/0
+        - ::/0
+  vault:
+    exposed-endpoints:
+      "":
+        expose-to-cidrs:
+        - 0.0.0.0/0
+        - ::/0
