@@ -44,11 +44,6 @@ class SnapService:
 
     def configure(self, snap_config: dict[str, Any]) -> None:
         """Configure the snap service."""
-        # Bail out or it will crash on self.snap_client.set() method
-        if not snap_config:
-            logger.warning("empty snap config: %s, skipping...", snap_config)
-            return
-
         self.snap_client.set(snap_config, typed=True)
 
     @property
@@ -73,6 +68,8 @@ def snap_install_or_refresh(resource: Optional[str], channel: str) -> None:
         if resource:
             logger.debug("installing %s from resource.", SNAP_NAME)
             # installing from a resource if installed from snap store previously is not problematic
+            # We allow manually attaching because some environment don't have the snap proxy.
+            # It should be deprecated for long term.
             snap.install_local(resource, dangerous=True)
         else:
             # installing from snap store if previously installed from resource is problematic, so
