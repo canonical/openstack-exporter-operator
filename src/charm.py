@@ -223,6 +223,15 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         snap_service = get_installed_snap_service(SNAP_NAME)
 
+        # The snap_channel config option is ignored if there is a snap resource,
+        # so warn the user.
+        if self.model.config["snap_channel"] != "latest/stable" and self.get_resource():
+            event.add_status(
+                BlockedStatus(
+                    "Unset snap_channel option: it is unused when snap resource is provided."
+                )
+            )
+
         if not snap_service.present:
             event.add_status(
                 BlockedStatus(
