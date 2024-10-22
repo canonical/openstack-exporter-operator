@@ -228,8 +228,8 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         if self.model.config["snap_channel"] != "latest/stable" and self.get_resource():
             event.add_status(
                 BlockedStatus(
-                    "snap_channel is unused when snap resource provided; "
-                    f"please unset it: juju config {self.app.name} --reset snap_channel"
+                    "Snap resource provided, so snap_channel is unused. "
+                    f"Please unset it: juju config {self.app.name} --reset snap_channel"
                 )
             )
 
