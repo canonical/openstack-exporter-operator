@@ -57,6 +57,12 @@ This script is also executed periodically as part of a GitHub Actions workflow t
 
 ## Build the charm
 
+Charmcraft v3 is required to build this charm:
+
+```
+sudo snap install charmcraft --channel 3.x/stable --classic
+```
+
 Build the charm in this git repository using:
 
 ```shell
