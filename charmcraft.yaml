@@ -69,7 +69,7 @@ config:
         The charmed-openstack-exporter snap is by default installed from the latest/stable channel.
         This option allows the selection of a different channel.
 
-        In case the openStack-exporter resource has been attached, this option has no effect.
+        If the snap file has been attached via the openstack-exporter resource, this option has no effect.
 
 
 links:
@@ -92,4 +92,5 @@ resources:
       ignore an empty file resource and normally install the snap from the snap store, but a
       custom snap can also be provided here if needed.
 
-      This resource has top priority. If the resource is present, the snap_channel option will have no effect.
+      This resource has priority: if this resource is present,
+      the snap will be installed from the resource, and the snap_channel option will have no effect.
