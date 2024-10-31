@@ -37,4 +37,4 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           destination-channel: ${{ steps.set-channels.outputs.destination-channel }}
           origin-channel: ${{ steps.set-channels.outputs.origin-channel }}
-          charmcraft-channel: "3.x/stable"
+          charmcraft-channel: "2.x/stable"
