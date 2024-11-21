@@ -23,6 +23,7 @@ requires:
 provides:
   cos-agent:
     interface: cos_agent
+    limit: 1
 
 # These bindings can be used to explicitly request interfaces in all the OpenStack
 # network spaces. Needed when APIs are not exposed in the same network as the one bound
