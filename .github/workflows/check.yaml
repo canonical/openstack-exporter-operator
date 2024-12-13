@@ -52,7 +52,7 @@ jobs:
   integration:
     name: Integration
     needs: [lint, unit]
-    runs-on: ['self-hosted', 'jammy', 'runner-openstack-exporter']
+    runs-on: ['self-hosted', 'jammy', 'X64', 'self-hosted-linux-amd64-jammy-private-endpoint-medium']
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
