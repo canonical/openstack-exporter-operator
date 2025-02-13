@@ -78,7 +78,7 @@ jobs:
       fail-fast: false
       matrix:
         runs-on: [[ "self-hosted", "jammy", "amd64", "two-xlarge" ]]
-        test-command: [ "tox -e func" ]
+        test-command: [ "MODEL_SETTINGS='update-status-hook-interval=30s' tox -e func" ]
         juju-channel: [ "3.4/stable" ]
     steps:
 
