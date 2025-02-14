@@ -1,3 +1,8 @@
+# This file is centrally managed as a template file in https://github.com/canonical/solutions-engineering-automation
+# To update the file:
+# - Edit it in the canonical/solutions-engineering-automation repository.
+# - Open a PR with the changes.
+# - When the PR merges, the soleng-terraform bot will open a PR to the target repositories with the changes.
 name: Tests
 
 on:
@@ -20,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10"]
+        python-version: ["3.8", "3.10"]
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
@@ -47,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10"]
+        python-version: ["3.8", "3.10"]
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
@@ -77,9 +82,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [[ "self-hosted", "jammy", "amd64", "two-xlarge" ]]
-        test-command: [ "TEST_MODEL_SETTINGS='update-status-hook-interval=30s' tox -e func" ]
-        juju-channel: [ "3.4/stable" ]
+        runs-on: [['self-hosted', 'jammy', 'amd64', 'two-xlarge']]
+        test-command: ['TEST_MODEL_SETTINGS="update-status-hook-interval=30s" tox -e func']
+        juju-channel: ['3.4/stable']
     steps:
 
       - uses: actions/checkout@v4
@@ -102,7 +107,7 @@ jobs:
         with:
           provider: "lxd"
           juju-channel: ${{ matrix.juju-channel }}
-          charmcraft-channel: "3.x/stable"
+          charmcraft-channel: "2.x/stable"
 
         # This is used by zaza in the functional tests for non-amd64 architectures (if applicable)
       - name: Set zaza juju model constraints for architecture
