@@ -26,9 +26,11 @@ applications:
     charm: mysql-router
     channel: latest/edge
   mysql:
-    charm: mysql
-    channel: 8.0/edge
-    num_units: 1
+    charm: mysql-innodb-cluster
+    channel: latest/edge
+    options:
+      source: *openstack-origin
+    num_units: 3
   glance:
     charm: glance
     channel: yoga/edge
