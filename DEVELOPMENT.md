@@ -1,6 +1,6 @@
-# Contributing
+# Development
 
-To make contributions to this charm, you'll need a working [development setup](https://juju.is/docs/sdk/dev-setup).
+## Setup environment
 
 You can create a virtual python environment for development with `tox`:
 
