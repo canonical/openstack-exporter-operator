@@ -216,3 +216,72 @@ class TestCharm:
 
         self.harness.charm._on_collect_unit_status(mock_event)
         mock_event.add_status.assert_called_with(ops.ActiveStatus())
+
+    @mock.patch("charm.OS_CLIENT_CONFIG")
+    @mock.patch("charm.OS_CLIENT_CONFIG_CACERT")
+    @mock.patch("charm.yaml.dump")
+    def test_write_cloud_config(self, mock_yaml_dump, mock_cacert, mock_config):
+        """Test that cloud config works correctly."""
+        # Setup mocks
+        mock_config_parent = mock.MagicMock()
+        mock_config.parent = mock_config_parent
+        mock_yaml_dump.return_value = "yaml content"
+
+        self.harness.begin()
+
+        # Prepare test data
+        test_data = {
+            "service_protocol": "https",
+            "service_hostname": "keystone.test",
+            "service_port": "5000",
+            "service_username": "testuser",
+            "service_password": "testpass",
+            "service_project_name": "testproject",
+            "service_project_domain_name": "testdomain",
+            "service_user_domain_name": "testuserdomain",
+            "service_region": "testregion",
+        }
+        self.harness.charm._write_cloud_config(test_data)
+
+        # Check the directory is created
+        mock_config_parent.mkdir.assert_called_once_with(parents=True, exist_ok=True)
+
+        # Check yaml content is correct
+        expected_contents = {
+            "clouds": {
+                CLOUD_NAME: {
+                    "region_name": "testregion",
+                    "identity_api_version": "3",
+                    "identity_interface": "internal",
+                    "auth": {
+                        "username": "testuser",
+                        "password": "testpass",
+                        "project_name": "testproject",
+                        "project_domain_name": "testdomain",
+                        "user_domain_name": "testuserdomain",
+                        "auth_url": "https://keystone.test:5000/v3",
+                    },
+                    "verify": True,
+                    "cacert": str(mock_cacert),
+                }
+            }
+        }
+        mock_yaml_dump.assert_called_once_with(expected_contents)
+
+        # Check config is written
+        mock_config.write_text.assert_called_once_with("yaml content")
+
+        # Check with http ("verify" should be False)
+        mock_yaml_dump.reset_mock()
+        mock_config.write_text.reset_mock()
+
+        test_data["service_protocol"] = "http"
+        self.harness.charm._write_cloud_config(test_data)
+
+        expected_contents["clouds"][CLOUD_NAME]["verify"] = False
+        expected_contents["clouds"][CLOUD_NAME]["auth"][
+            "auth_url"
+        ] = "http://keystone.test:5000/v3"
+
+        # Check the second call to yaml.dump had the updated content
+        mock_yaml_dump.assert_called_with(expected_contents)
