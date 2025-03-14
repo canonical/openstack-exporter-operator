@@ -16,8 +16,7 @@ from charm import (
     SNAP_NAME,
     OpenstackExporterOperatorCharm,
 )
-from service import SnapService
-from service import UPSTREAM_SNAP
+from service import UPSTREAM_SNAP, SnapService
 
 
 class TestCharm:
@@ -35,9 +34,7 @@ class TestCharm:
         ],
     )
     def test_config_changed(self, config, mocker):
-        mock_get_installed_snap_service = mocker.patch(
-            "charm.get_installed_snap_service"
-        )
+        mock_get_installed_snap_service = mocker.patch("charm.get_installed_snap_service")
         mock_snap_service = mocker.Mock(spec_set=SnapService)
         mock_upstream_service = mocker.Mock(spec_set=SnapService)
         mock_upstream_service.present = False
@@ -72,9 +69,7 @@ class TestCharm:
                 "cache-ttl": config["cache_ttl"],
             }
         )
-        self.harness.charm._write_cloud_config.assert_called_with(
-            mock_expect_keystone_data
-        )
+        self.harness.charm._write_cloud_config.assert_called_with(mock_expect_keystone_data)
         mock_snap_service.restart_and_enable.assert_called()
         mock_snap_service.stop.assert_not_called()
 
@@ -91,9 +86,7 @@ class TestCharm:
 
     @mock.patch("charm.get_installed_snap_service")
     @mock.patch("charm.OpenstackExporterOperatorCharm.install")
-    def test_config_changed_upstream_resource(
-        self, mock_install, mocked_installed_snap
-    ):
+    def test_config_changed_upstream_resource(self, mock_install, mocked_installed_snap):
         """Test config change when using the upstream resource."""
         mocked_upstream = mock.MagicMock()
         mocked_upstream.present = True
@@ -146,9 +139,7 @@ class TestCharm:
 
         # Scenario 1: No credentials relation
         self.harness.charm._on_collect_unit_status(mock_event)
-        mock_event.add_status.assert_any_call(
-            ops.BlockedStatus("Keystone is not related")
-        )
+        mock_event.add_status.assert_any_call(ops.BlockedStatus("Keystone is not related"))
 
         # Scenario 2: With credentials relation but no data
         self.harness.add_relation("credentials", "keystone")
@@ -159,9 +150,7 @@ class TestCharm:
 
         # Scenario 3: No cos-agent relation
         self.harness.charm._on_collect_unit_status(mock_event)
-        mock_event.add_status.assert_any_call(
-            ops.BlockedStatus("Grafana Agent is not related")
-        )
+        mock_event.add_status.assert_any_call(ops.BlockedStatus("Grafana Agent is not related"))
 
         # Scenario 4: With upstream snap present
         mock_upstream_service.present = True
@@ -279,9 +268,9 @@ class TestCharm:
         self.harness.charm._write_cloud_config(test_data)
 
         expected_contents["clouds"][CLOUD_NAME]["verify"] = False
-        expected_contents["clouds"][CLOUD_NAME]["auth"][
-            "auth_url"
-        ] = "http://keystone.test:5000/v3"
+        expected_contents["clouds"][CLOUD_NAME]["auth"]["auth_url"] = (
+            "http://keystone.test:5000/v3"
+        )
 
         # Check the second call to yaml.dump had the updated content
         mock_yaml_dump.assert_called_with(expected_contents)
