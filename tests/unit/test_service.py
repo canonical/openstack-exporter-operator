@@ -127,3 +127,113 @@ def test_remove_snap_as_resource_exception(mock_snap_remove, mock_snap_cache):
     mock_snap_remove.side_effect = service.snap.SnapError("My Error")
     with pytest.raises(service.snap.SnapError):
         service.remove_snap_as_resource()
+
+
+def test_get_installed_snap_service(mocker):
+    """Test retrieving snap service for different scenarios."""
+    mock_snap_cache = mocker.patch("service.snap.SnapCache")
+    mock_snap_client = mocker.Mock()
+    mock_snap_cache.return_value = {
+        "existing-snap": mock_snap_client,
+    }
+    mock_snap_service_init = mocker.patch("service.SnapService.__init__", return_value=None)
+
+    # Scenario 1: Snap exists
+    result = service.get_installed_snap_service("existing-snap")
+    mock_snap_service_init.assert_called_once_with(mock_snap_client)
+    assert isinstance(result, service.SnapService)
+
+    # Scenario 2: Snap doesn't exist
+    mock_snap_cache.reset_mock()
+    mock_snap_service_init.reset_mock()
+    mock_snap_cache.side_effect = service.snap.SnapNotFoundError("Snap not found")
+    with pytest.raises(service.snap.SnapNotFoundError, match="Snap not found"):
+        service.get_installed_snap_service("non-existing-snap")
+
+    mock_snap_service_init.assert_not_called()
+
+    # check error was logged
+    mock_logger = mocker.patch("service.logger.error")
+    with pytest.raises(service.snap.SnapNotFoundError):
+        service.get_installed_snap_service("non-existing-snap")
+    mock_logger.assert_called_once()
+
+
+def test_restart_and_enable(mocker):
+    """Test restart_and_enable method ensures service is restarted and enabled."""
+    mock_snap_client = mocker.Mock()
+    snap_service = service.SnapService(mock_snap_client)
+
+    manager = mocker.Mock()
+    manager.attach_mock(mock_snap_client.restart, "restart")
+    manager.attach_mock(mock_snap_client.start, "start")
+
+    snap_service.restart_and_enable()
+
+    # Check the calls were made
+    mock_snap_client.restart.assert_called_once()
+    mock_snap_client.start.assert_called_once_with(enable=True)
+
+    # Check the calls were made in the correct order
+    expected_calls = [mocker.call.restart(), mocker.call.start(enable=True)]
+    assert manager.mock_calls == expected_calls
+
+
+def test_stop(mocker):
+    """Test stop method correctly stops and disables the snap service."""
+    mock_snap_client = mocker.Mock()
+    snap_service = service.SnapService(mock_snap_client)
+    snap_service.stop()
+
+    mock_snap_client.stop.assert_called_once_with(disable=True)
+    mock_snap_client.restart.assert_not_called()
+    mock_snap_client.start.assert_not_called()
+
+
+def test_is_active(mocker):
+    """Test is_active correctly reports service status."""
+    mock_snap_client = mocker.Mock()
+    snap_service = service.SnapService(mock_snap_client)
+
+    # All services are active
+    all_active = {"service1": {"active": True}, "service2": {"active": True}}
+    mock_snap_client.services = all_active
+    assert snap_service.is_active() is True
+
+    # One service is not active
+    mixed_active = {"service1": {"active": True}, "service2": {"active": False}}
+    mock_snap_client.services = mixed_active
+    assert snap_service.is_active() is False
+
+    # All services are not active
+    none_active = {"service1": {"active": False}, "service2": {"active": False}}
+    mock_snap_client.services = none_active
+    assert snap_service.is_active() is False
+
+    # Service missing 'active' key
+    missing_key = {
+        "service1": {"active": True},
+        "service2": {},
+    }
+    mock_snap_client.services = missing_key
+    assert snap_service.is_active() is False
+
+    # Empty services dict
+    mock_snap_client.services = {}
+    assert snap_service.is_active() is True
+
+
+def test_present_property(mocker):
+    """Test the present property correctly reflects the snap client's present property."""
+    mock_snap_client = mocker.Mock()
+    snap_service = service.SnapService(mock_snap_client)
+
+    mock_snap_client.present = True
+    assert snap_service.present is True
+
+    mock_snap_client.present = False
+    assert snap_service.present is False
+
+    # Make sure the property is accessed, not a method call
+    assert isinstance(mock_snap_client.present, bool)
+    assert not hasattr(mock_snap_client.present, "called")
