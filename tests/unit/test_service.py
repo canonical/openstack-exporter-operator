@@ -237,3 +237,29 @@ def test_present_property(mocker):
     # Make sure the property is accessed, not a method call
     assert isinstance(mock_snap_client.present, bool)
     assert not hasattr(mock_snap_client.present, "called")
+
+
+def test_workaround_bug_268(mocker):
+    """Test that the bug 268 workaround creates the correct systemd override."""
+    # Mock the file system operations
+    mock_makedirs = mocker.patch("os.makedirs")
+    mock_open = mocker.patch("builtins.open", mocker.mock_open())
+    mock_logger = mocker.patch("service.logger.info")
+
+    service.workaround_bug_268()
+
+    # Check for correct directory creation
+    expected_dir = f"/etc/systemd/system/snap.{service.SNAP_NAME}.service.service.d"
+    mock_makedirs.assert_called_once_with(expected_dir, exist_ok=True)
+
+    # Check the file is opened with the correct path and mode
+    mock_open.assert_called_once_with(f"{expected_dir}/bug_268.conf", "w")
+
+    # Check the correct content is written to the file
+    file_handle = mock_open()
+    file_handle.write.assert_called_once_with(
+        "[Service]\nEnvironment=OS_COMPUTE_API_VERSION=2.87\n"
+    )
+
+    # Check logged message
+    mock_logger.assert_called_once_with("Adding service override to workaround bug 268")
