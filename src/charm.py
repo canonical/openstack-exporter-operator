@@ -19,6 +19,7 @@ from charms.grafana_agent.v0.cos_agent import COSAgentProvider
 from ops.model import ActiveStatus, BlockedStatus, ModelError, WaitingStatus
 
 from service import SNAP_NAME, UPSTREAM_SNAP, get_installed_snap_service, snap_install_or_refresh
+from validate_config import validate_cache_ttl, validate_port, validate_snap_channel
 
 logger = logging.getLogger(__name__)
 
@@ -145,11 +146,32 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         return snap_path
 
+    def validate_configs(self) -> Optional[str]:
+        """Validate the charm config options.
+
+        Return an error message if any config option is invalid, otherwise None.
+
+        """
+        if error := validate_port(self.model.config["port"]):
+            return error
+
+        if error := validate_cache_ttl(self.model.config["cache_ttl"]):
+            return error
+
+        if error := validate_snap_channel(self.model.config["snap_channel"]):
+            return error
+
+        # All config options are valid
+        return None
+
     def install(self) -> None:
         """Install the necessary resources for the charm."""
         # If this fails, it's not recoverable.
         # So we don't catch the error, instead letting this become a charm error status.
         # Errored hooks are auto-retried by juju, so the install may work on retry.
+        if error := validate_snap_channel(self.model.config["snap_channel"]):
+            logger.error(f"Invalid snap_channel: {error}")
+            return
         snap_install_or_refresh(self.get_resource(), self.model.config["snap_channel"])
 
     def _configure(self, _: ops.HookEvent) -> None:
@@ -159,6 +181,10 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         It will install the exporter if not already installed or refresh the channel if the it was
         changed.
         """
+        if config_error := self.validate_configs():
+            logger.error(f"Cannot configure charm: {config_error}")
+            return
+
         self.install()
 
         upstream_snap = get_installed_snap_service(UPSTREAM_SNAP)
@@ -201,6 +227,10 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
     def _on_collect_unit_status(self, event: ops.CollectStatusEvent) -> None:
         """Handle collect unit status event (called after every event)."""
+        if config_error := self.validate_configs():
+            event.add_status(BlockedStatus(f"Invalid configuration: {config_error}"))
+            return
+
         if not self.model.relations.get("credentials"):
             event.add_status(BlockedStatus("Keystone is not related"))
 
