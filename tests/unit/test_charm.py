@@ -109,118 +109,193 @@ class TestCharm:
         with pytest.raises(SnapError, match="My Error"):
             self.harness.charm.on.install.emit()
 
-    @mock.patch("charm.get_installed_snap_service")
-    @mock.patch("charm.OpenstackExporterOperatorCharm._get_keystone_data")
-    @mock.patch("charm.OpenstackExporterOperatorCharm.get_resource")
-    @mock.patch("charm.snap_install_or_refresh")
-    def test_on_collect_unit_status(
-        self,
-        _,
-        mock_get_resource,
-        mock_get_keystone_data,
-        mock_get_installed_snap_service,
-    ):
+    @pytest.mark.parametrize(
+        "config,relations,test_values,expected_status",
+        [
+            # Scenario 1: No credentials relation
+            (
+                {},  # Default config
+                [],  # No relations
+                {
+                    "keystone_data": {},
+                    "upstream_present": False,
+                    "snap_present": True,
+                    "snap_active": True,
+                    "resource_path": "/path/to/snap/resource",
+                },
+                ops.BlockedStatus("Keystone is not related"),
+            ),
+            # Scenario 2: With credentials relation but no data
+            (
+                {},  # Default config
+                [("credentials", "keystone")],
+                {
+                    "keystone_data": {},
+                    "upstream_present": False,
+                    "snap_present": True,
+                    "snap_active": True,
+                    "resource_path": "/path/to/snap/resource",
+                },
+                ops.WaitingStatus("Waiting for credentials from keystone"),
+            ),
+            # Scenario 3: No cos-agent relation
+            (
+                {},  # Default config
+                [("credentials", "keystone")],  # Only credentials relation
+                {
+                    "keystone_data": {"random": "data"},
+                    "upstream_present": False,
+                    "snap_present": True,
+                    "snap_active": True,
+                    "resource_path": "/path/to/snap/resource",
+                },
+                ops.BlockedStatus("Grafana Agent is not related"),
+            ),
+            # Scenario 4: With upstream snap present
+            (
+                {},  # Default config
+                [("credentials", "keystone"), ("cos-agent", "grafana-agent")],
+                {
+                    "keystone_data": {"random": "data"},
+                    "upstream_present": True,  # Upstream snap present
+                    "snap_present": True,
+                    "snap_active": True,
+                    "resource_path": "/path/to/snap/resource",
+                },
+                ops.BlockedStatus(
+                    "golang-openstack-exporter detected. Please see: "
+                    "https://charmhub.io/openstack-exporter#known-issues"
+                ),
+            ),
+            # Scenario 5: Non-default snap channel with resource
+            (
+                {"snap_channel": "latest/edge"},
+                [("credentials", "keystone"), ("cos-agent", "grafana-agent")],
+                {
+                    "keystone_data": {"random": "data"},
+                    "upstream_present": False,
+                    "snap_present": True,
+                    "snap_active": True,
+                    "resource_path": "/path/to/snap/resource",
+                },
+                ops.BlockedStatus(
+                    "Snap resource provided, so snap_channel is unused. "
+                    "Please unset it: juju config {app_name} --reset snap_channel"
+                ),
+            ),
+            # Scenario 6: Snap not installed
+            (
+                {},  # Default config
+                [("credentials", "keystone"), ("cos-agent", "grafana-agent")],
+                {
+                    "keystone_data": {"random": "data"},
+                    "upstream_present": False,
+                    "snap_present": False,
+                    "snap_active": False,
+                    "resource_path": "/path/to/snap/resource",
+                },
+                ops.BlockedStatus(
+                    f"{SNAP_NAME} snap is not installed. "
+                    "Please wait for installation to complete, "
+                    "or manually reinstall the snap if the issue persists."
+                ),
+            ),
+            # Scenario 7: Snap installed but service not active
+            (
+                {},  # Default config
+                [("credentials", "keystone"), ("cos-agent", "grafana-agent")],
+                {
+                    "keystone_data": {"random": "data"},
+                    "upstream_present": False,
+                    "snap_present": True,
+                    "snap_active": False,
+                    "resource_path": "/path/to/snap/resource",
+                },
+                ops.BlockedStatus(
+                    f"{SNAP_NAME} snap service is not active. "
+                    "Please wait for configuration to complete, "
+                    "or manually start the service the issue persists."
+                ),
+            ),
+            # Scenario 8: Everything ok
+            (
+                {"snap_channel": "latest/stable"},  # Default snap channel
+                [("credentials", "keystone"), ("cos-agent", "grafana-agent")],
+                {
+                    "keystone_data": {"random": "data"},
+                    "upstream_present": False,
+                    "snap_present": True,
+                    "snap_active": True,
+                    "resource_path": "/path/to/snap/resource",
+                },
+                ops.ActiveStatus(),
+            ),
+        ],
+    )
+    def test_on_collect_unit_status(self, config, relations, test_values, expected_status, mocker):
         """Test the _on_collect_unit_status method with different scenarios."""
-        # Mock services
-        mock_event = mock.MagicMock()
-        mock_snap_service = mock.MagicMock()
-        mock_upstream_service = mock.MagicMock()
+        # Setup mock event and services
+        mock_event = mocker.MagicMock()
+        mock_snap_service = mocker.MagicMock()
+        mock_upstream_service = mocker.MagicMock()
+
+        # Configure mocks and services
+        mocker.patch("charm.snap_install_or_refresh")
+        mock_get_installed_snap_service = mocker.patch("charm.get_installed_snap_service")
         mock_get_installed_snap_service.side_effect = lambda snap: (
             mock_upstream_service if snap == UPSTREAM_SNAP else mock_snap_service
         )
-
-        # Set initial values
-        mock_get_keystone_data.return_value = {}
-        mock_get_resource.return_value = "/path/to/snap/resource"
-        mock_upstream_service.present = False
-        mock_snap_service.present = True
-        mock_snap_service.is_active.return_value = True
+        mock_get_keystone_data = mocker.patch(
+            "charm.OpenstackExporterOperatorCharm._get_keystone_data"
+        )
+        mock_get_keystone_data.return_value = test_values["keystone_data"]
+        mock_get_resource = mocker.patch("charm.OpenstackExporterOperatorCharm.get_resource")
+        mock_get_resource.return_value = test_values["resource_path"]
+        mock_upstream_service.present = test_values["upstream_present"]
+        mock_snap_service.present = test_values["snap_present"]
+        mock_snap_service.is_active.return_value = test_values["snap_active"]
 
         self.harness.begin()
 
-        # Scenario 1: No credentials relation
-        self.harness.charm._on_collect_unit_status(mock_event)
-        mock_event.add_status.assert_any_call(ops.BlockedStatus("Keystone is not related"))
+        self.harness.update_config(config)
 
-        # Scenario 2: With credentials relation but no data
-        self.harness.add_relation("credentials", "keystone")
-        self.harness.charm._on_collect_unit_status(mock_event)
-        mock_event.add_status.assert_any_call(
-            ops.WaitingStatus("Waiting for credentials from keystone")
-        )
+        for relation_name, endpoint in relations:
+            self.harness.add_relation(relation_name, endpoint)
 
-        # Scenario 3: No cos-agent relation
         self.harness.charm._on_collect_unit_status(mock_event)
-        mock_event.add_status.assert_any_call(ops.BlockedStatus("Grafana Agent is not related"))
 
-        # Scenario 4: With upstream snap present
-        mock_upstream_service.present = True
-        self.harness.charm._on_collect_unit_status(mock_event)
-        mock_event.add_status.assert_any_call(
-            ops.BlockedStatus(
-                "golang-openstack-exporter detected. Please see: "
-                "https://charmhub.io/openstack-exporter#known-issues"
+        # In cases app_name in expected message
+        if (
+            isinstance(expected_status, ops.BlockedStatus)
+            and "{app_name}" in expected_status.message
+        ):
+            expected_status = ops.BlockedStatus(
+                expected_status.message.format(app_name=self.harness.charm.app.name)
             )
-        )
 
-        # Scenario 5: Non-default snap channel with resource
-        self.harness.update_config({"snap_channel": "latest/edge"})
-        self.harness.charm._on_collect_unit_status(mock_event)
-        mock_event.add_status.assert_any_call(
-            ops.BlockedStatus(
-                "Snap resource provided, so snap_channel is unused. "
-                f"Please unset it: juju config {self.harness.charm.app.name} --reset snap_channel"
-            )
-        )
+        mock_event.add_status.assert_any_call(expected_status)
 
-        # Scenario 6: Snap not installed
-        mock_upstream_service.present = False
-        mock_snap_service.present = False
-        self.harness.charm._on_collect_unit_status(mock_event)
-        mock_event.add_status.assert_any_call(
-            ops.BlockedStatus(
-                f"{SNAP_NAME} snap is not installed. "
-                "Please wait for installation to complete, "
-                "or manually reinstall the snap if the issue persists."
-            )
-        )
-
-        # Scenario 7: Snap installed but service not active
-        mock_snap_service.present = True
-        mock_snap_service.is_active.return_value = False
-        self.harness.charm._on_collect_unit_status(mock_event)
-        mock_event.add_status.assert_any_call(
-            ops.BlockedStatus(
-                f"{SNAP_NAME} snap service is not active. "
-                "Please wait for configuration to complete, "
-                "or manually start the service the issue persists."
-            )
-        )
-
-        # Scenario 8: Everything ok
-        mock_snap_service.is_active.return_value = True
-        mock_get_keystone_data.return_value = {"random": "data"}
-        # Reset snap_channel to default to avoid the resource warning
-        self.harness.update_config({"snap_channel": "latest/stable"})
-        self.harness.add_relation("cos-agent", "grafana-agent")
-
-        self.harness.charm._on_collect_unit_status(mock_event)
-        mock_event.add_status.assert_called_with(ops.ActiveStatus())
-
-    @mock.patch("charm.get_installed_snap_service")
-    @mock.patch("charm.OS_CLIENT_CONFIG")
-    @mock.patch("charm.OS_CLIENT_CONFIG_CACERT")
-    @mock.patch("charm.yaml.dump")
-    @mock.patch("charm.snap_install_or_refresh")
-    def test_write_cloud_config(
-        self, _, mock_yaml_dump, mock_cacert, mock_config, mock_get_installed_snap_service
-    ):
+    @pytest.mark.parametrize(
+        "protocol, expected_verify",
+        [
+            ("https", True),  # HTTPS with verify
+            ("http", False),  # HTTP without verify
+        ],
+    )
+    def test_write_cloud_config(self, protocol, expected_verify, mocker):
         """Test that cloud config works correctly."""
         # Setup mocks
-        mock_config_parent = mock.MagicMock()
+        mock_config = mocker.patch("charm.OS_CLIENT_CONFIG")
+        mock_config_parent = mocker.MagicMock()
         mock_config.parent = mock_config_parent
+        mocker.patch("charm.snap_install_or_refresh")
+
+        mock_cacert = mocker.patch("charm.OS_CLIENT_CONFIG_CACERT")
+        mock_yaml_dump = mocker.patch("charm.yaml.dump")
         mock_yaml_dump.return_value = "yaml content"
-        mock_upstream = mock.MagicMock()
+
+        mock_get_installed_snap_service = mocker.patch("charm.get_installed_snap_service")
+        mock_upstream = mocker.MagicMock()
         mock_upstream.present = True
         mock_get_installed_snap_service.return_value = mock_upstream
 
@@ -228,7 +303,7 @@ class TestCharm:
 
         # Prepare test data
         test_data = {
-            "service_protocol": "https",
+            "service_protocol": protocol,
             "service_hostname": "keystone.test",
             "service_port": "5000",
             "service_username": "testuser",
@@ -239,16 +314,15 @@ class TestCharm:
             "service_region": "testregion",
         }
         self.harness.update_config({"ssl_ca": "test-ca-certificate"})
+        expected_auth_url = f"{protocol}://keystone.test:5000/v3"
 
         self.harness.charm._write_cloud_config(test_data)
 
-        # Check the directory is created
+        # Common assertions
         mock_config_parent.mkdir.assert_called_once_with(parents=True, exist_ok=True)
-
-        # Check the CA cert is written
         mock_cacert.write_text.assert_called_once_with("test-ca-certificate")
 
-        # Check yaml content is correct
+        # Check the YAML content matches expectations
         expected_contents = {
             "clouds": {
                 CLOUD_NAME: {
@@ -261,31 +335,14 @@ class TestCharm:
                         "project_name": "testproject",
                         "project_domain_name": "testdomain",
                         "user_domain_name": "testuserdomain",
-                        "auth_url": "https://keystone.test:5000/v3",
+                        "auth_url": expected_auth_url,
                     },
-                    "verify": True,
+                    "verify": expected_verify,
                     "cacert": str(mock_cacert),
                 }
             }
         }
-        mock_yaml_dump.assert_called_once_with(expected_contents)
-
-        # Check config is written
-        mock_config.write_text.assert_called_once_with("yaml content")
-
-        # Check with http ("verify" should be False)
-        mock_yaml_dump.reset_mock()
-        mock_config.write_text.reset_mock()
-
-        test_data["service_protocol"] = "http"
-        self.harness.charm._write_cloud_config(test_data)
-
-        expected_contents["clouds"][CLOUD_NAME]["verify"] = False
-        expected_contents["clouds"][CLOUD_NAME]["auth"]["auth_url"] = (
-            "http://keystone.test:5000/v3"
-        )
-
-        # Check the second call to yaml.dump had the updated content
+        mock_config.write_text.assert_called_with("yaml content")
         mock_yaml_dump.assert_called_with(expected_contents)
 
     @mock.patch("charm.get_installed_snap_service")
@@ -404,39 +461,42 @@ class TestCharm:
             # With data present, stop should not be called
             mock_snap_service.stop.assert_not_called()
 
-    @mock.patch("charm.os.path.getsize")
-    @mock.patch("charm.OpenstackExporterOperatorCharm.install")
-    def test_get_resource(self, _, mock_getsize):
+    @pytest.mark.parametrize(
+        "file_size, model_error, expected_result",
+        [
+            (1024, False, "/path/to/snap/resource"),  # Scenario 1: Non-empty file
+            (0, False, None),  # Scenario 2: Empty file
+            (-1, False, None),  # Scenario 3: Empty file with negative size
+            (1024, True, None),  # Scenario 4: ModelError when fetching resource
+        ],
+    )
+    def test_get_resource(self, file_size, model_error, expected_result, mocker):
         """Test get_resource method with different scenarios."""
+        # Setup mocks
+        mock_getsize = mocker.patch("charm.os.path.getsize")
+        mock_getsize.return_value = file_size
+
         self.harness.begin()
 
-        # Setup mock for model.resources.fetch to return a path
-        with mock.patch.object(self.harness.charm.model.resources, "fetch") as mock_fetch:
+        if model_error:
+            mock_fetch = mocker.patch.object(
+                self.harness.charm.model.resources,
+                "fetch",
+                side_effect=ops.model.ModelError("cannot fetch charm resource"),
+            )
+        else:
+            mock_fetch = mocker.patch.object(self.harness.charm.model.resources, "fetch")
             mock_fetch.return_value = Path("/path/to/snap/resource")
 
-            # Scenario 1: Non-empty file
-            mock_getsize.return_value = 1024
-            result = self.harness.charm.get_resource().as_posix()
-            assert result == "/path/to/snap/resource"
+        result = self.harness.charm.get_resource()
 
-            # Scenario 2: Empty file
-            mock_getsize.return_value = 0
-            result = self.harness.charm.get_resource()
-            assert result is None
+        if result is not None:
+            result = result.as_posix()
 
-            # Scenario 3: Empty file with negative size
-            mock_getsize.return_value = -1
-            result = self.harness.charm.get_resource()
-            assert result is None
+        assert result == expected_result
 
-        # Scenario 4: ModelError when fetching resource
-        with mock.patch.object(
-            self.harness.charm.model.resources,
-            "fetch",
-            side_effect=ops.model.ModelError("cannot fetch charm resource"),
-        ):
-            result = self.harness.charm.get_resource()
-            assert result is None
+        if not model_error:
+            mock_fetch.assert_called_once()
 
     @mock.patch("charm.OpenstackExporterOperatorCharm.install")
     def test_on_upgrade(self, mock_install):
