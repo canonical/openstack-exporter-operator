@@ -345,26 +345,28 @@ class TestCharm:
         mock_config.write_text.assert_called_with("yaml content")
         mock_yaml_dump.assert_called_with(expected_contents)
 
-    @mock.patch("charm.get_installed_snap_service")
-    @mock.patch("charm.snap_install_or_refresh")
-    def test_get_keystone_data(self, _, mock_get_installed_snap_service):
-        """Test retrieving Keystone data from relations in different scenarios."""
-        # Setup mocks
-        mock_upstream = mock.MagicMock()
-        mock_upstream.present = True
-        mock_get_installed_snap_service.return_value = mock_upstream
-
+    def test_get_keystone_data_no_relations(self, mocker):
+        """Test _get_keystone_data returns empty dict when no relations exist."""
+        self._setup_common_mocks(mocker)
         self.harness.begin()
-
-        # Scenario 1: No relations exist
         result = self.harness.charm._get_keystone_data()
         assert result == {}
 
-        # Scenario 2: Relation exists but no units
-        rel_id = self.harness.add_relation("credentials", "keystone")
-        assert self.harness.charm._get_keystone_data() == {}
+    def test_get_keystone_data_relation_no_units(self, mocker):
+        """Test that _get_keystone_data returns empty.
 
-        # Scenario 3: Relation exists with a unit with incomplete data
+        dict when relation exists but has no units.
+        """
+        self._setup_common_mocks(mocker)
+        self.harness.begin()
+        result = self.harness.charm._get_keystone_data()
+        assert result == {}
+
+    def test_get_keystone_data_relation_incomplete_data(self, mocker):
+        """Test that _get_keystone_data returns empty dict when unit has incomplete data."""
+        self._setup_common_mocks(mocker)
+        self.harness.begin()
+        rel_id = self.harness.add_relation("credentials", "keystone")
         self.harness.add_relation_unit(rel_id, "keystone/0")
         incomplete_data = {
             "service_protocol": "https",
@@ -372,10 +374,107 @@ class TestCharm:
             # Missing other fields
         }
         self.harness.update_relation_data(rel_id, "keystone/0", incomplete_data)
-        assert self.harness.charm._get_keystone_data() == {}
 
-        # Scenario 4: One unit with complete data
-        complete_data = {
+        result = self.harness.charm._get_keystone_data()
+        assert result == {}
+
+    def test_get_keystone_data_relation_complete_data(self, mocker):
+        """Test that _get_keystone_data returns data when unit has complete data."""
+        self._setup_common_mocks(mocker)
+        self.harness.begin()
+        rel_id = self.harness.add_relation("credentials", "keystone")
+        self.harness.add_relation_unit(rel_id, "keystone/0")
+        complete_data = self._get_complete_keystone_data()
+        self.harness.update_relation_data(rel_id, "keystone/0", complete_data)
+
+        result = self.harness.charm._get_keystone_data()
+        assert result == complete_data
+
+    def test_get_keystone_data_multiple_units_mixed_data(self, mocker):
+        """Test that _get_keystone_data returns first complete .
+
+        data when multiple units have mixed data quality.
+        """
+        self._setup_common_mocks(mocker)
+        self.harness.begin()
+
+        rel_id = self.harness.add_relation("credentials", "keystone")
+
+        # Add first unit with complete data
+        self.harness.add_relation_unit(rel_id, "keystone/0")
+        complete_data = self._get_complete_keystone_data()
+        self.harness.update_relation_data(rel_id, "keystone/0", complete_data)
+
+        # Add second unit with incomplete data
+        self.harness.add_relation_unit(rel_id, "keystone/1")
+        incomplete_data = {
+            "service_protocol": "http",
+            # Missing other fields
+        }
+        self.harness.update_relation_data(rel_id, "keystone/1", incomplete_data)
+
+        result = self.harness.charm._get_keystone_data()
+        assert result == complete_data
+
+    def test_get_keystone_data_multiple_relations(self, mocker):
+        """Test that _get_keystone_data prioritises first relation with valid data."""
+        self._setup_common_mocks(mocker)
+        self.harness.begin()
+
+        # First relation with complete data
+        first_rel_id = self.harness.add_relation("credentials", "keystone")
+        self.harness.add_relation_unit(first_rel_id, "keystone/0")
+        first_complete_data = self._get_complete_keystone_data()
+        self.harness.update_relation_data(first_rel_id, "keystone/0", first_complete_data)
+
+        # Second relation with different but also complete data
+        second_rel_id = self.harness.add_relation("credentials", "second-keystone")
+        self.harness.add_relation_unit(second_rel_id, "second-keystone/0")
+        second_complete_data = self._get_complete_keystone_data(
+            protocol="http", hostname="second-keystone.test", username="seconduser"
+        )
+        self.harness.update_relation_data(second_rel_id, "second-keystone/0", second_complete_data)
+
+        result = self.harness.charm._get_keystone_data()
+        assert result == first_complete_data, "Should prefer data from first relation"
+
+    def test_get_keystone_data_after_relation_removal(self, mocker):
+        """Test that _get_keystone_data uses second relation after first is removed."""
+        # Setup
+        self._setup_common_mocks(mocker)
+        self.harness.begin()
+
+        # First relation with complete data
+        first_rel_id = self.harness.add_relation("credentials", "keystone")
+        self.harness.add_relation_unit(first_rel_id, "keystone/0")
+        first_complete_data = self._get_complete_keystone_data()
+        self.harness.update_relation_data(first_rel_id, "keystone/0", first_complete_data)
+
+        # Second relation with different but also complete data
+        second_rel_id = self.harness.add_relation("credentials", "second-keystone")
+        self.harness.add_relation_unit(second_rel_id, "second-keystone/0")
+        second_complete_data = self._get_complete_keystone_data(
+            protocol="http", hostname="second-keystone.test", username="seconduser"
+        )
+        self.harness.update_relation_data(second_rel_id, "second-keystone/0", second_complete_data)
+
+        # Remove first relation
+        self.harness.remove_relation(first_rel_id)
+
+        result = self.harness.charm._get_keystone_data()
+        assert result == second_complete_data
+
+    def _setup_common_mocks(self, mocker):
+        """Set up common mocks for _get_keystone_data tests."""
+        mock_get_installed_snap_service = mocker.patch("charm.get_installed_snap_service")
+        mock_upstream = mocker.MagicMock()
+        mock_upstream.present = True
+        mock_get_installed_snap_service.return_value = mock_upstream
+        mocker.patch("charm.snap_install_or_refresh")
+
+    def _get_complete_keystone_data(self, **overrides):
+        """Get complete keystone data with optional overrides."""
+        data = {
             "service_protocol": "https",
             "service_hostname": "keystone.test",
             "service_port": "5000",
@@ -386,55 +485,16 @@ class TestCharm:
             "service_user_domain_name": "testuserdomain",
             "service_region": "testregion",
         }
-        self.harness.update_relation_data(rel_id, "keystone/0", complete_data)
-        result = self.harness.charm._get_keystone_data()
-        assert result == complete_data
-
-        # Scenario 5: Multiple units with and without complete data
-        self.harness.add_relation_unit(rel_id, "keystone/1")
-        second_unit_data = {
-            "service_protocol": "http",
-            # Missing other fields
-        }
-        self.harness.update_relation_data(rel_id, "keystone/1", second_unit_data)
-
-        # Should still return the complete data from the first unit
-        result = self.harness.charm._get_keystone_data()
-        assert result == complete_data
-
-        # Scenario 6: Multiple relations, with complete data in the second relation
-        second_rel_id = self.harness.add_relation("credentials", "another-keystone")
-        self.harness.add_relation_unit(second_rel_id, "another-keystone/0")
-        second_rel_data = {
-            "service_protocol": "http",
-            "service_hostname": "another-keystone.test",
-            "service_port": "5000",
-            "service_username": "anotheruser",
-            "service_password": "anotherpass",
-            "service_project_name": "anotherproject",
-            "service_project_domain_name": "anotherdomain",
-            "service_user_domain_name": "anotheruserdomain",
-            "service_region": "anotherregion",
-        }
-        self.harness.update_relation_data(second_rel_id, "another-keystone/0", second_rel_data)
-
-        # Should still return data from the first relation that has valid data
-        result = self.harness.charm._get_keystone_data()
-        assert result == complete_data
-
-        # Scenario 7: Remove first relation, should now get data from second relation
-        self.harness.remove_relation(rel_id)
-        result = self.harness.charm._get_keystone_data()
-        assert result == second_rel_data
+        # Apply any overrides
+        data.update(overrides)
+        return data
 
     @mock.patch("charm.get_installed_snap_service")
-    @mock.patch("charm.OpenstackExporterOperatorCharm._get_keystone_data")
+    @mock.patch("charm.OpenstackExporterOperatorCharm._get_keystone_data", return_value={})
     @mock.patch("charm.snap_install_or_refresh")
-    def test_snap_service_with_keystone_data(
-        self, _, mock_get_keystone_data, mock_get_installed_snap_service
-    ):
-        """Test snap service behaviour with and without keystone data in _configure method."""
-        # Setup mock
+    def test_snap_service_with_no_keystone_data(self, _, __, mock_get_installed_snap_service):
+        """Test snap service behavior when Keystone data is not available."""
+        # Setup mocks
         mock_snap_service = mock.MagicMock()
         mock_upstream_service = mock.MagicMock()
         mock_upstream_service.present = False
@@ -442,18 +502,28 @@ class TestCharm:
             mock_upstream_service if snap == UPSTREAM_SNAP else mock_snap_service
         )
         self.harness.begin()
-
-        # Add relation to pass the first check in _configure
         self.harness.add_relation("cos-agent", "grafana-agent")
 
-        # Test with no Keystone data
-        mock_get_keystone_data.return_value = {}
         self.harness.charm._configure(mock.MagicMock())
         mock_snap_service.stop.assert_called_once()
 
-        # Test with Keystone data present
-        mock_get_keystone_data.return_value = {"some": "data"}
-        mock_snap_service.reset_mock()
+    @mock.patch("charm.get_installed_snap_service")
+    @mock.patch(
+        "charm.OpenstackExporterOperatorCharm._get_keystone_data", return_value={"some": "data"}
+    )
+    @mock.patch("charm.snap_install_or_refresh")
+    def test_snap_service_with_keystone_data(self, _, __, mock_get_installed_snap_service):
+        """Test snap service behavior when Keystone data is available."""
+        # Setup mocks
+        mock_snap_service = mock.MagicMock()
+        mock_upstream_service = mock.MagicMock()
+        mock_upstream_service.present = False
+        mock_get_installed_snap_service.side_effect = lambda snap: (
+            mock_upstream_service if snap == UPSTREAM_SNAP else mock_snap_service
+        )
+        self.harness.begin()
+        self.harness.add_relation("cos-agent", "grafana-agent")
+
         # Mock _write_cloud_config to avoid real file operations
         with mock.patch.object(self.harness.charm, "_write_cloud_config"):
             self.harness.charm._configure(mock.MagicMock())
@@ -461,42 +531,57 @@ class TestCharm:
             # With data present, stop should not be called
             mock_snap_service.stop.assert_not_called()
 
-    @pytest.mark.parametrize(
-        "file_size, model_error, expected_result",
-        [
-            (1024, False, "/path/to/snap/resource"),  # Scenario 1: Non-empty file
-            (0, False, None),  # Scenario 2: Empty file
-            (-1, False, None),  # Scenario 3: Empty file with negative size
-            (1024, True, None),  # Scenario 4: ModelError when fetching resource
-        ],
-    )
-    def test_get_resource(self, file_size, model_error, expected_result, mocker):
-        """Test get_resource method with different scenarios."""
-        # Setup mocks
-        mock_getsize = mocker.patch("charm.os.path.getsize")
-        mock_getsize.return_value = file_size
-
+    def test_get_resource_returns_path_for_non_empty_file(self, mocker):
+        """Test get_resource returns the resource path when the file exists and is not empty."""
         self.harness.begin()
+        mock_getsize = mocker.patch("charm.os.path.getsize")
+        mock_getsize.return_value = 1024  # Non-empty file
 
-        if model_error:
-            mock_fetch = mocker.patch.object(
-                self.harness.charm.model.resources,
-                "fetch",
-                side_effect=ops.model.ModelError("cannot fetch charm resource"),
-            )
-        else:
-            mock_fetch = mocker.patch.object(self.harness.charm.model.resources, "fetch")
-            mock_fetch.return_value = Path("/path/to/snap/resource")
+        mock_fetch = mocker.patch.object(self.harness.charm.model.resources, "fetch")
+        mock_fetch.return_value = Path("/path/to/snap/resource")
 
         result = self.harness.charm.get_resource()
+        assert result == Path("/path/to/snap/resource")
+        mock_fetch.assert_called_once()
 
-        if result is not None:
-            result = result.as_posix()
+    def test_get_resource_returns_none_for_empty_file(self, mocker):
+        """Test get_resource returns None when the file exists but is empty."""
+        self.harness.begin()
+        mock_getsize = mocker.patch("charm.os.path.getsize")
+        mock_getsize.return_value = 0  # Empty file
 
-        assert result == expected_result
+        mock_fetch = mocker.patch.object(self.harness.charm.model.resources, "fetch")
+        mock_fetch.return_value = Path("/path/to/snap/resource")
 
-        if not model_error:
-            mock_fetch.assert_called_once()
+        result = self.harness.charm.get_resource()
+        assert result is None
+        mock_fetch.assert_called_once()
+
+    def test_get_resource_returns_none_for_negative_size_file(self, mocker):
+        """Test get_resource returns None when the file size is negative."""
+        self.harness.begin()
+        mock_getsize = mocker.patch("charm.os.path.getsize")
+        mock_getsize.return_value = -1  # Negative size
+
+        mock_fetch = mocker.patch.object(self.harness.charm.model.resources, "fetch")
+        mock_fetch.return_value = Path("/path/to/snap/resource")
+
+        result = self.harness.charm.get_resource()
+        assert result is None
+        mock_fetch.assert_called_once()
+
+    def test_get_resource_returns_none_when_model_error_occurs(self):
+        """Test get_resource returns None when a ModelError occurs during fetch."""
+        # Setup
+        self.harness.begin()
+        mock.patch.object(
+            self.harness.charm.model.resources,
+            "fetch",
+            side_effect=ops.model.ModelError("cannot fetch charm resource"),
+        )
+
+        result = self.harness.charm.get_resource()
+        assert result is None
 
     @mock.patch("charm.OpenstackExporterOperatorCharm.install")
     def test_on_upgrade(self, mock_install):
