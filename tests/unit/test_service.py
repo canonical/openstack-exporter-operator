@@ -129,33 +129,30 @@ def test_remove_snap_as_resource_exception(mock_snap_remove, mock_snap_cache):
         service.remove_snap_as_resource()
 
 
-def test_get_installed_snap_service(mocker):
-    """Test retrieving snap service for different scenarios."""
+def test_get_installed_snap_service_when_snap_exists(mocker):
+    """Test retrieving snap service when the snap exists."""
     mock_snap_cache = mocker.patch("service.snap.SnapCache")
     mock_snap_client = mocker.Mock()
-    mock_snap_cache.return_value = {
-        "existing-snap": mock_snap_client,
-    }
+    mock_snap_cache.return_value = {"existing-snap": mock_snap_client}
     mock_snap_service_init = mocker.patch("service.SnapService.__init__", return_value=None)
 
-    # Scenario 1: Snap exists
     result = service.get_installed_snap_service("existing-snap")
+
     mock_snap_service_init.assert_called_once_with(mock_snap_client)
     assert isinstance(result, service.SnapService)
 
-    # Scenario 2: Snap doesn't exist
-    mock_snap_cache.reset_mock()
-    mock_snap_service_init.reset_mock()
+
+def test_get_installed_snap_service_when_snap_missing(mocker):
+    """Test retrieving snap service when the snap doesn't exist."""
+    mock_snap_cache = mocker.patch("service.snap.SnapCache")
     mock_snap_cache.side_effect = service.snap.SnapNotFoundError("Snap not found")
+    mock_snap_service_init = mocker.patch("service.SnapService.__init__", return_value=None)
+    mock_logger = mocker.patch("service.logger.error")
+
     with pytest.raises(service.snap.SnapNotFoundError, match="Snap not found"):
         service.get_installed_snap_service("non-existing-snap")
 
     mock_snap_service_init.assert_not_called()
-
-    # check error was logged
-    mock_logger = mocker.patch("service.logger.error")
-    with pytest.raises(service.snap.SnapNotFoundError):
-        service.get_installed_snap_service("non-existing-snap")
     mock_logger.assert_called_once()
 
 
@@ -190,37 +187,42 @@ def test_stop(mocker):
     mock_snap_client.start.assert_not_called()
 
 
-def test_is_active(mocker):
-    """Test is_active correctly reports service status."""
+@pytest.mark.parametrize(
+    "services_dict, expected_result",
+    [
+        # Scenario 1: All services active
+        (
+            {"service1": {"active": True}, "service2": {"active": True}},
+            True,
+        ),
+        # Scenario 2 : One service not active
+        (
+            {"service1": {"active": True}, "service2": {"active": False}},
+            False,
+        ),
+        # Scenario 3: All services not active
+        (
+            {"service1": {"active": False}, "service2": {"active": False}},
+            False,
+        ),
+        # Scenario 4: A service missing 'active' key
+        (
+            {"service1": {"active": True}, "service2": {}},
+            False,
+        ),
+        # Scenario 5: Empty services dict
+        (
+            {},
+            True,
+        ),
+    ],
+)
+def test_is_active(services_dict, expected_result, mocker):
+    """Test is_active correctly reports service status based on different scenarios."""
     mock_snap_client = mocker.Mock()
     snap_service = service.SnapService(mock_snap_client)
-
-    # All services are active
-    all_active = {"service1": {"active": True}, "service2": {"active": True}}
-    mock_snap_client.services = all_active
-    assert snap_service.is_active() is True
-
-    # One service is not active
-    mixed_active = {"service1": {"active": True}, "service2": {"active": False}}
-    mock_snap_client.services = mixed_active
-    assert snap_service.is_active() is False
-
-    # All services are not active
-    none_active = {"service1": {"active": False}, "service2": {"active": False}}
-    mock_snap_client.services = none_active
-    assert snap_service.is_active() is False
-
-    # Service missing 'active' key
-    missing_key = {
-        "service1": {"active": True},
-        "service2": {},
-    }
-    mock_snap_client.services = missing_key
-    assert snap_service.is_active() is False
-
-    # Empty services dict
-    mock_snap_client.services = {}
-    assert snap_service.is_active() is True
+    mock_snap_client.services = services_dict
+    assert snap_service.is_active() is expected_result
 
 
 def test_present_property(mocker):
