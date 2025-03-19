@@ -24,8 +24,10 @@ def validate_cache_ttl(cache_ttl: str) -> Optional[str]:
 
     """
     if not re.match(r"^\d+[smhd]$", cache_ttl):
-        return f"cache_ttl must be in format <number><unit> \
-                where unit is s, m, h, or d, got {cache_ttl}"
+        return (
+            f"cache_ttl must be in format <number><unit> "
+            f"where unit is s, m, h, or d, got {cache_ttl}"
+        )
     return None
 
 
@@ -37,6 +39,8 @@ def validate_snap_channel(snap_channel: str) -> Optional[str]:
     """
     if snap_channel != "latest/stable":
         if not re.match(r"^(latest/|[^/]+/)(stable|candidate|beta|edge)$", snap_channel):
-            return f"Invalid snap_channel, must be one of 'latest/stable', \
-                'latest/candidate', 'latest/beta', 'latest/edge', got {snap_channel}"
+            return (
+                f"Invalid snap_channel, must be one of 'latest/stable', 'latest/candidate', "
+                f"'latest/beta', 'latest/edge', got {snap_channel}"
+            )
     return None

@@ -11,7 +11,7 @@ OpenStack deployment.
 import logging
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import ops
 import yaml
@@ -152,14 +152,14 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         Return an error message if any config option is invalid, otherwise None.
 
         """
-        if error := validate_port(self.model.config["port"]):
-            return error
-
-        if error := validate_cache_ttl(self.model.config["cache_ttl"]):
-            return error
-
-        if error := validate_snap_channel(self.model.config["snap_channel"]):
-            return error
+        validators: list[tuple[Callable, str]] = [
+            (validate_port, "port"),
+            (validate_cache_ttl, "cache_ttl"),
+            (validate_snap_channel, "snap_channel"),
+        ]
+        for validator, config_key in validators:
+            if error := validator(self.model.config[config_key]):
+                return error
 
         # All config options are valid
         return None
@@ -169,9 +169,6 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         # If this fails, it's not recoverable.
         # So we don't catch the error, instead letting this become a charm error status.
         # Errored hooks are auto-retried by juju, so the install may work on retry.
-        if error := validate_snap_channel(self.model.config["snap_channel"]):
-            logger.error(f"Invalid snap_channel: {error}")
-            return
         snap_install_or_refresh(self.get_resource(), self.model.config["snap_channel"])
 
     def _configure(self, _: ops.HookEvent) -> None:
@@ -182,7 +179,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         changed.
         """
         if config_error := self.validate_configs():
-            logger.error(f"Cannot configure charm: {config_error}")
+            logger.error(config_error)
             return
 
         self.install()
@@ -227,10 +224,6 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
     def _on_collect_unit_status(self, event: ops.CollectStatusEvent) -> None:
         """Handle collect unit status event (called after every event)."""
-        if config_error := self.validate_configs():
-            event.add_status(BlockedStatus(f"Invalid configuration: {config_error}"))
-            return
-
         if not self.model.relations.get("credentials"):
             event.add_status(BlockedStatus("Keystone is not related"))
 
