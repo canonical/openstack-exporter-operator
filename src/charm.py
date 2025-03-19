@@ -224,6 +224,9 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
     def _on_collect_unit_status(self, event: ops.CollectStatusEvent) -> None:
         """Handle collect unit status event (called after every event)."""
+        if config_error := self.validate_configs():
+            event.add_status(BlockedStatus(config_error))
+
         if not self.model.relations.get("credentials"):
             event.add_status(BlockedStatus("Keystone is not related"))
 

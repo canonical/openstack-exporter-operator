@@ -612,12 +612,17 @@ class TestCharm:
         mock_get_installed_snap_service = mocker.patch("charm.get_installed_snap_service")
         mock_get_installed_snap_service.return_value = mocked_upstream_service
         mock_install = mocker.patch("charm.OpenstackExporterOperatorCharm.install")
+        mock_event = mock.MagicMock()
 
         self.harness.begin()
         self.harness.update_config({config_option: cofig_value})
 
         # If valid config, install method can be called from _configure
         mock_install.assert_called_once()
+
+        # Status should be set to Active
+        self.harness.charm._on_collect_unit_status(mock_event)
+        mock_event.add_status.assert_called_with(ops.ActiveStatus())
 
     @pytest.mark.parametrize(
         "config_option, cofig_value",
@@ -636,7 +641,7 @@ class TestCharm:
         ],
     )
     def test_config_change_with_invalid_config(self, config_option, cofig_value, mocker):
-        """Test config change with invalid config."""
+        """Test config change and status being set with invalid config."""
         if config_option == "port":
             validate_function = "charm.validate_port"
             error_msg = f"Port must be between 1 and 65535, got {cofig_value}"
@@ -653,10 +658,14 @@ class TestCharm:
                 f"'latest/beta', 'latest/edge', got {cofig_value}"
             )
 
+        mock_event = mock.MagicMock()
         mock_logger = mocker.patch("charm.logger.error")
         mocker.patch(validate_function, return_value=error_msg)
         mocker.patch("charm.get_installed_snap_service")
 
         self.harness.begin()
         self.harness.update_config({config_option: cofig_value})
+        self.harness.charm._on_collect_unit_status(mock_event)
+
         mock_logger.assert_called_once_with(error_msg)
+        mock_event.add_status.assert_any_call(ops.BlockedStatus(error_msg))
