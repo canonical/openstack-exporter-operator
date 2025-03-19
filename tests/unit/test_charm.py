@@ -180,7 +180,7 @@ class TestCharm:
                 },
                 ops.BlockedStatus(
                     "Snap resource provided, so snap_channel is unused. "
-                    "Please unset it: juju config {app_name} --reset snap_channel"
+                    "Please unset it: juju config openstack-exporter --reset snap_channel"
                 ),
             ),
             # Scenario 6: Snap not installed
@@ -263,16 +263,6 @@ class TestCharm:
             self.harness.add_relation(relation_name, endpoint)
 
         self.harness.charm._on_collect_unit_status(mock_event)
-
-        # In cases app_name in expected message
-        if (
-            isinstance(expected_status, ops.BlockedStatus)
-            and "{app_name}" in expected_status.message
-        ):
-            expected_status = ops.BlockedStatus(
-                expected_status.message.format(app_name=self.harness.charm.app.name)
-            )
-
         mock_event.add_status.assert_any_call(expected_status)
 
     @pytest.mark.parametrize(
