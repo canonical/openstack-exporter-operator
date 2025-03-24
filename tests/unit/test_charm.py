@@ -598,7 +598,17 @@ class TestCharm:
             ("cache_ttl", "300s"),
             ("cache_ttl", "300m"),
             ("cache_ttl", "300h"),
-            ("cache_ttl", "300d"),
+            ("cache_ttl", "+1s"),
+            ("cache_ttl", ".1m"),
+            ("cache_ttl", "5.s"),
+            ("cache_ttl", "5\u05bcs"),
+            ("cache_ttl", "5\u03bcs"),
+            ("cache_ttl", "30s"),
+            ("cache_ttl", "3h30m"),
+            ("cache_ttl", "10.5s4m"),
+            ("cache_ttl", "2m3.4s"),
+            ("cache_ttl", "1h2m3s4ms5us6ns"),
+            ("cache_ttl", "39h9m14s"),
             ("snap_channel", "latest/stable"),
             ("snap_channel", "latest/candidate"),
             ("snap_channel", "latest/beta"),
@@ -630,14 +640,24 @@ class TestCharm:
             ("port", 0),
             ("port", -1),
             ("port", 65536),
-            ("cache_ttl", "300.1s"),
-            ("cache_ttl", "300 seconds"),
-            ("cache_ttl", "300 s"),
-            ("cache_ttl", "300y"),
-            ("snap_channel", "invalid/channel"),
-            ("snap_channel", "latest-stable"),
-            ("snap_channel", "Latest/Beta"),
-            ("snap_channel", "latest/edge/"),
+            ("cache_ttl", ""),
+            ("cache_ttl", "3"),
+            ("cache_ttl", "-"),
+            ("cache_ttl", "+"),
+            ("cache_ttl", "s"),
+            ("cache_ttl", "."),
+            ("cache_ttl", "0"),
+            ("cache_ttl", "+0s"),
+            ("cache_ttl", "-."),
+            ("cache_ttl", "-3h30m"),
+            ("cache_ttl", "0s0m"),
+            ("cache_ttl", ".s"),
+            ("cache_ttl", "+.s"),
+            ("cache_ttl", "1d"),
+            ("snap_channel", "/invalidchannel"),
+            ("snap_channel", "latest-stable/"),
+            ("snap_channel", "Latest/Beta/"),
+            ("snap_channel", "/latest/edge"),
         ],
     )
     def test_config_change_with_invalid_config(self, config_option, cofig_value, mocker):
@@ -648,8 +668,8 @@ class TestCharm:
         elif config_option == "cache_ttl":
             validate_function = "charm.validate_cache_ttl"
             error_msg = (
-                f"cache_ttl must be in format <number><unit> "
-                f"where unit is s, m, h, or d, got {cofig_value}"
+                f"cache_ttl must be non-negative, non-zero, "
+                f"and in correct pattern, got {cofig_value}"
             )
         elif config_option == "snap_channel":
             validate_function = "charm.validate_snap_channel"
