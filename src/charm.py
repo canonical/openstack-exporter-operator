@@ -19,7 +19,7 @@ from charms.grafana_agent.v0.cos_agent import COSAgentProvider
 from ops.model import ActiveStatus, BlockedStatus, ModelError, WaitingStatus
 
 from service import SNAP_NAME, UPSTREAM_SNAP, get_installed_snap_service, snap_install_or_refresh
-from validate_config import validate_cache_ttl, validate_port, validate_snap_channel
+from validate_config import validate_cache_ttl, validate_port
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +155,6 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         validators: list[tuple[Callable, str]] = [
             (validate_port, "port"),
             (validate_cache_ttl, "cache_ttl"),
-            (validate_snap_channel, "snap_channel"),
         ]
         for validator, config_key in validators:
             if error := validator(self.model.config[config_key]):

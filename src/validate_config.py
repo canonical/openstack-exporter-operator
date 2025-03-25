@@ -6,7 +6,7 @@ from typing import Optional
 MAX_PORT = 65535
 
 # Allowable duration units for cache_ttl from https://pkg.go.dev/time#ParseDuration
-VALID_UNITS = {"ns", "us", "\u05bcs", "\u03bcs", "ms", "s", "m", "h"}
+VALID_UNITS = {"ns", "us", "\u00b5s", "\u03bcs", "ms", "s", "m", "h"}
 
 # Regex patterns for cache_ttl
 NUMBER_PATTERN = r"(\d+\.?\d*|\d*\.\d+)"
@@ -36,12 +36,18 @@ def validate_cache_ttl(cache_ttl: str) -> Optional[str]:
     Return error message if invalid, None if valid.
 
     """
-    if not cache_ttl or cache_ttl[0] == "-":
-        return f"Cache_ttl must be non-empty and non-negative. Got {cache_ttl}"
+    if not cache_ttl:
+        return f"Cache_ttl must be non-empty. Got {cache_ttl}"
+
+    if cache_ttl[0] == "-":
+        return f"Cache_ttl must be non-negative. Got {cache_ttl}"
 
     # Validate overall format
     if not re.fullmatch(DURATION_PATTERN, cache_ttl):
-        return f"Invalid regex format. Valid pattern is {DURATION_PATTERN}. Got {cache_ttl}"
+        return (
+            "Cache_ttl is not in a valid format. It must be a valid format for "
+            "https://pkg.go.dev/time#ParseDuration; for example '20m' or '2h30m'"
+        )
 
     # Get each number-unit pair
     matches = re.findall(r"(\d+\.?\d*|\d*\.\d+)([a-zµ\u03bc\u05bc]+)", cache_ttl)
@@ -53,25 +59,9 @@ def validate_cache_ttl(cache_ttl: str) -> Optional[str]:
     # Validate units
     for _, unit in matches:
         if unit not in VALID_UNITS:
-            return f"Invalid time unit {unit}. Valid units are {VALID_UNITS}."
-
-    return None
-
-
-def validate_snap_channel(snap_channel: str) -> Optional[str]:
-    """Validate snap_channel configuration.
-
-    Return error message if invalid, None if valid.
-
-    """
-    if "/" not in snap_channel:
-        return f"Invalid snap_channel format: {snap_channel}. Expected format like 'track/risk'."
-
-    parts = snap_channel.split("/")
-    for part in parts:
-        if not part:
             return (
-                f"Invalid snap_channel format: {snap_channel}. Expected format like 'track/risk'."
+                f"Cache_ttl has invalid time unit: {unit}. "
+                f"Valid units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'."
             )
 
     return None

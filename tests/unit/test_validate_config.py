@@ -1,6 +1,6 @@
 import pytest
 
-from validate_config import validate_cache_ttl, validate_port, validate_snap_channel
+from validate_config import validate_cache_ttl, validate_port
 
 
 @pytest.mark.parametrize(
@@ -47,7 +47,7 @@ def test_validate_port_invalid(port):
         "100.00100s",
         "10ns",
         "11us",
-        "12\u05bcs",  # U+00B5
+        "12\u00b5s",  # U+00B5
         "12\u03bcs",  # U+03BC
         "13ms",
         "14s",
@@ -113,39 +113,3 @@ def test_validate_cache_ttl_invalid(cache_ttl):
 
     """
     assert validate_cache_ttl(cache_ttl) is not None
-
-
-@pytest.mark.parametrize(
-    "snap_channel",
-    [
-        "latest/stable",
-        "latest/candidate",
-        "latest/beta",
-        "latest/edge",
-        "v32/beta",
-        "latest/edge/test-fix-bug1",
-    ],
-)
-def test_validate_snap_channel_valid(snap_channel):
-    """Test validate snap_channel function with valid snap_channel."""
-    assert validate_snap_channel(snap_channel) is None
-
-
-@pytest.mark.parametrize(
-    "snap_channel",
-    [
-        "",
-        "invalid-channel",
-        "/latest/stable",
-        "LatestBeta",
-        "latestedge/",
-        "v1/edge/",
-        "latest//edge",
-        "//latest/edge",
-    ],
-)
-def test_validate_snap_channel_invalid(snap_channel):
-    """Test validate snap_channel function with invalid snap_channel."""
-    assert validate_snap_channel(snap_channel) == (
-        f"Invalid snap_channel format: {snap_channel}. Expected format like 'track/risk'."
-    )

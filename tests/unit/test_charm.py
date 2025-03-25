@@ -581,16 +581,8 @@ class TestCharm:
         self.harness.charm._on_upgrade(upgrade_event)
         mock_install.assert_called_once()
 
-    @mock.patch("charm.OpenstackExporterOperatorCharm.install")
-    def test_on_upgrade(self, mock_install):
-        """Test the charm is installed in upgrade event."""
-        self.harness.begin()
-        upgrade_event = mock.MagicMock()
-        self.harness.charm._on_upgrade(upgrade_event)
-        mock_install.assert_called_once()
-
     @pytest.mark.parametrize(
-        "config_option, cofig_value",
+        "config_option, config_value",
         [
             ("port", 9180),
             ("port", 8080),
@@ -601,7 +593,7 @@ class TestCharm:
             ("cache_ttl", "+1s"),
             ("cache_ttl", ".1m"),
             ("cache_ttl", "5.s"),
-            ("cache_ttl", "5\u05bcs"),
+            ("cache_ttl", "5\u00b5s"),
             ("cache_ttl", "5\u03bcs"),
             ("cache_ttl", "30s"),
             ("cache_ttl", "3h30m"),
@@ -609,13 +601,9 @@ class TestCharm:
             ("cache_ttl", "2m3.4s"),
             ("cache_ttl", "1h2m3s4ms5us6ns"),
             ("cache_ttl", "39h9m14s"),
-            ("snap_channel", "latest/stable"),
-            ("snap_channel", "latest/candidate"),
-            ("snap_channel", "latest/beta"),
-            ("snap_channel", "latest/edge"),
         ],
     )
-    def test_config_change_with_valid_config(self, config_option, cofig_value, mocker):
+    def test_config_change_with_valid_config(self, config_option, config_value, mocker):
         """Test config change with valid config."""
         mocked_upstream_service = mock.MagicMock()
         mocked_upstream_service.present = True
@@ -625,7 +613,7 @@ class TestCharm:
         mock_event = mock.MagicMock()
 
         self.harness.begin()
-        self.harness.update_config({config_option: cofig_value})
+        self.harness.update_config({config_option: config_value})
 
         # If valid config, install method can be called from _configure
         mock_install.assert_called_once()
@@ -635,7 +623,7 @@ class TestCharm:
         mock_event.add_status.assert_called_with(ops.ActiveStatus())
 
     @pytest.mark.parametrize(
-        "config_option, cofig_value",
+        "config_option, config_value",
         [
             ("port", 0),
             ("port", -1),
@@ -654,28 +642,18 @@ class TestCharm:
             ("cache_ttl", ".s"),
             ("cache_ttl", "+.s"),
             ("cache_ttl", "1d"),
-            ("snap_channel", "/invalidchannel"),
-            ("snap_channel", "latest-stable/"),
-            ("snap_channel", "Latest/Beta/"),
-            ("snap_channel", "/latest/edge"),
         ],
     )
-    def test_config_change_with_invalid_config(self, config_option, cofig_value, mocker):
+    def test_config_change_with_invalid_config(self, config_option, config_value, mocker):
         """Test config change and status being set with invalid config."""
         if config_option == "port":
             validate_function = "charm.validate_port"
-            error_msg = f"Port must be between 1 and 65535, got {cofig_value}"
+            error_msg = f"Port must be between 1 and 65535, got {config_value}"
         elif config_option == "cache_ttl":
             validate_function = "charm.validate_cache_ttl"
             error_msg = (
                 f"cache_ttl must be non-negative, non-zero, "
-                f"and in correct pattern, got {cofig_value}"
-            )
-        elif config_option == "snap_channel":
-            validate_function = "charm.validate_snap_channel"
-            error_msg = (
-                f"Invalid snap_channel, must be one of 'latest/stable', 'latest/candidate', "
-                f"'latest/beta', 'latest/edge', got {cofig_value}"
+                f"and in correct pattern, got {config_value}"
             )
 
         mock_event = mock.MagicMock()
@@ -684,7 +662,7 @@ class TestCharm:
         mocker.patch("charm.get_installed_snap_service")
 
         self.harness.begin()
-        self.harness.update_config({config_option: cofig_value})
+        self.harness.update_config({config_option: config_value})
         self.harness.charm._on_collect_unit_status(mock_event)
 
         mock_logger.assert_called_once_with(error_msg)
