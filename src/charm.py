@@ -11,7 +11,7 @@ OpenStack deployment.
 import logging
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import ops
 import yaml
@@ -19,6 +19,7 @@ from charms.grafana_agent.v0.cos_agent import COSAgentProvider
 from ops.model import ActiveStatus, BlockedStatus, ModelError, WaitingStatus
 
 from service import SNAP_NAME, UPSTREAM_SNAP, get_installed_snap_service, snap_install_or_refresh
+from validate_config import validate_cache_ttl, validate_port
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +146,23 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         return snap_path
 
+    def validate_configs(self) -> Optional[str]:
+        """Validate the charm config options.
+
+        Return an error message if any config option is invalid, otherwise None.
+
+        """
+        validators: list[tuple[Callable, str]] = [
+            (validate_port, "port"),
+            (validate_cache_ttl, "cache_ttl"),
+        ]
+        for validator, config_key in validators:
+            if error := validator(self.model.config[config_key]):
+                return error
+
+        # All config options are valid
+        return None
+
     def install(self) -> None:
         """Install the necessary resources for the charm."""
         # If this fails, it's not recoverable.
@@ -159,6 +177,10 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         It will install the exporter if not already installed or refresh the channel if the it was
         changed.
         """
+        if config_error := self.validate_configs():
+            logger.error(config_error)
+            return
+
         self.install()
 
         upstream_snap = get_installed_snap_service(UPSTREAM_SNAP)
@@ -201,6 +223,9 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
     def _on_collect_unit_status(self, event: ops.CollectStatusEvent) -> None:
         """Handle collect unit status event (called after every event)."""
+        if config_error := self.validate_configs():
+            event.add_status(BlockedStatus(config_error))
+
         if not self.model.relations.get("credentials"):
             event.add_status(BlockedStatus("Keystone is not related"))
 
