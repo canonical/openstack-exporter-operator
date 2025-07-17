@@ -1068,7 +1068,7 @@
           "datasource": {
             "uid": "${prometheusds}"
           },
-          "expr": "(${ceph_without_ephemeral} == 1) * (ceph_cluster_total_bytes - ceph_cluster_total_used_bytes) or ((sum by(aggregates) (openstack_nova_local_storage_available_bytes * on(hostname) group_left() openstack_placement_resource_allocation_ratio{resourcetype=\"DISK_GB\"})) - (sum by(aggregates) (openstack_nova_local_storage_used_bytes)))",
+          "expr": "(${ceph_without_ephemeral} * (ceph_cluster_total_bytes - ceph_cluster_total_used_bytes)) or ((sum by(aggregates) (openstack_nova_local_storage_available_bytes * on(hostname) group_left() openstack_placement_resource_allocation_ratio{resourcetype=\"DISK_GB\"})) - (sum by(aggregates) (openstack_nova_local_storage_used_bytes)))",
           "intervalFactor": 2,
           "legendFormat": "{{aggregate}}",
           "refId": "A",
@@ -1692,7 +1692,7 @@
         "name": "ceph_without_ephemeral",
         "options": [],
         "query": {
-          "query": "bool((ceph_cluster_total_bytes > 0 and stddev(openstack_nova_local_storage_available_bytes) < 1000000 and abs(ceph_cluster_total_bytes - max(openstack_nova_local_storage_available_bytes)) < 5000000000))",
+          "query": "bool((ceph_cluster_total_bytes > 0 and stddev(openstack_nova_local_storage_available_bytes) < 1000000000 and abs(ceph_cluster_total_bytes - max(openstack_nova_local_storage_available_bytes)) < 10000000000))",
           "refId": "${prometheusds}-ceph_without_ephemeral-Variable-Query"
         },
         "refresh": 1,

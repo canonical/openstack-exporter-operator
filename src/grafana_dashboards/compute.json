@@ -279,7 +279,7 @@
       "pluginVersion": "9.2.1",
       "targets": [
         {
-          "expr": "(${ceph_without_ephemeral} == 1) * (ceph_cluster_total_used_bytes / clamp_min(ceph_cluster_total_bytes, 1) * 100) or (sum(openstack_nova_local_storage_used_bytes{hostname=~\"$hypervisor.*\"}) / sum(openstack_nova_local_storage_available_bytes{hostname=~\"$hypervisor.*\"}) * 100)",
+          "expr": "(${ceph_without_ephemeral} * (ceph_cluster_total_used_bytes / clamp_min(ceph_cluster_total_bytes, 1) * 100)) or (sum(openstack_nova_local_storage_used_bytes{hostname=~\"$hypervisor.*\"}) / sum(openstack_nova_local_storage_available_bytes{hostname=~\"$hypervisor.*\"}) * 100)",
           "instant": false,
           "interval": "",
           "legendFormat": "",
@@ -621,7 +621,7 @@
       "pluginVersion": "9.2.1",
       "targets": [
         {
-          "expr": "(${ceph_without_ephemeral} == 1) * ceph_cluster_total_bytes or sum(openstack_nova_local_storage_available_bytes{hostname=~\"$hypervisor.*\"})",
+          "expr": "(${ceph_without_ephemeral} * ceph_cluster_total_bytes) or sum(openstack_nova_local_storage_available_bytes{hostname=~\"$hypervisor.*\"})",
           "instant": false,
           "interval": "",
           "legendFormat": "",
@@ -2386,7 +2386,7 @@
         "name": "ceph_without_ephemeral",
         "options": [],
         "query": {
-          "query": "bool((ceph_cluster_total_bytes > 0 and stddev(openstack_nova_local_storage_available_bytes) < 1000000 and abs(ceph_cluster_total_bytes - max(openstack_nova_local_storage_available_bytes)) < 5000000000))",
+          "query": "bool((ceph_cluster_total_bytes > 0 and stddev(openstack_nova_local_storage_available_bytes) < 1000000000 and abs(ceph_cluster_total_bytes - max(openstack_nova_local_storage_available_bytes)) < 10000000000))",
           "refId": "${prometheusds}-ceph_without_ephemeral-Variable-Query"
         },
         "refresh": 1,
