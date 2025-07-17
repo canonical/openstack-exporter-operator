@@ -122,7 +122,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         # So we pick the first one that has the data we need.
         for rel in self.model.relations.get("credentials", []):
             for unit in rel.units:
-                data = rel.data[unit]
+                data = rel.data.get(unit, {})
                 if self._is_keystone_data_ready(data):
                     return data
         return {}
