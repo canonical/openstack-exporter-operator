@@ -146,7 +146,7 @@ jobs:
       matrix:
         runs-on: [['self-hosted', 'jammy', 'amd64', 'two-xlarge']]
         test-command: ['TEST_MODEL_SETTINGS="update-status-hook-interval=30s" tox -e func']
-        juju-channel: ['3.4/stable']
+        juju-channel: ['3.6/stable']
     steps:
       - uses: actions/checkout@v4
         with:
