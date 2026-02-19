@@ -33,21 +33,17 @@ find the `Justfile` at the project root automatically.
 
 ## Fetching libraries
 
-Charm libraries are managed with charmcraft and recorded in `./scripts/update-charm-libs.sh`.
-
 To update the libraries included, run
 
 ```shell
-./scripts/update-charm-libs.sh
+charmcraft fetch-libs
 ```
 
-If you need to include more charm libraries, you can run:
+If you need to include more charm libraries, you can add the new lib in the `charm-libs` section in charmcraft.yaml and run:
 
 ```shell
-charmcraft fetch-lib <operator-libs>
+charmcraft fetch-libs
 ```
-
-And add the corresponding command to `./scripts/update-charm-libs.sh`.
 
 ## Checking for dashboard and alert rule updates
 
