@@ -72,6 +72,11 @@ config:
 
         If the snap file has been attached via the openstack-exporter resource, this option has no effect.
 
+charm-libs:
+  - lib: grafana-agent.cos_agent
+    version: "0"
+  - lib: operator-libs-linux.snap
+    version: "2"
 
 links:
   documentation: https://discourse.charmhub.io/t/openstack-exporter-docs-index/13876
