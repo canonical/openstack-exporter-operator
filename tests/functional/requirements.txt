@@ -1,3 +1,10 @@
+# NOTE:
+# Keystone imports `pkg_resources` (from setuptools). In Python 3.12
+# environments, newer setuptools versions (>= 70) no longer provide
+# `pkg_resources` in a way compatible with Keystone, resulting in
+# ImportError at runtime. We therefore pin setuptools < 70 until
+# Keystone removes this dependency or becomes compatible.
+setuptools < 70
 cosl # dependency from charm
 pydantic < 2 # dependency from charm
 python-openstackclient
