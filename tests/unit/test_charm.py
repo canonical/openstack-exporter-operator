@@ -11,12 +11,7 @@ import ops.testing
 import pytest
 from charms.operator_libs_linux.v2.snap import SnapError
 
-from charm import (
-    CLOUD_NAME,
-    OS_CLIENT_CONFIG,
-    SNAP_NAME,
-    OpenstackExporterOperatorCharm,
-)
+from charm import CLOUD_NAME, OS_CLIENT_CONFIG, SNAP_NAME, OpenstackExporterOperatorCharm
 from service import UPSTREAM_SNAP, SnapService
 
 
