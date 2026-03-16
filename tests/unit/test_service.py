@@ -176,6 +176,33 @@ def test_restart_and_enable(mocker):
     assert manager.mock_calls == expected_calls
 
 
+@mock.patch("service.log_ssdlc_system_event")
+def test_restart_and_enable_crash(mock_ssdlc, mocker):
+    """Test restart_and_enable logs CRASH and re-raises on failure."""
+    mock_snap_client = mocker.Mock()
+    mock_snap_client.restart.side_effect = Exception("snap restart failed")
+    snap_service = service.SnapService(mock_snap_client)
+
+    with pytest.raises(Exception, match="snap restart failed"):
+        snap_service.restart_and_enable()
+
+    mock_ssdlc.assert_any_call(service.SSDLCSysEvent.RESTART)
+    mock_ssdlc.assert_any_call(service.SSDLCSysEvent.CRASH, msg="snap restart failed")
+
+
+@mock.patch("service.log_ssdlc_system_event")
+def test_configure_crash(mock_ssdlc, mocker):
+    """Test configure logs CRASH and re-raises on failure."""
+    mock_snap_client = mocker.Mock()
+    mock_snap_client.set.side_effect = Exception("snap set failed")
+    snap_service = service.SnapService(mock_snap_client)
+
+    with pytest.raises(Exception, match="snap set failed"):
+        snap_service.configure({"config": "value"})
+
+    mock_ssdlc.assert_any_call(service.SSDLCSysEvent.CRASH, msg="snap set failed")
+
+
 def test_stop(mocker):
     """Test stop method correctly stops and disables the snap service."""
     mock_snap_client = mocker.Mock()
