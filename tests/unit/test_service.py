@@ -19,12 +19,13 @@ class TestSnapService:
         mock_client.set.assert_called_with(config, typed=True)
 
 
+@mock.patch("service.log_ssdlc_system_event")
 @mock.patch("service.remove_upstream_snap")
 @mock.patch("service.remove_snap_as_resource")
 @mock.patch("service.workaround_bug_268")
 @mock.patch("service.snap")
 def test_snap_install_or_refresh_with_resource(
-    mock_snap, mock_workaround, mock_remove_resource, mock_remove_upstream
+    mock_snap, mock_workaround, mock_remove_resource, mock_remove_upstream, mock_ssdlc
 ):
     """Test snap installation with resource."""
     service.snap_install_or_refresh("my-resource", "latest/stable")
@@ -32,14 +33,16 @@ def test_snap_install_or_refresh_with_resource(
     mock_snap.install_local.assert_called_once_with("my-resource", dangerous=True)
     mock_workaround.assert_called_once()
     mock_remove_resource.assert_not_called()
+    mock_ssdlc.assert_called_once_with(service.SSDLCSysEvent.STARTUP)
 
 
+@mock.patch("service.log_ssdlc_system_event")
 @mock.patch("service.remove_upstream_snap")
 @mock.patch("service.remove_snap_as_resource")
 @mock.patch("service.workaround_bug_268")
 @mock.patch("service.snap")
 def test_snap_install_or_refresh_snap_store(
-    mock_snap, mock_workaround, mock_remove_resource, mock_remove_upstream
+    mock_snap, mock_workaround, mock_remove_resource, mock_remove_upstream, mock_ssdlc
 ):
     """Test snap installation using the snap store."""
     service.snap_install_or_refresh("", "my-channel")
@@ -48,16 +51,19 @@ def test_snap_install_or_refresh_snap_store(
     mock_snap.add.assert_called_once_with(service.SNAP_NAME, channel="my-channel")
     mock_workaround.assert_called_once()
     mock_remove_resource.assert_called_once()
+    mock_ssdlc.assert_called_once_with(service.SSDLCSysEvent.STARTUP)
 
 
+@mock.patch("service.log_ssdlc_system_event")
 @mock.patch("service.workaround_bug_268")
 @mock.patch("service.snap.add")
-def test_snap_install_or_refresh_exception_raises(mock_snap, mock_workaround):
+def test_snap_install_or_refresh_exception_raises(mock_snap, mock_workaround, mock_ssdlc):
     """Test that when an exception happens, it will raise an exception to the caller."""
     mock_snap.side_effect = service.snap.SnapError("My Error")
     with pytest.raises(service.snap.SnapError):
         service.snap_install_or_refresh("", "my-channel")
     mock_workaround.assert_not_called()
+    mock_ssdlc.assert_not_called()
 
 
 @mock.patch("service.snap")
@@ -156,7 +162,8 @@ def test_get_installed_snap_service_when_snap_missing(mocker):
     mock_logger.assert_called_once()
 
 
-def test_restart_and_enable(mocker):
+@mock.patch("service.log_ssdlc_system_event")
+def test_restart_and_enable(mock_ssdlc, mocker):
     """Test restart_and_enable method ensures service is restarted and enabled."""
     mock_snap_client = mocker.Mock()
     snap_service = service.SnapService(mock_snap_client)
@@ -175,8 +182,39 @@ def test_restart_and_enable(mocker):
     expected_calls = [mocker.call.restart(), mocker.call.start(enable=True)]
     assert manager.mock_calls == expected_calls
 
+    # Check SSDLC RESTART event was logged
+    mock_ssdlc.assert_called_once_with(service.SSDLCSysEvent.RESTART)
 
-def test_stop(mocker):
+
+@mock.patch("service.log_ssdlc_system_event")
+def test_restart_and_enable_crash(mock_ssdlc, mocker):
+    """Test restart_and_enable logs CRASH and re-raises on failure."""
+    mock_snap_client = mocker.Mock()
+    mock_snap_client.restart.side_effect = Exception("snap restart failed")
+    snap_service = service.SnapService(mock_snap_client)
+
+    with pytest.raises(Exception, match="snap restart failed"):
+        snap_service.restart_and_enable()
+
+    mock_ssdlc.assert_any_call(service.SSDLCSysEvent.RESTART)
+    mock_ssdlc.assert_any_call(service.SSDLCSysEvent.CRASH, msg="snap restart failed")
+
+
+@mock.patch("service.log_ssdlc_system_event")
+def test_configure_crash(mock_ssdlc, mocker):
+    """Test configure logs CRASH and re-raises on failure."""
+    mock_snap_client = mocker.Mock()
+    mock_snap_client.set.side_effect = Exception("snap set failed")
+    snap_service = service.SnapService(mock_snap_client)
+
+    with pytest.raises(Exception, match="snap set failed"):
+        snap_service.configure({"config": "value"})
+
+    mock_ssdlc.assert_any_call(service.SSDLCSysEvent.CRASH, msg="snap set failed")
+
+
+@mock.patch("service.log_ssdlc_system_event")
+def test_stop(mock_ssdlc, mocker):
     """Test stop method correctly stops and disables the snap service."""
     mock_snap_client = mocker.Mock()
     snap_service = service.SnapService(mock_snap_client)
@@ -185,6 +223,9 @@ def test_stop(mocker):
     mock_snap_client.stop.assert_called_once_with(disable=True)
     mock_snap_client.restart.assert_not_called()
     mock_snap_client.start.assert_not_called()
+
+    # Check SSDLC SHUTDOWN event was logged
+    mock_ssdlc.assert_called_once_with(service.SSDLCSysEvent.SHUTDOWN)
 
 
 @pytest.mark.parametrize(
