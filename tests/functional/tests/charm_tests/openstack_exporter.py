@@ -211,24 +211,26 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
         )
         self.assertEqual(self.leader_unit.workload_status_message, "")
 
-    def test_grafana_agent_relation_changed(self):
-        """Test grafana-agent relation changed will reach expected status.
+    def test_otel_relation_changed(self):
+        """Test opentelemetry-collector relation changed will reach expected status.
 
-        Test the expected charm status when removing grafana-agent relation and
-        adding grafana-agent relation back.
+        Test the expected charm status when removing opentelemetry-collector relation and
+        adding opentelemetry-collector relation back.
         """
-        # Remove grafana-agent relation
-        model.remove_relation(APP_NAME, "cos-agent", "grafana-agent:cos-agent")
+        # Remove opentelemetry-collector relation
+        model.remove_relation(APP_NAME, "cos-agent", "opentelemetry-collector:cos-agent")
         model.block_until_unit_wl_status(
             self.leader_unit_entity_id, "blocked", timeout=STATUS_TIMEOUT
         )
-        self.assertEqual(self.leader_unit.workload_status_message, "Grafana Agent is not related")
+        self.assertEqual(
+            self.leader_unit.workload_status_message, "Opentelemetry Collector is not related"
+        )
 
         # Be patient: wait until the relation is completely removed
         model.block_until_all_units_idle()
 
-        # Add back grafan-agent relation
-        model.add_relation(APP_NAME, "cos-agent", "grafana-agent:cos-agent")
+        # Add back opentelemetry-collector relation
+        model.add_relation(APP_NAME, "cos-agent", "opentelemetry-collector:cos-agent")
         model.block_until_unit_wl_status(
             self.leader_unit_entity_id, "active", timeout=STATUS_TIMEOUT
         )
