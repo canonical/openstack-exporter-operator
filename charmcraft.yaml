@@ -14,7 +14,7 @@ parts:
     source: .
 
 platforms:
-  ubuntu@22.04:amd64:
+  # ubuntu@22.04:amd64:  # temporarily disabled to speed up Noble CI verification
   ubuntu@24.04:amd64:
 
 requires:

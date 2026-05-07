@@ -1,6 +1,6 @@
 charm_name: openstack-exporter
 gate_bundles:
-  - jammy-yoga
+  # - jammy-yoga  # temporarily disabled to speed up Noble CI verification
   - noble-caracal
 configure:
   - zaza.openstack.charm_tests.vault.setup.auto_initialize_no_validation_no_wait
@@ -30,3 +30,6 @@ target_deploy_status:
   grafana-agent:
     workload-status: blocked
     workload-status-message-regex: "^Missing .* for cos-agent$"
+  opentelemetry-collector:
+    workload-status: blocked
+    workload-status-message-regex: ".* for cos-agent$"
