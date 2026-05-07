@@ -1,6 +1,6 @@
 charm_name: openstack-exporter
 gate_bundles:
-  # - jammy-yoga  # temporarily disabled to speed up Noble CI verification
+  - jammy-yoga
   - noble-caracal
 configure:
   - zaza.openstack.charm_tests.vault.setup.auto_initialize_no_validation_no_wait
