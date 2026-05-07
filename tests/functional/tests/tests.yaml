@@ -1,6 +1,7 @@
 charm_name: openstack-exporter
 gate_bundles:
   - jammy-yoga
+  - noble-caracal
 configure:
   - zaza.openstack.charm_tests.vault.setup.auto_initialize_no_validation_no_wait
   - tests.charm_tests.setup.setup_export_ssl_ca_config
