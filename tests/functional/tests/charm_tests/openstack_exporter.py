@@ -223,7 +223,7 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
             self.leader_unit_entity_id, "blocked", timeout=STATUS_TIMEOUT
         )
         self.assertEqual(
-            self.leader_unit.workload_status_message, "Opentelemetry Collector is not related"
+            self.leader_unit.workload_status_message, "Observability Agent is not related"
         )
 
         # Be patient: wait until the relation is completely removed
