@@ -6,6 +6,8 @@ from typing import Any, Optional
 
 from charms.operator_libs_linux.v2 import snap
 
+from ssdlc import SSDLCSysEvent, log_ssdlc_system_event
+
 logger = getLogger(__name__)
 
 SNAP_NAME = "charmed-openstack-exporter"
@@ -31,20 +33,30 @@ class SnapService:
         - service is enabled
         - service is restarted if already running to apply updated config
         """
-        # This is safe to always run,
-        # because restarting when service is disabled has no effect,
-        # and restarting when enabled but stopped has the same effect as start.
-        self.snap_client.restart()
-        # This is idempotent, so ok to always run to ensure it's started and enabled
-        self.snap_client.start(enable=True)
+        log_ssdlc_system_event(SSDLCSysEvent.RESTART)
+        try:
+            # This is safe to always run,
+            # because restarting when service is disabled has no effect,
+            # and restarting when enabled but stopped has the same effect as start.
+            self.snap_client.restart()
+            # This is idempotent, so ok to always run to ensure it's started and enabled
+            self.snap_client.start(enable=True)
+        except Exception as err:
+            log_ssdlc_system_event(SSDLCSysEvent.CRASH, msg=str(err))
+            raise
 
     def stop(self) -> None:
         """Stop and disable the snap service."""
         self.snap_client.stop(disable=True)
+        log_ssdlc_system_event(SSDLCSysEvent.SHUTDOWN)
 
     def configure(self, snap_config: dict[str, Any]) -> None:
         """Configure the snap service."""
-        self.snap_client.set(snap_config, typed=True)
+        try:
+            self.snap_client.set(snap_config, typed=True)
+        except Exception as err:
+            log_ssdlc_system_event(SSDLCSysEvent.CRASH, msg=str(err))
+            raise
 
     @property
     def present(self) -> bool:
@@ -82,6 +94,8 @@ def snap_install_or_refresh(resource: Optional[str], channel: str) -> None:
         raise e
     else:
         logger.info("installed %s snap.", SNAP_NAME)
+        # Asume the service is started and enabled after installation, log the startup event here.
+        log_ssdlc_system_event(SSDLCSysEvent.STARTUP)
         workaround_bug_268()
 
 
