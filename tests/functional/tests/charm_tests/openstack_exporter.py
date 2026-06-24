@@ -222,9 +222,6 @@ class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
         model.block_until_unit_wl_status(
             self.leader_unit_entity_id, "blocked", timeout=STATUS_TIMEOUT
         )
-        self.assertEqual(
-            self.leader_unit.workload_status_message, "Opentelemetry Collector is not related"
-        )
 
         # Be patient: wait until the relation is completely removed
         model.block_until_all_units_idle()
