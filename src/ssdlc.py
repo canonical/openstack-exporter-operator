@@ -54,8 +54,9 @@ def log_ssdlc_system_event(
 
     Args:
         event: The SSDLC system event type
-        service: Service enum (defaults to CHARMED_OPENSTACK_EXPORTER)
+        subject: Service enum (defaults to CHARMED_OPENSTACK_EXPORTER)
         msg: Optional additional message
+
     """
     level = _EVENT_LEVELS[event]
     description_template = _EVENT_DESCRIPTIONS[event]

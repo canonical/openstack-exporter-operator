@@ -1,4 +1,4 @@
-# Copyright 2024 Canonical
+# Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 from unittest import mock

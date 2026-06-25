@@ -1,4 +1,4 @@
-# Copyright 2024 Canonical
+# Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 #
 # Learn more about testing at: https://juju.is/docs/sdk/testing
@@ -56,15 +56,13 @@ class TestCharm:
         self.harness.charm.on.config_changed.emit()
 
         mock_get_installed_snap_service.assert_called_with(SNAP_NAME)
-        mock_snap_service.configure.assert_called_with(
-            {
-                "cloud": CLOUD_NAME,
-                "os-client-config": str(OS_CLIENT_CONFIG),
-                "web": {"listen-address": f":{config.get('port', 9180)}"},
-                "cache": config["cache"],
-                "cache-ttl": config["cache_ttl"],
-            }
-        )
+        mock_snap_service.configure.assert_called_with({
+            "cloud": CLOUD_NAME,
+            "os-client-config": str(OS_CLIENT_CONFIG),
+            "web": {"listen-address": f":{config.get('port', 9180)}"},
+            "cache": config["cache"],
+            "cache-ttl": config["cache_ttl"],
+        })
         self.harness.charm._write_cloud_config.assert_called_with(mock_expect_keystone_data)
         mock_snap_service.restart_and_enable.assert_called()
         mock_snap_service.stop.assert_not_called()
@@ -526,7 +524,7 @@ class TestCharm:
         mock_fetch.return_value = Path("/path/to/snap/resource")
 
         result = self.harness.charm.get_resource()
-        assert result == Path("/path/to/snap/resource")
+        assert result == "/path/to/snap/resource"
         mock_fetch.assert_called_once()
 
     def test_get_resource_returns_none_for_empty_file(self, mocker):

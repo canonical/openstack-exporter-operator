@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2024 Canonical
+# Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 """OpenStack Exporter Operator.
 
@@ -11,7 +11,7 @@ OpenStack deployment.
 import logging
 import os
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, cast
 
 import ops
 import yaml
@@ -37,7 +37,7 @@ OS_CLIENT_CONFIG_CACERT = Path(f"/var/snap/{SNAP_NAME}/common/cacert.pem")
 class OpenstackExporterOperatorCharm(ops.CharmBase):
     """Charm the service."""
 
-    def __init__(self, *args: tuple[Any]) -> None:
+    def __init__(self, *args: Any) -> None:
         """Initialize the charm."""
         super().__init__(*args)
 
@@ -88,7 +88,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         https://docs.openstack.org/keystone/latest/contributor/http-api.html
         """
         OS_CLIENT_CONFIG.parent.mkdir(parents=True, exist_ok=True)
-        OS_CLIENT_CONFIG_CACERT.write_text(self.config["ssl_ca"])
+        OS_CLIENT_CONFIG_CACERT.write_text(str(self.config["ssl_ca"]))
 
         auth_url = (
             f"{data['service_protocol']}://{data['service_hostname']}:{data['service_port']}/v3"
@@ -122,7 +122,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         # So we pick the first one that has the data we need.
         for rel in self.model.relations.get("credentials", []):
             for unit in rel.units:
-                data = rel.data.get(unit, {})
+                data = cast(dict[str, str], rel.data.get(unit, {}))
                 if self._is_keystone_data_ready(data):
                     return data
         return {}
@@ -144,7 +144,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             logger.debug("resource is an empty file")
             return None
 
-        return snap_path
+        return str(snap_path)
 
     def validate_configs(self) -> Optional[str]:
         """Validate the charm config options.
@@ -168,7 +168,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         # If this fails, it's not recoverable.
         # So we don't catch the error, instead letting this become a charm error status.
         # Errored hooks are auto-retried by juju, so the install may work on retry.
-        snap_install_or_refresh(self.get_resource(), self.model.config["snap_channel"])
+        snap_install_or_refresh(self.get_resource(), str(self.model.config["snap_channel"]))
 
     def _configure(self, _: ops.HookEvent) -> None:
         """Configure the charm.
@@ -193,15 +193,13 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             snap_service.stop()
             return
 
-        snap_service.configure(
-            {
-                "cloud": CLOUD_NAME,
-                "os-client-config": str(OS_CLIENT_CONFIG),
-                "web": {"listen-address": f":{self.model.config['port']}"},
-                "cache": self.model.config["cache"],
-                "cache-ttl": self.model.config["cache_ttl"],
-            }
-        )
+        snap_service.configure({
+            "cloud": CLOUD_NAME,
+            "os-client-config": str(OS_CLIENT_CONFIG),
+            "web": {"listen-address": f":{self.model.config['port']}"},
+            "cache": self.model.config["cache"],
+            "cache-ttl": self.model.config["cache_ttl"],
+        })
 
         data = self._get_keystone_data()
         if not data:
