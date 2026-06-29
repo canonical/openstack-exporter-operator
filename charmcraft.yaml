@@ -10,8 +10,12 @@ subordinate: false
 
 parts:
   charm:
-    plugin: charm
     source: .
+    plugin: uv
+    build-snaps:
+      - astral-uv
+    build-packages:
+      - git
 
 platforms:
   ubuntu@22.04:amd64:

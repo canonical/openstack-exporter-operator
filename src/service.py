@@ -1,3 +1,5 @@
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
 """Utility module to help manage the snap service with guarding functions."""
 
 import os
@@ -94,7 +96,7 @@ def snap_install_or_refresh(resource: Optional[str], channel: str) -> None:
         raise e
     else:
         logger.info("installed %s snap.", SNAP_NAME)
-        # Asume the service is started and enabled after installation, log the startup event here.
+        # Assume the service is started and enabled after installation, log the startup event here.
         log_ssdlc_system_event(SSDLCSysEvent.STARTUP)
         workaround_bug_268()
 

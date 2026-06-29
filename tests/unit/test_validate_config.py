@@ -1,3 +1,5 @@
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
 import pytest
 
 from validate_config import validate_cache_ttl, validate_port
