@@ -2,26 +2,34 @@
 
 ## Setup environment
 
-You can create a virtual python environment for development with `tox`:
+You can create a virtual python environment for development with `uv`:
 
 ```shell
-tox devenv -e unit
-source venv/bin/activate
+uv sync --group unit
+source .venv/bin/activate
 ```
 
 ## Testing
 
-This project uses `tox` for managing test environments. There are some pre-configured environments
-that can be used for linting and formatting code when you're preparing contributions to the charm:
+This project uses [`just`](https://just.systems) for running development tasks. Install it with:
 
 ```shell
-tox run -e format        # update your code according to linting rules
-tox run -e lint          # run static analysis (code style, type checking, etc.)
-tox run -e unit          # run unit tests
-tox run -e integration   # run integration tests
-tox                      # run 'lint' and 'unit' environments
+sudo snap install --classic just
 ```
 
+Run `just` or `just help` to see the pre-configured recipes for linting, formatting, and testing.
+
+Unit and functional tests support filtering and other pytest flags via extra arguments:
+
+```shell
+just unit -k test_charm                      # filter by test name
+just unit tests/unit/test_charm.py           # run a specific file
+just unit -x                                 # stop on first failure
+just func -k test_charm --keep-models        # filter by test name
+```
+
+All recipes can be invoked from any subdirectory of the project; `just` will
+find the `Justfile` at the project root automatically.
 
 ## Fetching libraries
 
