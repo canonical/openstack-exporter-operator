@@ -30,11 +30,11 @@ jobs:
     - name: Install uv
       uses: astral-sh/setup-uv@v7
 
-    - name: Install tox with tox-uv
-      run: uv tool install tox --with tox-uv
+    - name: Install just
+      uses: extractions/setup-just@v3
 
     - name: Run linters
-      run: tox -e lint
+      run: just lint
 
   unit:
     name: Unit
@@ -51,11 +51,11 @@ jobs:
     - name: Install uv
       uses: astral-sh/setup-uv@v7
 
-    - name: Install tox with tox-uv
-      run: uv tool install tox --with tox-uv
+    - name: Install just
+      uses: extractions/setup-just@v3
 
     - name: Run unit tests
-      run: tox -e unit
+      run: just unit
 
     - name: Determine system architecture
       run: echo "SYSTEM_ARCH=$(uname -m)" >> $GITHUB_ENV
@@ -130,7 +130,7 @@ jobs:
       fail-fast: false
       matrix:
         runs-on: [['self-hosted', 'jammy', 'amd64', 'two-xlarge']]
-        test-command: ['TEST_MODEL_SETTINGS="update-status-hook-interval=30s" tox -e func']
+        test-command: ['TEST_MODEL_SETTINGS="update-status-hook-interval=30s" just func']
         juju-channel: ['3.6/stable']
     steps:
       - uses: actions/checkout@v6
@@ -146,8 +146,8 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
 
-      - name: Install tox with tox-uv
-        run: uv tool install tox --with tox-uv
+      - name: Install just
+        uses: extractions/setup-just@v3
 
       - name: Setup Juju environment
         uses: charmed-kubernetes/actions-operator@main
