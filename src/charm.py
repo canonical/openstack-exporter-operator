@@ -16,7 +16,6 @@ from typing import Any, Callable, Optional, cast
 import ops
 import yaml
 from charms.grafana_agent.v0.cos_agent import COSAgentProvider
-from charms.operator_libs_linux.v2 import snap
 from ops.model import ActiveStatus, BlockedStatus, ModelError, WaitingStatus
 
 from service import SNAP_NAME, UPSTREAM_SNAP, get_installed_snap_service, snap_install_or_refresh
@@ -184,7 +183,8 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         self.install()
 
-        if self._upstream_snap_present():
+        upstream_snap = get_installed_snap_service(UPSTREAM_SNAP)
+        if upstream_snap.present:
             return
 
         snap_service = get_installed_snap_service(SNAP_NAME)
@@ -219,13 +219,6 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         """Handle upgrade charm event."""
         self.install()
 
-    def _upstream_snap_present(self) -> bool:
-        """Return True iff the legacy `golang-openstack-exporter` snap is installed and present."""
-        try:
-            return get_installed_snap_service(UPSTREAM_SNAP).present
-        except snap.SnapNotFoundError:
-            return False
-
     def _on_collect_unit_status(self, event: ops.CollectStatusEvent) -> None:
         """Handle collect unit status event (called after every event)."""
         if config_error := self.validate_configs():
@@ -240,8 +233,10 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         if not self.model.relations.get("cos-agent"):
             event.add_status(BlockedStatus("Grafana Agent is not related"))
 
+        upstream_snap = get_installed_snap_service(UPSTREAM_SNAP)
+
         # this is necessary when doing a charm upgrade coming from revision 27
-        if self._upstream_snap_present():
+        if upstream_snap.present:
             event.add_status(
                 BlockedStatus(
                     "golang-openstack-exporter detected. Please see: "

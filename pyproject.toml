@@ -4,7 +4,7 @@ version = "0.0.0"
 requires-python = ">=3.10"
 dependencies = [
     "cosl",
-    "ops ~= 3.8",
+    "ops ~= 2.5",
     "pydantic < 2",
     "pyyaml ~= 6.0",
 ]
@@ -33,22 +33,6 @@ lint = [
 ]
 reformat = ["ruff"]
 tics = ["coverage[toml]"]
-
-[tool.pytest.ini_options]
-# Turn warnings into errors so deprecations and resource leaks fail the unit
-# suite. Each ignore below is message-anchored and narrow; see the comment on
-# each for why it is allowed and where the eventual fix belongs.
-filterwarnings = [
-    "error",
-    # Harness is deprecated in favour of Scenario. This is the intentional
-    # signal, ignored narrowly until tests/unit/test_charm.py is migrated; it
-    # pairs with a migration nudge in the PR.
-    "ignore:Harness is deprecated:PendingDeprecationWarning",
-    # The vendored grafana_agent/v0/cos_agent.py lib calls cosl's deprecated
-    # GrafanaDashboard._serialize; the fix belongs upstream in
-    # canonical/grafana-agent-operator (lib) / cosl.
-    "ignore:GrafanaDashboard._serialize is deprecated:DeprecationWarning",
-]
 
 [tool.ruff]
 line-length = 99
