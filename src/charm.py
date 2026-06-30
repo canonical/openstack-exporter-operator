@@ -184,8 +184,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         self.install()
 
-        upstream_snap = get_installed_snap_service(UPSTREAM_SNAP)
-        if upstream_snap.present:
+        if self._upstream_snap_present():
             return
 
         snap_service = get_installed_snap_service(SNAP_NAME)
