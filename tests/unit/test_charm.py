@@ -142,15 +142,12 @@ class TestCharm:
                     "snap_active": True,
                     "resource_path": "/path/to/snap/resource",
                 },
-                ops.BlockedStatus("Grafana Agent is not related"),
+                ops.BlockedStatus("Observability Agent is not related"),
             ),
             # Scenario 4: With upstream snap present
             (
                 {},  # Default config
-                [
-                    ("credentials", "keystone"),
-                    ("cos-agent", "openstack-exporter"),
-                ],  # Both relations
+                [("credentials", "keystone"), ("cos-agent", "opentelemetry-collector")],
                 {
                     "keystone_data": {"random": "data"},
                     "upstream_present": True,  # Upstream snap present

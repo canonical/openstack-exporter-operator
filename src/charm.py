@@ -238,7 +238,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             event.add_status(WaitingStatus("Waiting for credentials from keystone"))
 
         if not self.model.relations.get("cos-agent"):
-            event.add_status(BlockedStatus("Grafana Agent is not related"))
+            event.add_status(BlockedStatus("Observability Agent is not related"))
 
         # this is necessary when doing a charm upgrade coming from revision 27
         if self._upstream_snap_present():
