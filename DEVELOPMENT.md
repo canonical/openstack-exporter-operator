@@ -17,7 +17,7 @@ This project uses [`just`](https://just.systems) for running development tasks. 
 sudo snap install --classic just
 ```
 
-Run `just` or `just help` to see the pre-configured recipes for linting, formatting, and testing.
+Run `just` or `just --list` to see the pre-configured recipes for linting, formatting, and testing.
 
 Unit and functional tests support filtering and other pytest flags via extra arguments:
 
@@ -25,7 +25,7 @@ Unit and functional tests support filtering and other pytest flags via extra arg
 just unit -k test_charm                      # filter by test name
 just unit tests/unit/test_charm.py           # run a specific file
 just unit -x                                 # stop on first failure
-just func -k test_charm --keep-models        # filter by test name
+just func -k test_charm --keep-model        # filter by test name
 ```
 
 All recipes can be invoked from any subdirectory of the project; `just` will

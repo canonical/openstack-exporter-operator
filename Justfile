@@ -30,7 +30,7 @@ reformat:
 # Run unit tests; extra args are forwarded to pytest
 unit *ARGS:
     #!/bin/bash -xeu
-    COVERAGE_FILE=.coverage-unit
+    export COVERAGE_FILE=.coverage-unit
     uv run --group unit pytest tests/unit \
         -v \
         --cov \
@@ -43,6 +43,6 @@ unit *ARGS:
 [working-directory("tests/functional")]
 func *ARGS:
     #!/bin/bash -xeu
-    COVERAGE_FILE=.coverage-func
+    export COVERAGE_FILE="{{ justfile_directory() }}/.coverage-func"
     POSARGS="{{ ARGS }}"
     uv run --group func functest-run-suite ${POSARGS:---keep-model}
