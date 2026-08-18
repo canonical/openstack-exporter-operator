@@ -19,7 +19,12 @@ from charms.grafana_agent.v0.cos_agent import COSAgentProvider
 from ops.model import ActiveStatus, BlockedStatus, ModelError, WaitingStatus
 
 from service import SNAP_NAME, UPSTREAM_SNAP, get_installed_snap_service, snap_install_or_refresh
-from validate_config import validate_cache_ttl, validate_port
+from validate_config import (
+    parse_alert_for_duration,
+    validate_alert_for_duration,
+    validate_cache_ttl,
+    validate_port,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -41,13 +46,8 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         """Initialize the charm."""
         super().__init__(*args)
 
-        self._grafana_agent = COSAgentProvider(
-            self,
-            metrics_endpoints=[
-                {"path": "/metrics", "port": self.config["port"]},
-            ],
-        )
-
+        # Register _configure before COSAgentProvider so rendered alert rules are written
+        # to disk before COSAgentProvider reads them on config_changed.
         self.framework.observe(self.on.install, self._on_install)
         self.framework.observe(self.on.upgrade_charm, self._on_upgrade)
         self.framework.observe(self.on.config_changed, self._configure)
@@ -56,6 +56,13 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         self.framework.observe(self.on.credentials_relation_broken, self._configure)
         self.framework.observe(self.on.cos_agent_relation_changed, self._configure)
         self.framework.observe(self.on.cos_agent_relation_broken, self._configure)
+
+        self._grafana_agent = COSAgentProvider(
+            self,
+            metrics_endpoints=[
+                {"path": "/metrics", "port": self.config["port"]},
+            ],
+        )
 
     def _is_keystone_data_ready(self, data: dict[str, str]) -> bool:
         """Check if all the data is available from keystone.
@@ -155,6 +162,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         validators: list[tuple[Callable, str]] = [
             (validate_port, "port"),
             (validate_cache_ttl, "cache_ttl"),
+            (validate_alert_for_duration, "alert_for_duration"),
         ]
         for validator, config_key in validators:
             if error := validator(self.model.config[config_key]):
@@ -162,6 +170,26 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         # All config options are valid
         return None
+
+    def _render_alert_rules(self) -> None:
+        """Write alert rule files with per-alert `for` duration overrides."""
+        overrides = parse_alert_for_duration(str(self.model.config["alert_for_duration"]))
+        if not overrides:
+            return
+        rules_dir = Path(self.charm_dir) / "src" / "prometheus_alert_rules"
+        for path in rules_dir.glob("*.yaml"):
+            data = yaml.safe_load(path.read_text())
+            changed = False
+            for group in data.get("groups", []):
+                for rule in group.get("rules", []):
+                    if "for" not in rule:
+                        continue
+                    duration = overrides.get(rule.get("alert", ""))
+                    if duration:
+                        rule["for"] = duration
+                        changed = True
+            if changed:
+                path.write_text(yaml.dump(data, default_flow_style=False, sort_keys=False))
 
     def install(self) -> None:
         """Install the necessary resources for the charm."""
@@ -181,6 +209,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             logger.error(config_error)
             return
 
+        self._render_alert_rules()
         self.install()
 
         upstream_snap = get_installed_snap_service(UPSTREAM_SNAP)
