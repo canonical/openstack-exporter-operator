@@ -76,6 +76,17 @@ config:
         This option allows the selection of a different channel.
 
         If the snap file has been attached via the openstack-exporter resource, this option has no effect.
+    alert_for_duration:
+      default: ""
+      type: string
+      description: |
+        Comma-separated list of AlertName=duration overrides for Prometheus alert `for:` fields.
+        Empty string (default) means no overrides (rules stay as shipped with 5m).
+
+        Examples:
+          "NovaComputeDown=2m,NeutronStateCritical=2m"  - only those two alerts
+
+        Duration syntax: integer number + unit (ms, s, m, h, d, w, y), e.g. "30s", "2m", "1h30m".
 
 
 links:

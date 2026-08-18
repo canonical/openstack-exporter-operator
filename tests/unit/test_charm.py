@@ -9,6 +9,7 @@ from unittest import mock
 import ops
 import ops.testing
 import pytest
+import yaml
 from charms.operator_libs_linux.v2.snap import SnapError
 
 from charm import CLOUD_NAME, OS_CLIENT_CONFIG, SNAP_NAME, OpenstackExporterOperatorCharm
@@ -594,6 +595,8 @@ class TestCharm:
             ("cache_ttl", "2m3.4s"),
             ("cache_ttl", "1h2m3s4ms5us6ns"),
             ("cache_ttl", "39h9m14s"),
+            ("alert_for_duration", "NovaComputeDown=2m,NeutronStateCritical=30s"),
+            ("alert_for_duration", ""),
         ],
     )
     def test_config_change_with_valid_config(self, config_option, config_value, mocker):
@@ -635,6 +638,8 @@ class TestCharm:
             ("cache_ttl", ".s"),
             ("cache_ttl", "+.s"),
             ("cache_ttl", "1d"),
+            ("alert_for_duration", "Invalid-Alert=2m"),
+            ("alert_for_duration", "NovaComputeDown"),
         ],
     )
     def test_config_change_with_invalid_config(self, config_option, config_value, mocker):
@@ -648,6 +653,9 @@ class TestCharm:
                 f"cache_ttl must be non-negative, non-zero, "
                 f"and in correct pattern, got {config_value}"
             )
+        elif config_option == "alert_for_duration":
+            validate_function = "charm.validate_alert_for_duration"
+            error_msg = f"alert_for_duration {config_value!r} is not valid"
 
         mock_event = mock.MagicMock()
         mock_logger = mocker.patch("charm.logger.error")
@@ -660,3 +668,35 @@ class TestCharm:
 
         mock_logger.assert_called_once_with(error_msg)
         mock_event.add_status.assert_any_call(ops.BlockedStatus(error_msg))
+
+    def test_render_alert_rules_writes_configured_duration(self, tmp_path, mocker):
+        """Test that _render_alert_rules writes the configured for duration."""
+        mocker.patch("charm.get_installed_snap_service")
+        mocker.patch("charm.snap_install_or_refresh")
+
+        rules_dir = tmp_path / "src" / "prometheus_alert_rules"
+        rules_dir.mkdir(parents=True)
+        src_rules_dir = Path("src/prometheus_alert_rules")
+        for src_file in src_rules_dir.glob("*.yaml"):
+            (rules_dir / src_file.name).write_text(src_file.read_text())
+
+        # Patch charm_dir before begin so _render_alert_rules uses tmp_path
+        mocker.patch.object(
+            OpenstackExporterOperatorCharm,
+            "charm_dir",
+            new_callable=mock.PropertyMock,
+            return_value=tmp_path,
+        )
+
+        self.harness.begin()
+        self.harness.update_config({"alert_for_duration": "NovaComputeDown=2m"})
+
+        # Only the configured alert must use the configured duration.
+        for rendered_file in rules_dir.glob("*.yaml"):
+            data = yaml.safe_load(rendered_file.read_text())
+            for group in data.get("groups", []):
+                for rule in group.get("rules", []):
+                    if rule.get("alert") == "NovaComputeDown":
+                        assert rule["for"] == "2m", (
+                            f"{rendered_file.name}: {rule.get('alert')} has for={rule['for']!r}"
+                        )

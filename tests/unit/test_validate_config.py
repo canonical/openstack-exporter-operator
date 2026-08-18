@@ -2,7 +2,12 @@
 # See LICENSE file for licensing details.
 import pytest
 
-from validate_config import validate_cache_ttl, validate_port
+from validate_config import (
+    parse_alert_for_duration,
+    validate_alert_for_duration,
+    validate_cache_ttl,
+    validate_port,
+)
 
 
 @pytest.mark.parametrize(
@@ -115,3 +120,49 @@ def test_validate_cache_ttl_invalid(cache_ttl):
 
     """
     assert validate_cache_ttl(cache_ttl) is not None
+
+
+@pytest.mark.parametrize(
+    "config",
+    [
+        "",
+        "NovaComputeDown=2m",
+        "NovaComputeDown=2m,NeutronStateCritical=30s",
+    ],
+)
+def test_validate_alert_for_duration_valid(config):
+    valid_alert_names = {"NovaComputeDown", "NeutronStateCritical"}
+    assert validate_alert_for_duration(config, valid_alert_names) is None
+
+
+@pytest.mark.parametrize(
+    "config",
+    [
+        "Invalid-Alert=2m",
+        "NovaComputeDown=0m",
+        "NovaComputeDown=2.5m",
+        "NovaComputeDown",
+        "=2m",
+        "NovaComputeDown=2m,",
+        "NovaComputeDown=",
+        "0Alert=2m",
+        "MyAlert=500ms",
+    ],
+)
+def test_validate_alert_for_duration_invalid(config):
+    valid_alert_names = {"NovaComputeDown", "NeutronStateCritical"}
+    assert validate_alert_for_duration(config, valid_alert_names) is not None
+
+
+@pytest.mark.parametrize(
+    "config,expected",
+    [
+        ("", {}),
+        (
+            "NovaComputeDown=2m,NeutronStateCritical=30s",
+            {"NovaComputeDown": "2m", "NeutronStateCritical": "30s"},
+        ),
+    ],
+)
+def test_parse_alert_for_duration(config, expected):
+    assert parse_alert_for_duration(config) == expected
