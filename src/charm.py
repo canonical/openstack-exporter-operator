@@ -20,11 +20,18 @@ from charms.grafana_agent.v0.cos_agent import COSAgentProvider
 from ops.model import ActiveStatus, BlockedStatus, ModelError, WaitingStatus
 
 from service import SNAP_NAME, UPSTREAM_SNAP, get_installed_snap_service, snap_install_or_refresh
-from validate_config import validate_cache_ttl, validate_port
+from validate_config import (
+    validate_alert_rules,
+    validate_cache_ttl,
+    validate_port,
+)
 
 logger = logging.getLogger(__name__)
 
 RESOURCE_NAME = "openstack-exporter"
+# Alert rules shipped with the charm, and the directory COSAgentProvider reads rendered rules from.
+SHIPPED_ALERT_RULES_DIRNAME = "prometheus_alert_rules"
+ALERT_RULES_DIRNAME = "alert_rules"
 # Snap config options global constants
 # This is to match between openstack-exporter and the entry in clouds.yaml
 CLOUD_NAME = "openstack"
@@ -42,13 +49,8 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         """Initialize the charm."""
         super().__init__(*args)
 
-        self._grafana_agent = COSAgentProvider(
-            self,
-            metrics_endpoints=[
-                {"path": "/metrics", "port": self.config["port"]},
-            ],
-        )
-
+        # Register _configure before COSAgentProvider so rendered alert rules are written
+        # to disk before COSAgentProvider reads them on config_changed.
         self.framework.observe(self.on.install, self._on_install)
         self.framework.observe(self.on.upgrade_charm, self._on_upgrade)
         self.framework.observe(self.on.config_changed, self._configure)
@@ -57,6 +59,15 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         self.framework.observe(self.on.credentials_relation_broken, self._configure)
         self.framework.observe(self.on.cos_agent_relation_changed, self._configure)
         self.framework.observe(self.on.cos_agent_relation_broken, self._configure)
+        self.framework.observe(self.on.get_alert_rules_action, self._on_get_alert_rules)
+
+        self._grafana_agent = COSAgentProvider(
+            self,
+            metrics_endpoints=[
+                {"path": "/metrics", "port": self.config["port"]},
+            ],
+            metrics_rules_dir=f"./src/{ALERT_RULES_DIRNAME}",
+        )
 
     def _is_keystone_data_ready(self, data: dict[str, str]) -> bool:
         """Check if all the data is available from keystone.
@@ -156,6 +167,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
         validators: list[tuple[Callable, str]] = [
             (validate_port, "port"),
             (validate_cache_ttl, "cache_ttl"),
+            (validate_alert_rules, "alert_rules"),
         ]
         for validator, config_key in validators:
             if error := validator(self.model.config[config_key]):
@@ -163,6 +175,51 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
 
         # All config options are valid
         return None
+
+    def _render_alert_rules(self) -> None:
+        """Render alert rules for COSAgentProvider to read.
+
+        Writes the user-provided `alert_rules` document when set, otherwise the alert rules
+        shipped with the charm. The rendered directory is rebuilt each time so unsetting the
+        option restores the shipped rules.
+        """
+        src_dir = Path(self.charm_dir) / "src"
+        rendered_dir = src_dir / ALERT_RULES_DIRNAME
+        rendered_dir.mkdir(parents=True, exist_ok=True)
+
+        # Clear previously rendered rules so unsetting the override restores the shipped rules.
+        for existing in rendered_dir.glob("*"):
+            existing.unlink()
+
+        override = str(self.model.config["alert_rules"])
+        if override.strip():
+            (rendered_dir / "custom.yaml").write_text(override)
+            return
+
+        for path in (src_dir / SHIPPED_ALERT_RULES_DIRNAME).glob("*.yaml"):
+            (rendered_dir / path.name).write_text(path.read_text())
+
+    def _effective_alert_rules(self) -> str:
+        """Return the currently effective alert rules as a single YAML document.
+
+        Returns the user-provided `alert_rules` override when set, otherwise the shipped rules
+        merged into one document with a top-level `groups` key.
+        """
+        override = str(self.model.config["alert_rules"])
+        if override.strip():
+            return override
+
+        src_dir = Path(self.charm_dir) / "src"
+        groups: list = []
+        for path in sorted((src_dir / SHIPPED_ALERT_RULES_DIRNAME).glob("*.yaml")):
+            doc = yaml.safe_load(path.read_text()) or {}
+            groups.extend(doc.get("groups", []))
+        # width avoids backslash line-folding, allow_unicode avoids \uXXXX escapes.
+        return yaml.safe_dump({"groups": groups}, sort_keys=False, allow_unicode=True, width=4096)
+
+    def _on_get_alert_rules(self, event: ops.ActionEvent) -> None:
+        """Dump the effective alert rules so they can be edited and set as config."""
+        event.set_results({"alert-rules": self._effective_alert_rules()})
 
     def install(self) -> None:
         """Install the necessary resources for the charm."""
@@ -182,6 +239,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             logger.error(config_error)
             return
 
+        self._render_alert_rules()
         self.install()
 
         if self._upstream_snap_present():

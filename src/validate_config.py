@@ -2,8 +2,15 @@
 # See LICENSE file for licensing details.
 """Configuration validation functions."""
 
+import logging
 import re
-from typing import Optional
+from typing import Optional, cast
+
+import yaml
+from cosl import CosTool
+from cosl.cos_tool import OfficialRuleFileFormat
+
+logger = logging.getLogger(__name__)
 
 MAX_PORT = 65535
 
@@ -65,5 +72,35 @@ def validate_cache_ttl(cache_ttl: str) -> Optional[str]:
                 f"Cache_ttl has invalid time unit: {unit}. "
                 f"Valid units are 'ns', 'us' (or 'µs'), 'ms', 's', 'm', 'h'."
             )
+
+    return None
+
+
+def validate_alert_rules(config: str) -> Optional[str]:
+    """Validate the alert_rules configuration.
+
+    The value is a full Prometheus rules document that replaces the shipped alert rules.
+    Empty string (default) keeps the shipped rules and is valid.
+
+    The document is validated with the bundled `cos-tool` binary via `cosl.CosTool`, which
+    uses Prometheus' own rule parser, so invalid PromQL expressions and durations are rejected.
+
+    Return error message if invalid, None if valid.
+
+    """
+    if not config.strip():
+        return None
+
+    try:
+        data = yaml.safe_load(config)
+    except yaml.YAMLError as error:
+        return f"alert_rules is not valid YAML: {error}"
+
+    if not isinstance(data, dict) or not data.get("groups"):
+        return "alert_rules must be a Prometheus rules document with a top-level 'groups' key."
+
+    valid, errors = CosTool("promql").validate_alert_rules(cast(OfficialRuleFileFormat, data))
+    if not valid:
+        return f"alert_rules failed Prometheus validation: {errors}"
 
     return None

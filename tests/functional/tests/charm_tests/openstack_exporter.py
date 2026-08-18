@@ -184,6 +184,41 @@ class OpenstackExporterConfigTest(OpenstackExporterBaseTest):
         model.set_application_config(APP_NAME, {"cache": "true"})
         model.block_until_all_units_idle()
 
+    def test_configure_alert_rules(self):
+        """Test overriding the shipped alert rules via the alert_rules config."""
+        key = "alert_rules"
+        override = (
+            "groups:\n"
+            "- name: FunctionalTest\n"
+            "  rules:\n"
+            "  - alert: FunctionalTestAlert\n"
+            "    expr: up == 0\n"
+            "    for: 2m\n"
+            "    labels:\n"
+            "      severity: critical\n"
+        )
+
+        # Rendered alert rules directory inside the charm dir on the unit.
+        unit_num = self.leader_unit_entity_id.split("/")[1]
+        rendered_dir = f"/var/lib/juju/agents/unit-{APP_NAME}-{unit_num}/charm/src/alert_rules"
+
+        # Set the override and verify the custom document replaces the shipped rules.
+        model.set_application_config(APP_NAME, {key: override})
+        model.block_until_all_units_idle()
+        model.block_until_file_has_contents(
+            APP_NAME, f"{rendered_dir}/custom.yaml", "FunctionalTestAlert"
+        )
+        results = model.run_on_leader(APP_NAME, f"ls {rendered_dir}")
+        self.assertEqual(results.get("Stdout", "").strip(), "custom.yaml")
+
+        # Reset config: alert_rules; the shipped rules should be restored.
+        model.reset_application_config(APP_NAME, [key])
+        model.block_until_file_missing(APP_NAME, f"{rendered_dir}/custom.yaml")
+        results = model.run_on_leader(APP_NAME, f"ls {rendered_dir}")
+        rendered_files = results.get("Stdout", "").strip()
+        self.assertNotIn("custom.yaml", rendered_files)
+        self.assertNotEqual(rendered_files, "")
+
 
 class OpenstackExporterStatusTest(OpenstackExporterBaseTest):
     """Test status changes for openstack exporter."""
