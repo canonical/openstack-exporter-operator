@@ -55,9 +55,13 @@ def test_snap_install_or_refresh_snap_store(
 
 
 @mock.patch("service.log_ssdlc_system_event")
+@mock.patch("service.remove_upstream_snap")
+@mock.patch("service.remove_snap_as_resource")
 @mock.patch("service.workaround_bug_268")
 @mock.patch("service.snap.add")
-def test_snap_install_or_refresh_exception_raises(mock_snap, mock_workaround, mock_ssdlc):
+def test_snap_install_or_refresh_exception_raises(
+    mock_snap, mock_workaround, mock_remove_resource, mock_remove_upstream, mock_ssdlc
+):
     """Test that when an exception happens, it will raise an exception to the caller."""
     mock_snap.side_effect = service.snap.SnapError("My Error")
     with pytest.raises(service.snap.SnapError):
