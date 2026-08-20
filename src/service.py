@@ -101,16 +101,29 @@ def snap_install_or_refresh(resource: Optional[str], channel: str) -> None:
         workaround_bug_268()
 
 
+def _remove_snap_if_present(snap_name: str) -> None:
+    """Remove a snap if it is present; no-op otherwise.
+
+    Raises an exception on error.
+    """
+    snap_cache = snap.SnapCache()
+    s = snap_cache[snap_name]
+    if not s.present:
+        logger.debug("%s snap not installed, skipping removal", snap_name)
+        return
+    try:
+        snap.remove([snap_name])
+    except snap.SnapError as e:
+        logger.error("failed to remove %s snap: %s", snap_name, str(e))
+        raise e
+
+
 def remove_upstream_snap() -> None:
     """Remove the old snap from upstream to not conflict with the charmed-openstack-exporter.
 
     Raises an exception on error.
     """
-    try:
-        snap.remove([UPSTREAM_SNAP])
-    except snap.SnapError as e:
-        logger.error("failed to remove %s snap: %s", UPSTREAM_SNAP, str(e))
-        raise e
+    _remove_snap_if_present(UPSTREAM_SNAP)
 
 
 def remove_snap_as_resource() -> None:
@@ -126,11 +139,7 @@ def remove_snap_as_resource() -> None:
     o7k_exporter = snap_cache[SNAP_NAME]
     if o7k_exporter.present and "x" in o7k_exporter.revision:
         logger.info("removing local resource snap before installing from snapstore")
-        try:
-            snap.remove(SNAP_NAME)
-        except snap.SnapError as e:
-            logger.error("failed to remove snap as a resource: %s", str(e))
-            raise e
+        _remove_snap_if_present(SNAP_NAME)
 
 
 def get_installed_snap_service(snap_name: str) -> SnapService:
