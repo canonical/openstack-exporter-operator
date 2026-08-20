@@ -30,14 +30,15 @@ reformat:
 # Run unit tests; extra args are forwarded to pytest
 unit *ARGS:
     #!/bin/bash -xeu
-    export COVERAGE_FILE=.coverage-unit
-    uv run --group unit pytest tests/unit \
+    export COVERAGE_FILE="{{ justfile_directory() }}/.coverage-unit"
+    POSARGS="{{ ARGS }}"
+    uv run --group unit pytest \
         -v \
         --cov \
         --cov-report=term-missing \
         --cov-report=html \
         --cov-report=xml \
-        {{ ARGS }}
+        ${POSARGS:-tests/unit}
 
 # Run functional tests; extra args replace the default --keep-model
 [working-directory("tests/functional")]

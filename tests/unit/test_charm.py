@@ -142,12 +142,12 @@ class TestCharm:
                     "snap_active": True,
                     "resource_path": "/path/to/snap/resource",
                 },
-                ops.BlockedStatus("Grafana Agent is not related"),
+                ops.BlockedStatus("Observability Agent is not related"),
             ),
             # Scenario 4: With upstream snap present
             (
                 {},  # Default config
-                [("credentials", "keystone"), ("cos-agent", "grafana-agent")],
+                [("credentials", "keystone"), ("cos-agent", "opentelemetry-collector")],
                 {
                     "keystone_data": {"random": "data"},
                     "upstream_present": True,  # Upstream snap present
@@ -163,7 +163,7 @@ class TestCharm:
             # Scenario 5: Non-default snap channel with resource
             (
                 {"snap_channel": "latest/edge"},
-                [("credentials", "keystone"), ("cos-agent", "grafana-agent")],
+                [("credentials", "keystone"), ("cos-agent", "opentelemetry-collector")],
                 {
                     "keystone_data": {"random": "data"},
                     "upstream_present": False,
@@ -179,7 +179,7 @@ class TestCharm:
             # Scenario 6: Snap not installed
             (
                 {},  # Default config
-                [("credentials", "keystone"), ("cos-agent", "grafana-agent")],
+                [("credentials", "keystone"), ("cos-agent", "opentelemetry-collector")],
                 {
                     "keystone_data": {"random": "data"},
                     "upstream_present": False,
@@ -196,7 +196,7 @@ class TestCharm:
             # Scenario 7: Snap installed but service not active
             (
                 {},  # Default config
-                [("credentials", "keystone"), ("cos-agent", "grafana-agent")],
+                [("credentials", "keystone"), ("cos-agent", "opentelemetry-collector")],
                 {
                     "keystone_data": {"random": "data"},
                     "upstream_present": False,
@@ -213,7 +213,7 @@ class TestCharm:
             # Scenario 8: Everything ok
             (
                 {"snap_channel": "latest/stable"},  # Default snap channel
-                [("credentials", "keystone"), ("cos-agent", "grafana-agent")],
+                [("credentials", "keystone"), ("cos-agent", "opentelemetry-collector")],
                 {
                     "keystone_data": {"random": "data"},
                     "upstream_present": False,
@@ -497,7 +497,7 @@ class TestCharm:
             mock_upstream_service if snap == UPSTREAM_SNAP else mock_snap_service
         )
         self.harness.begin()
-        self.harness.add_relation("cos-agent", "grafana-agent")
+        self.harness.add_relation("cos-agent", "opentelemetry-collector")
 
         self.harness.charm._configure(mock.MagicMock())
         mock_snap_service.stop.assert_called_once()
@@ -517,7 +517,7 @@ class TestCharm:
             mock_upstream_service if snap == UPSTREAM_SNAP else mock_snap_service
         )
         self.harness.begin()
-        self.harness.add_relation("cos-agent", "grafana-agent")
+        self.harness.add_relation("cos-agent", "opentelemetry-collector")
 
         # Mock _write_cloud_config to avoid real file operations
         with mock.patch.object(self.harness.charm, "_write_cloud_config"):
