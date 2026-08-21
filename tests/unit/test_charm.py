@@ -258,6 +258,18 @@ class TestCharm:
         self.harness.charm._on_collect_unit_status(mock_event)
         mock_event.add_status.assert_any_call(expected_status)
 
+    def test_upstream_snap_present_returns_false_when_snap_missing(self, mocker):
+        """_upstream_snap_present treats SnapNotFoundError as absent (not crash)."""
+        from charms.operator_libs_linux.v2 import snap as snap_mod
+
+        mock_get_installed_snap_service = mocker.patch("charm.get_installed_snap_service")
+        mock_get_installed_snap_service.side_effect = snap_mod.SnapNotFoundError(
+            "Snap 'golang-openstack-exporter' not found!"
+        )
+        self.harness.begin()
+        assert self.harness.charm._upstream_snap_present() is False
+        mock_get_installed_snap_service.assert_called_once_with(UPSTREAM_SNAP)
+
     @pytest.mark.parametrize(
         "protocol, expected_verify",
         [
