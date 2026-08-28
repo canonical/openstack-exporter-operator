@@ -14,6 +14,7 @@ dependencies = [
 package = false
 override-dependencies = [
     "setuptools<82",  # setuptools v82.0.0 officially removed the pkg_resources module which python-keystoneclient 3.21.0 depends on
+    "prettytable>0.7.2"  # prettytable v0.7.2 uses .tar.bz2 format for source distribution which is not supported by newer version of uv
 ]
 
 [dependency-groups]
