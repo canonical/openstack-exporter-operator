@@ -9,7 +9,7 @@ from unittest import mock
 import ops
 import ops.testing
 import pytest
-from charms.operator_libs_linux.v2.snap import SnapError
+from charmlibs.snap import SnapError
 
 from charm import CLOUD_NAME, OS_CLIENT_CONFIG, SNAP_NAME, OpenstackExporterOperatorCharm
 from service import UPSTREAM_SNAP, SnapService
@@ -260,7 +260,7 @@ class TestCharm:
 
     def test_upstream_snap_present_returns_false_when_snap_missing(self, mocker):
         """_upstream_snap_present treats SnapNotFoundError as absent (not crash)."""
-        from charms.operator_libs_linux.v2 import snap as snap_mod
+        from charmlibs import snap as snap_mod
 
         mock_get_installed_snap_service = mocker.patch("charm.get_installed_snap_service")
         mock_get_installed_snap_service.side_effect = snap_mod.SnapNotFoundError(

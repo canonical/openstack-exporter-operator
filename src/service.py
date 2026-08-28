@@ -6,7 +6,7 @@ import os
 from logging import getLogger
 from typing import Any, Optional
 
-from charms.operator_libs_linux.v2 import snap
+from charmlibs import snap
 
 from ssdlc import SSDLCSysEvent, log_ssdlc_system_event
 

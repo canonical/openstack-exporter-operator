@@ -80,8 +80,6 @@ config:
 charm-libs:
   - lib: grafana-agent.cos_agent
     version: "0"
-  - lib: operator-libs-linux.snap
-    version: "2"
 
 links:
   documentation: https://discourse.charmhub.io/t/openstack-exporter-docs-index/13876
