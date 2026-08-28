@@ -27,6 +27,6 @@ target_deploy_status:
   ovn-central:
     workload-status: waiting
     workload-status-message-prefix: "'ovsdb-peer' incomplete, 'certificates' awaiting server certificate data"
-  grafana-agent:
+  opentelemetry-collector:
     workload-status: blocked
-    workload-status-message-regex: "^Missing .* for cos-agent$"
+    workload-status-message-prefix: "['cloud-config']|['grafana-dashboards-provider']|['send-loki-logs']|['send-remote-write'] for cos-agent"

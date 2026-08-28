@@ -15,8 +15,8 @@ from typing import Any, Callable, Optional, cast
 
 import ops
 import yaml
+from charmlibs import snap
 from charms.grafana_agent.v0.cos_agent import COSAgentProvider
-from charms.operator_libs_linux.v2 import snap
 from ops.model import ActiveStatus, BlockedStatus, ModelError, WaitingStatus
 
 from service import SNAP_NAME, UPSTREAM_SNAP, get_installed_snap_service, snap_install_or_refresh
@@ -238,7 +238,7 @@ class OpenstackExporterOperatorCharm(ops.CharmBase):
             event.add_status(WaitingStatus("Waiting for credentials from keystone"))
 
         if not self.model.relations.get("cos-agent"):
-            event.add_status(BlockedStatus("Grafana Agent is not related"))
+            event.add_status(BlockedStatus("Observability Agent is not related"))
 
         # this is necessary when doing a charm upgrade coming from revision 27
         if self._upstream_snap_present():

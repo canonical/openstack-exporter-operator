@@ -77,9 +77,31 @@ def test_remove_upstream_snap(mock_snap):
     mock_snap.remove.assert_called_with([service.UPSTREAM_SNAP])
 
 
+@mock.patch("service.snap.SnapCache")
 @mock.patch("service.snap.remove")
-def test_remove_upstream_snap_exception(mock_snap_remove):
+def test_remove_upstream_snap_not_installed(mock_snap_remove, mock_snap_cache):
+    """Test remove upstream snap function when the snap is not installed."""
+    snap_cache = mock.MagicMock()
+    upstream_snap = mock.MagicMock()
+    upstream_snap.present = False
+    snap_cache.__getitem__.return_value = upstream_snap
+    mock_snap_cache.return_value = snap_cache
+
+    service.remove_upstream_snap()
+
+    mock_snap_remove.assert_not_called()
+
+
+@mock.patch("service.snap.SnapCache")
+@mock.patch("service.snap.remove")
+def test_remove_upstream_snap_exception(mock_snap_remove, mock_snap_cache):
     """Test remove upstream snap function when raises exception."""
+    snap_cache = mock.MagicMock()
+    upstream_snap = mock.MagicMock()
+    upstream_snap.present = True
+    snap_cache.__getitem__.return_value = upstream_snap
+    mock_snap_cache.return_value = snap_cache
+
     mock_snap_remove.side_effect = service.snap.SnapError("My Error")
     with pytest.raises(service.snap.SnapError):
         service.remove_upstream_snap()
@@ -100,7 +122,7 @@ def test_remove_snap_as_resource_remove(mock_snap_remove, mock_snap_cache):
 
     service.remove_snap_as_resource()
 
-    mock_snap_remove.assert_called_once_with(service.SNAP_NAME)
+    mock_snap_remove.assert_called_once_with([service.SNAP_NAME])
 
 
 @mock.patch("service.snap.SnapCache")
