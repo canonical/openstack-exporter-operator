@@ -2,7 +2,11 @@
 # See LICENSE file for licensing details.
 import pytest
 
-from validate_config import validate_cache_ttl, validate_port
+from validate_config import (
+    validate_alert_rules,
+    validate_cache_ttl,
+    validate_port,
+)
 
 
 @pytest.mark.parametrize(
@@ -115,3 +119,46 @@ def test_validate_cache_ttl_invalid(cache_ttl):
 
     """
     assert validate_cache_ttl(cache_ttl) is not None
+
+
+@pytest.mark.parametrize(
+    "config",
+    [
+        "",
+        "   ",
+        "groups:\n- name: g\n  rules:\n    - alert: A\n      expr: up == 0\n",
+    ],
+)
+def test_validate_alert_rules_valid(config, mocker):
+    # Ensure the test does not depend on cos-tool being present.
+    mocker.patch("validate_config.CosTool.validate_alert_rules", return_value=(True, ""))
+    assert validate_alert_rules(config) is None
+
+
+@pytest.mark.parametrize(
+    "config",
+    [
+        "groups: [oops",  # invalid YAML
+        "just a string",  # not a mapping
+        "foo: bar",  # no groups key
+        "groups: []",  # empty groups
+    ],
+)
+def test_validate_alert_rules_invalid(config, mocker):
+    mocker.patch("validate_config.CosTool.validate_alert_rules", return_value=(True, ""))
+    assert validate_alert_rules(config) is not None
+
+
+def test_validate_alert_rules_cos_tool_success(mocker):
+    mocker.patch("validate_config.CosTool.validate_alert_rules", return_value=(True, ""))
+    config = "groups:\n- name: g\n  rules:\n    - alert: A\n      expr: up == 0\n"
+    assert validate_alert_rules(config) is None
+
+
+def test_validate_alert_rules_cos_tool_failure(mocker):
+    mocker.patch(
+        "validate_config.CosTool.validate_alert_rules",
+        return_value=(False, "error validating: bad for"),
+    )
+    config = "groups:\n- name: g\n  rules:\n    - alert: A\n      expr: up == 0\n      for: djdj\n"
+    assert validate_alert_rules(config) is not None
