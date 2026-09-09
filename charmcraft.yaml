@@ -16,10 +16,37 @@ parts:
       - astral-uv
     build-packages:
       - git
+  # Bundle cos-tool so the charm can validate the alert_rules config with
+  # Prometheus' own rule parser at runtime.
+  cos-tool:
+    plugin: dump
+    source: https://github.com/canonical/cos-tool/releases/latest/download/cos-tool-${CRAFT_ARCH_BUILD_FOR}
+    source-type: file
+    permissions:
+      - path: cos-tool-${CRAFT_ARCH_BUILD_FOR}
+        mode: "755"
 
 platforms:
   ubuntu@22.04:amd64:
   ubuntu@24.04:amd64:
+
+actions:
+  get-alert-rules:
+    description: |
+      Dump the alert rules currently in effect as a single Prometheus rules
+      document (YAML), returned in the `alert-rules` result. Use this as a starting
+      point for the `alert_rules` config option: dump the rules, edit them,
+      then set the edited document as the `alert_rules` config.
+
+      Because `juju run` wraps the result under the unit name, extract the raw
+      document before saving. For example:
+
+        juju run openstack-exporter/leader get-alert-rules --format=json \
+          | jq -r 'first(.[]).results."alert-rules"' > rules.yaml
+
+      Edit rules.yaml, then apply it:
+
+        juju config openstack-exporter alert_rules="$(cat rules.yaml)"
 
 requires:
   credentials:
@@ -76,6 +103,31 @@ config:
         This option allows the selection of a different channel.
 
         If the snap file has been attached via the openstack-exporter resource, this option has no effect.
+    alert_rules:
+      default: ""
+      type: string
+      description: |
+        A full Prometheus alert rules document (YAML) that replaces the alert rules shipped
+        with the charm. Empty string (default) keeps the shipped rules.
+
+        Use this to customise severities, thresholds and `for:` durations, or to add or remove
+        alerts. The value must be a valid Prometheus rules file with a top-level `groups` key. 
+        For example:
+
+          groups:
+            - name: NovaCompute
+              rules:
+                - alert: NovaComputeDown
+                  expr: openstack_nova_agent_state{adminState="enabled"} == 0
+                  for: 2m
+                  labels:
+                    severity: critical
+                  annotations:
+                    summary: Nova Compute Agent Down
+
+        Warning: Changing this option reloads the alert rules in Prometheus. 
+        Any currently firing alerts that are removed by the new rules will be canceled 
+        and reported to Alert Manager as resolved.
 
 charm-libs:
   - lib: grafana-agent.cos_agent

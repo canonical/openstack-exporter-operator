@@ -22,6 +22,15 @@ class TestCharm:
     def teardown_method(self, _):
         self.harness.cleanup()
 
+    @pytest.fixture(autouse=True)
+    def isolate_charm_dir(self, tmp_path, mocker):
+        mocker.patch.object(
+            OpenstackExporterOperatorCharm,
+            "charm_dir",
+            new_callable=mock.PropertyMock,
+            return_value=tmp_path,
+        )
+
     @pytest.mark.parametrize(
         "config",
         [
@@ -606,6 +615,8 @@ class TestCharm:
             ("cache_ttl", "2m3.4s"),
             ("cache_ttl", "1h2m3s4ms5us6ns"),
             ("cache_ttl", "39h9m14s"),
+            ("alert_rules", "groups:\n- name: g\n  rules:\n    - alert: A\n      expr: up == 0\n"),
+            ("alert_rules", ""),
         ],
     )
     def test_config_change_with_valid_config(self, config_option, config_value, mocker):
@@ -615,12 +626,16 @@ class TestCharm:
         mock_get_installed_snap_service = mocker.patch("charm.get_installed_snap_service")
         mock_get_installed_snap_service.return_value = mocked_upstream_service
         mock_install = mocker.patch("charm.OpenstackExporterOperatorCharm.install")
+        mock_render_alert_rules = mocker.patch(
+            "charm.OpenstackExporterOperatorCharm._render_alert_rules"
+        )
         mock_event = mock.MagicMock()
 
         self.harness.begin()
         self.harness.update_config({config_option: config_value})
 
         # If valid config, install method can be called from _configure
+        mock_render_alert_rules.assert_called_once()
         mock_install.assert_called_once()
 
         # Status should be set to Active
@@ -647,6 +662,8 @@ class TestCharm:
             ("cache_ttl", ".s"),
             ("cache_ttl", "+.s"),
             ("cache_ttl", "1d"),
+            ("alert_rules", "foo: bar"),
+            ("alert_rules", "groups: [oops"),
         ],
     )
     def test_config_change_with_invalid_config(self, config_option, config_value, mocker):
@@ -660,6 +677,9 @@ class TestCharm:
                 f"cache_ttl must be non-negative, non-zero, "
                 f"and in correct pattern, got {config_value}"
             )
+        elif config_option == "alert_rules":
+            validate_function = "charm.validate_alert_rules"
+            error_msg = f"alert_rules {config_value!r} is not valid"
 
         mock_event = mock.MagicMock()
         mock_logger = mocker.patch("charm.logger.error")
@@ -672,3 +692,110 @@ class TestCharm:
 
         mock_logger.assert_called_once_with(error_msg)
         mock_event.add_status.assert_any_call(ops.BlockedStatus(error_msg))
+
+    def test_render_alert_rules_default_uses_shipped(self, tmp_path, mocker):
+        """Without an override, the shipped rules are rendered for COSAgentProvider."""
+        mocker.patch("charm.get_installed_snap_service")
+        mocker.patch("charm.snap_install_or_refresh")
+
+        src_dir = tmp_path / "src"
+        shipped_dir = src_dir / "prometheus_alert_rules"
+        shipped_dir.mkdir(parents=True)
+        rendered_dir = src_dir / "alert_rules"
+        rendered_dir.mkdir()
+        stale_rule = rendered_dir / "stale.yaml"
+        stale_rule.write_text("groups: []\n")
+        real_shipped_dir = Path("src/prometheus_alert_rules")
+        for src_file in real_shipped_dir.glob("*.yaml"):
+            (shipped_dir / src_file.name).write_text(src_file.read_text())
+
+        mocker.patch.object(
+            OpenstackExporterOperatorCharm,
+            "charm_dir",
+            new_callable=mock.PropertyMock,
+            return_value=tmp_path,
+        )
+
+        self.harness.begin()
+        self.harness.update_config({"cache_ttl": "100s"})
+
+        rendered_names = sorted(p.name for p in rendered_dir.glob("*.yaml"))
+        shipped_names = sorted(p.name for p in shipped_dir.glob("*.yaml"))
+        assert rendered_names == shipped_names
+        assert not stale_rule.exists()
+
+    def test_render_alert_rules_override_replaces_shipped(self, tmp_path, mocker):
+        """An alert_rules override replaces the shipped rules with a single document."""
+        mocker.patch("charm.get_installed_snap_service")
+        mocker.patch("charm.snap_install_or_refresh")
+
+        src_dir = tmp_path / "src"
+        shipped_dir = src_dir / "prometheus_alert_rules"
+        shipped_dir.mkdir(parents=True)
+        real_shipped_dir = Path("src/prometheus_alert_rules")
+        for src_file in real_shipped_dir.glob("*.yaml"):
+            (shipped_dir / src_file.name).write_text(src_file.read_text())
+
+        mocker.patch.object(
+            OpenstackExporterOperatorCharm,
+            "charm_dir",
+            new_callable=mock.PropertyMock,
+            return_value=tmp_path,
+        )
+
+        self.harness.begin()
+        override = (
+            "groups:\n"
+            "- name: Custom\n"
+            "  rules:\n"
+            "    - alert: NovaComputeDown\n"
+            "      expr: openstack_nova_agent_state == 0\n"
+            "      for: 2m\n"
+        )
+        self.harness.update_config({"alert_rules": override})
+
+        rendered_dir = src_dir / "alert_rules"
+        rendered_files = list(rendered_dir.glob("*.yaml"))
+        assert [f.name for f in rendered_files] == ["custom.yaml"]
+        assert rendered_files[0].read_text() == override
+
+    def test_get_alert_rules_action_default_merges_shipped(self, tmp_path):
+        """Without an override, the action dumps the shipped rules as one merged document."""
+        import yaml
+
+        from charm import validate_alert_rules
+
+        src_dir = tmp_path / "src"
+        shipped_dir = src_dir / "prometheus_alert_rules"
+        shipped_dir.mkdir(parents=True)
+        real_shipped_dir = Path("src/prometheus_alert_rules")
+        expected_groups = []
+        for src_file in sorted(real_shipped_dir.glob("*.yaml")):
+            (shipped_dir / src_file.name).write_text(src_file.read_text())
+            expected_groups.extend(yaml.safe_load(src_file.read_text()).get("groups", []))
+
+        self.harness.begin()
+        results = self.harness.run_action("get-alert-rules").results
+
+        dumped = yaml.safe_load(results["alert-rules"])
+        assert dumped["groups"] == expected_groups
+        # The dumped document must itself be a valid value for the alert_rules config.
+        assert validate_alert_rules(results["alert-rules"]) is None
+
+    def test_get_alert_rules_action_returns_override(self, mocker):
+        """With an override set, the action returns the override verbatim."""
+        mocker.patch("charm.get_installed_snap_service")
+        mocker.patch("charm.snap_install_or_refresh")
+        override = (
+            "groups:\n"
+            "- name: Custom\n"
+            "  rules:\n"
+            "    - alert: NovaComputeDown\n"
+            "      expr: openstack_nova_agent_state == 0\n"
+            "      for: 2m\n"
+        )
+        self.harness.begin()
+        self.harness.update_config({"alert_rules": override})
+
+        results = self.harness.run_action("get-alert-rules").results
+        assert results["alert-rules"] == override
