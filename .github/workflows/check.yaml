@@ -31,7 +31,8 @@ jobs:
       uses: astral-sh/setup-uv@v7
 
     - name: Install just
-      uses: extractions/setup-just@v3
+      run:
+        sudo snap install --classic just
 
     - name: Run linters
       run: just lint
@@ -52,7 +53,8 @@ jobs:
       uses: astral-sh/setup-uv@v7
 
     - name: Install just
-      uses: extractions/setup-just@v3
+      run:
+        sudo snap install --classic just
 
     - name: Run unit tests
       run: just unit
@@ -147,7 +149,8 @@ jobs:
         uses: astral-sh/setup-uv@v7
 
       - name: Install just
-        uses: extractions/setup-just@v3
+        run:
+          sudo snap install --classic just
 
       - name: Setup Juju environment
         uses: charmed-kubernetes/actions-operator@main
