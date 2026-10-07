@@ -111,22 +111,10 @@ config:
         with the charm. Empty string (default) keeps the shipped rules.
 
         Use this to customise severities, thresholds and `for:` durations, or to add or remove
-        alerts. The value must be a valid Prometheus rules file with a top-level `groups` key. 
-        For example:
+        alerts. The value must be a valid Prometheus rules file.
 
-          groups:
-            - name: NovaCompute
-              rules:
-                - alert: NovaComputeDown
-                  expr: openstack_nova_agent_state{adminState="enabled"} == 0
-                  for: 2m
-                  labels:
-                    severity: critical
-                  annotations:
-                    summary: Nova Compute Agent Down
-
-        Warning: Changing this option reloads the alert rules in Prometheus. 
-        Any currently firing alerts that are removed by the new rules will be canceled 
+        Warning: Changing this option reloads the alert rules in Prometheus.
+        Any currently firing alerts that are removed by the new rules will be canceled
         and reported to Alert Manager as resolved.
 
 charm-libs:
