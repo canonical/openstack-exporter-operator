@@ -39,7 +39,7 @@ lint = [
 reformat = ["ruff"]
 tics = [
     "coverage[toml]",
-    "pylint>=4.0.7",
+    "pylint>=4.0.9",
 ]
 
 [tool.ruff]
