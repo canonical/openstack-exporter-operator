@@ -104,10 +104,19 @@ def snap_install_or_refresh(resource: Optional[str], channel: str) -> None:
 def _remove_snap_if_present(snap_name: str) -> None:
     """Remove a snap if it is present; no-op otherwise.
 
+    SnapCache loads the installed snaps from snapd locally, and only looks up a snap that is not
+    installed in the store. SnapNotFoundError (e.g. the store is unreachable or slow through a
+    proxy) therefore means the snap is not installed, and there is nothing to remove.
+
     Raises an exception on error.
     """
-    snap_cache = snap.SnapCache()
-    s = snap_cache[snap_name]
+    try:
+        s = snap.SnapCache()[snap_name]
+    except snap.SnapNotFoundError:
+        logger.debug(
+            "%s snap not installed (not in the local snap list), skipping removal", snap_name
+        )
+        return
     if not s.present:
         logger.debug("%s snap not installed, skipping removal", snap_name)
         return

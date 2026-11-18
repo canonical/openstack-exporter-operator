@@ -94,6 +94,39 @@ def test_remove_upstream_snap_not_installed(mock_snap_remove, mock_snap_cache):
 
 @mock.patch("service.snap.SnapCache")
 @mock.patch("service.snap.remove")
+def test_remove_upstream_snap_store_lookup_fails(mock_snap_remove, mock_snap_cache):
+    """Test remove upstream snap when the store lookup for the not-installed snap fails."""
+    snap_cache = mock.MagicMock()
+    snap_cache.__getitem__.side_effect = service.snap.SnapNotFoundError("Snap not found")
+    mock_snap_cache.return_value = snap_cache
+
+    service.remove_upstream_snap()
+
+    mock_snap_remove.assert_not_called()
+
+
+@mock.patch("service.log_ssdlc_system_event")
+@mock.patch("service.workaround_bug_268")
+@mock.patch("service.remove_snap_as_resource")
+@mock.patch("service.snap.add")
+@mock.patch("service.snap.remove")
+@mock.patch("service.snap.SnapCache")
+def test_snap_install_or_refresh_store_lookup_fails(
+    mock_snap_cache, mock_snap_remove, mock_snap_add, _, __, ___
+):
+    """Install/refresh proceeds when the legacy snap lookup fails in the store."""
+    snap_cache = mock.MagicMock()
+    snap_cache.__getitem__.side_effect = service.snap.SnapNotFoundError("Snap not found")
+    mock_snap_cache.return_value = snap_cache
+
+    service.snap_install_or_refresh(None, "latest/stable")
+
+    mock_snap_remove.assert_not_called()
+    mock_snap_add.assert_called_once_with(service.SNAP_NAME, channel="latest/stable")
+
+
+@mock.patch("service.snap.SnapCache")
+@mock.patch("service.snap.remove")
 def test_remove_upstream_snap_exception(mock_snap_remove, mock_snap_cache):
     """Test remove upstream snap function when raises exception."""
     snap_cache = mock.MagicMock()
