@@ -11,7 +11,7 @@ applications:
     channel: 2/stable
   keystone:
     charm: keystone
-    channel: yoga/edge
+    channel: yoga/stable
     num_units: 1
     options:
       openstack-origin: *openstack-origin
@@ -21,7 +21,7 @@ applications:
     channel: latest/edge
   vault:
     charm: vault
-    channel: latest/edge
+    channel: 1.8/stable
     num_units: 1
   vault-mysql-router:
     charm: mysql-router
@@ -35,7 +35,7 @@ applications:
     constraints: arch=amd64 mem=4096
   glance:
     charm: glance
-    channel: yoga/edge
+    channel: yoga/stable
     num_units: 1
     options:
       openstack-origin: *openstack-origin
@@ -45,7 +45,7 @@ applications:
     channel: latest/edge
   nova-compute:
     charm: nova-compute
-    channel: yoga/edge
+    channel: yoga/stable
     num_units: 1
     options:
       enable-live-migration: true
@@ -63,7 +63,7 @@ applications:
     channel: latest/edge
   nova-cloud-controller:
     charm: nova-cloud-controller
-    channel: yoga/edge
+    channel: yoga/stable
     num_units: 1
     options:
       debug: true
@@ -73,7 +73,7 @@ applications:
     constraints: arch=amd64 mem=2048
   neutron-api:
     charm: neutron-api
-    channel: yoga/edge
+    channel: yoga/stable
     num_units: 1
     options:
       debug: true
@@ -97,7 +97,7 @@ applications:
     constraints: arch=amd64 mem=1024
   placement:
     charm: placement
-    channel: yoga/edge
+    channel: yoga/stable
     num_units: 1
     options:
       debug: true
@@ -108,7 +108,7 @@ applications:
     channel: latest/edge
   neutron-api-plugin-ovn:
     charm: neutron-api-plugin-ovn
-    channel: yoga/edge
+    channel: yoga/stable
   ovn-central:
     charm: ovn-central
     channel: 22.03/stable
